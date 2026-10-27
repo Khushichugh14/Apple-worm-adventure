@@ -13,6 +13,13 @@ import { playSound } from './game/audio';
 import { findNextHint } from './game/solver';
 import './style.css';
 
+const SKINS = [
+  { id: 'emerald', name: 'Emerald', color: '#10b981', label: 'Classic Garden' },
+  { id: 'golden', name: 'Golden Sun', color: '#f59e0b', label: 'Radiant Glow' },
+  { id: 'ruby', name: 'Ruby Flame', color: '#ef4444', label: 'Blazing Spark' },
+  { id: 'amethyst', name: 'Cosmic Violet', color: '#8b5cf6', label: 'Mystic Aura' },
+];
+
 function calculateStars(moves, limit) {
   if (moves <= Math.ceil(limit * 0.55)) return 3;
   if (moves <= Math.ceil(limit * 0.8)) return 2;
@@ -30,6 +37,8 @@ function App() {
   const [solverHint, setSolverHint] = useState(null);
   const [notice, setNotice] = useState('');
   const [earnedStars, setEarnedStars] = useState(3);
+  const [wormSkin, setWormSkin] = useState(() => localStorage.getItem('wormSkin') || 'emerald');
+  const [bonusMoves, setBonusMoves] = useState(0);
 
   // Auth & Cloud Save state
   const [token, setToken] = useState(() => localStorage.getItem('token') || '');
@@ -70,6 +79,7 @@ function App() {
   const startLevel = useCallback(id => {
     setLevelId(id);
     setGame(initialState(LEVELS[id - 1]));
+    setBonusMoves(0);
     setHistory([]);
     setHint(false);
     setSolverHint(null);
@@ -167,9 +177,30 @@ function App() {
   const restart = () => {
     playSound('undo', sound);
     setGame(initialState(level));
+    setBonusMoves(0);
     setHistory([]);
     setSolverHint(null);
     setNotice('Puzzle reset. Find a new route!');
+  };
+
+  const cycleSkin = () => {
+    const currentIdx = SKINS.findIndex(s => s.id === wormSkin);
+    const nextSkin = SKINS[(currentIdx + 1) % SKINS.length];
+    setWormSkin(nextSkin.id);
+    localStorage.setItem('wormSkin', nextSkin.id);
+    playSound('complete', sound);
+    setNotice(`Equipped ${nextSkin.name} skin!`);
+  };
+
+  const buyBoost = () => {
+    if (coins < 30) {
+      setNotice('Need at least 30 coins for an Apple Boost (+5 moves)!');
+      return;
+    }
+    setCoins(c => c - 30);
+    setBonusMoves(b => b + 5);
+    playSound('complete', sound);
+    setNotice('Apple Boost active: +5 extra moves granted!');
   };
 
   // BFS Smart solver dynamic hint
@@ -392,36 +423,55 @@ function App() {
       {mode === 'play' ? (
         <main className="layout">
           <aside className="left-column">
-            <div className="eyebrow"><span className="live-dot" /> YOUR ADVENTURE</div>
+            <div className="eyebrow"><span className="live-dot" /> GARDEN ADVENTURE</div>
             <h1>Eat. Solve.<br /><em>Grow.</em></h1>
-            <p className="intro">A little worm. A big adventure. Find the perfect path through every garden.</p>
+            <p className="intro">A clever worm. A magical labyrinth. Find the optimal route to feast and escape.</p>
 
             <div className="level-card">
               <div className="level-card-top">
                 <div>
-                  <span className="muted-label">CURRENT PUZZLE</span>
+                  <span className="muted-label">LEVEL {String(levelId).padStart(2, '0')}</span>
                   <h2>{level.title}</h2>
                 </div>
                 <span className="difficulty">{level.difficulty}</span>
               </div>
-              <p>{level.objective}</p>
-              <div className="progress-row">
-                <span>Garden progress</span>
-                <b>{completed.filter(n => n <= 50).length}/50</b>
+
+              <div className="progress-section">
+                <div className="progress-row">
+                  <span>PROGRESS</span>
+                  <b>{Math.round((completed.length / 50) * 100)}%</b>
+                </div>
+                <div className="progress-segmented">
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <span
+                      key={i}
+                      className={`seg-bar ${i < Math.max(1, Math.round((completed.length / 50) * 10)) ? 'filled' : ''}`}
+                    />
+                  ))}
+                </div>
               </div>
-              <div className="progress-track">
-                <span style={{ width: `${(completed.length / 50) * 100}%` }} />
+
+              <div className="mockup-game-tips">
+                <div className="tips-title">🌱 GAME TIPS</div>
+                <ul>
+                  <li>Collect ALL apples to open the portal</li>
+                  <li>Worm body grows with every apple eaten</li>
+                  <li>Avoid walls and your own body tail!</li>
+                </ul>
               </div>
-              <button className="outline-button" onClick={() => setMode('levels')}>
-                Explore all levels <ChevronRight size={16} />
-              </button>
+
+              <div className="quick-action-btns">
+                <button className="action-btn-primary" onClick={restart}>RESET</button>
+                <button className="action-btn-secondary" onClick={triggerSmartHint}>HINT</button>
+                <button className="action-btn-secondary" onClick={() => setMode('levels')}>MAP</button>
+              </div>
             </div>
 
             <div className="tip-card">
               <span className="tip-icon"><Lightbulb size={18} /></span>
               <div>
-                <b>Little tip</b>
-                <p>{hint ? 'The glowing dots reveal the shortest path!' : 'Your body grows with every apple. Think two moves ahead!'}</p>
+                <b>Pro Strategy</b>
+                <p>{hint ? 'Glowing dots show the shortest BFS route.' : 'Turn corners wisely so you do not corner yourself.'}</p>
               </div>
             </div>
 
@@ -446,12 +496,13 @@ function App() {
                 </div>
                 <div className="panel-tools">
                   <span className="moves-chip">
-                    MOVES <b>{game.moves}/{level.moveLimit}</b>
+                    MOVES <b>{game.moves}/{level.moveLimit + bonusMoves}</b>
+                    {bonusMoves > 0 && <small className="bonus-tag">+{bonusMoves}</small>}
                   </span>
-                  <button className="small-icon" onClick={undo} disabled={!history.length} title="Undo">
+                  <button className="small-icon" onClick={undo} disabled={!history.length} title="Undo move">
                     <RotateCcw size={17} />
                   </button>
-                  <button className="small-icon" onClick={restart} title="Restart">
+                  <button className="small-icon" onClick={restart} title="Reset puzzle">
                     <RotateCcw size={17} />
                   </button>
                 </div>
@@ -462,15 +513,22 @@ function App() {
                   {board.map((p, i) => (
                     <div key={i} className={cellClass(p)}>
                       {isHead(p) ? (
-                        <span className="worm-face">◡</span>
+                        <span className="worm-avatar-face">
+                          <span className="face-eyes">👀</span>
+                        </span>
                       ) : game.worm.some(w => same(w, p)) ? (
                         <span className="worm-dot" />
                       ) : isApple(p) ? (
-                        <Apple className="apple-svg" size={23} fill="currentColor" />
+                        <div className="apple-wrapper">
+                          <span className="apple-sparkle">✦</span>
+                          <Apple className="apple-svg" size={23} fill="currentColor" />
+                        </div>
                       ) : same(level.portal, p) ? (
-                        <span className="portal-glyph">↗</span>
+                        <div className="portal-vortex">
+                          <span className="portal-glyph">🌀</span>
+                        </div>
                       ) : level.walls.some(w => same(w, p)) ? (
-                        <span className="wall-glyph">✦</span>
+                        <span className="wall-glyph">❖</span>
                       ) : null}
                     </div>
                   ))}
@@ -487,7 +545,7 @@ function App() {
                 )}
 
                 <div className="board-caption">
-                  <span><i className="legend-dot worm-legend" /> Your worm</span>
+                  <span><i className={`legend-dot skin-${wormSkin}`} /> Worm ({SKINS.find(s => s.id === wormSkin)?.name})</span>
                   <span><i className="legend-dot apple-legend" /> Apple</span>
                   <span><i className="legend-dot portal-legend" /> Portal</span>
                 </div>
@@ -535,7 +593,7 @@ function App() {
               <div className="controls-row">
                 <div className="control-copy">
                   <b>Make your move</b>
-                  <span>Use arrow keys or tap the controls</span>
+                  <span>Arrow keys / WASD or tap pad</span>
                 </div>
                 <div className="dpad">
                   <button onClick={() => move('up')} aria-label="Move up"><ArrowUp /></button>
@@ -564,60 +622,82 @@ function App() {
           </section>
 
           <aside className="right-column">
-            <div className="mission-card">
-              <div className="mission-head">
-                <span className="mission-symbol"><Trophy size={18} /></span>
-                <span className="muted-label">LEVEL OBJECTIVE</span>
+            {/* Mockup Objectives Card */}
+            <div className="objective-panel">
+              <div className="panel-badge-header">
+                <span className="objective-symbol"><Trophy size={16} /></span>
+                <span className="panel-title">OBJECTIVES</span>
               </div>
-              <h3>Collect & escape</h3>
-              <p>Gather every apple to power up the portal and find your way out.</p>
-              <div className="mission-item">
-                <span className="mission-emoji">🍎</span>
-                <span><b>Collect apples</b><small>Remaining in garden</small></span>
-                <strong>{game.apples.length}/{level.apples.length}</strong>
+
+              <div className="objective-box">
+                <div className="objective-label-row">
+                  <span className="objective-label">COLLECTED APPLES</span>
+                  <span className="objective-count">
+                    <b>{level.apples.length - game.apples.length}</b>/{level.apples.length}
+                  </span>
+                </div>
+                <div className="apple-icons-track">
+                  {Array.from({ length: level.apples.length }).map((_, idx) => (
+                    <span
+                      key={idx}
+                      className={`apple-token ${idx < (level.apples.length - game.apples.length) ? 'collected' : 'pending'}`}
+                    >
+                      🍎
+                    </span>
+                  ))}
+                </div>
               </div>
-              <div className="mission-item">
-                <span className="mission-emoji">🌀</span>
-                <span><b>Reach the portal</b><small>{game.apples.length ? 'Collect apples first' : 'Portal is ready!'}</small></span>
-                <span className={game.apples.length ? 'status-wait' : 'status-ready'}>
-                  {game.apples.length ? 'LOCKED' : 'READY'}
-                </span>
-              </div>
-              <div className="mission-item">
-                <span className="mission-emoji">🐛</span>
-                <span><b>Worm length</b><small>Grow as you collect</small></span>
-                <strong>{game.worm.length}</strong>
+
+              <div className="portal-status-box">
+                <div className="portal-status-label">PORTAL STATUS</div>
+                {game.apples.length > 0 ? (
+                  <div className="portal-badge locked">
+                    <span className="badge-icon">🔒</span>
+                    <div>
+                      <b className="badge-title">LOCKED</b>
+                      <small className="badge-sub">until {game.apples.length} apple{game.apples.length > 1 ? 's are' : ' is'} eaten</small>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="portal-badge ready">
+                    <span className="badge-icon">🌀</span>
+                    <div>
+                      <b className="badge-title">PORTAL OPEN!</b>
+                      <small className="badge-sub">Slither in to complete the level</small>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="reward-card">
-              <div className="reward-card-title">
-                <span className="reward-spark"><Sparkles size={18} /></span>
-                <div>
-                  <h3>Reward garden</h3>
-                  <p>Small bonuses, your choice.</p>
-                </div>
+            {/* Mockup Reward Shop Card */}
+            <div className="reward-shop-panel">
+              <div className="panel-badge-header">
+                <span className="reward-symbol"><Sparkles size={16} /></span>
+                <span className="panel-title">REWARD SHOP</span>
               </div>
-              <div className="reward-option">
-                <span className="reward-emoji">💡</span>
-                <div>
-                  <b>Smart hint</b>
-                  <small>Calculates shortest path using BFS</small>
-                </div>
-                <button onClick={triggerSmartHint}>Use</button>
-              </div>
-              <div className="reward-option">
-                <span className="reward-emoji">🪙</span>
-                <div>
-                  <b>Daily bonus</b>
-                  <small>Demo reward · once per session</small>
-                </div>
-                <button onClick={() => { setCoins(c => c + 10); setNotice('Daily bonus: +10 coins added!'); }}>
-                  Claim
+
+              <div className="shop-grid">
+                <button className="shop-card" onClick={cycleSkin} title="Cycle to next worm skin">
+                  <div className={`shop-icon-box skin-${wormSkin}`}>🐛</div>
+                  <b>Worm Skin</b>
+                  <span className="shop-sub">{SKINS.find(s => s.id === wormSkin)?.name}</span>
+                  <span className="shop-price-btn">Switch</span>
                 </button>
-              </div>
-              <div className="reward-foot">
-                <ShieldCheck size={15} /> Real ad rewards require server verification.
+
+                <button className="shop-card" onClick={buyBoost} title="Add +5 moves for 30 coins">
+                  <div className="shop-icon-box boost-box">⚡</div>
+                  <b>Apple Boost</b>
+                  <span className="shop-sub">+5 Moves</span>
+                  <span className="shop-price-btn">30 🪙</span>
+                </button>
+
+                <button className="shop-card" onClick={triggerSmartHint} title="BFS Shortest Path Hint">
+                  <div className="shop-icon-box hint-box">💡</div>
+                  <b>Smart Hint</b>
+                  <span className="shop-sub">BFS Solver</span>
+                  <span className="shop-price-btn">Free</span>
+                </button>
               </div>
             </div>
 
