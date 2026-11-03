@@ -1,5 +1,6 @@
 export const GAME_NAME = process.env.GAME_NAME || 'APPLE WORM ADVENTURE';
 export const ECONOMY_CONFIG = Object.freeze({
+  currencyName: 'Garden Coins',
   levelCompletionCoins: 25,
   goldenAppleCoins: 10,
   doubleCoinsMultiplier: 2,

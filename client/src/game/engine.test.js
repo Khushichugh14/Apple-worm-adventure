@@ -52,19 +52,38 @@ test('step detects wall collision', () => {
   assert.match(next.reason, /wall/i);
 });
 
-test('step detects garden boundary collision', () => {
+test('step detects garden boundary collision on all sides', () => {
   const edgeLevel = {
     size: 4,
     moveLimit: 10,
-    worm: [[0, 1]],
+    worm: [[0, 0], [0, 1]],
     apples: [],
     walls: [],
     portal: [3, 3]
   };
-  const state = initialState(edgeLevel);
-  const next = step(state, 'left', edgeLevel); // Moves to [-1, 1]
-  assert.equal(next.status, 'failed');
-  assert.match(next.reason, /garden/i);
+
+  // Top boundary
+  const stateTop = initialState(edgeLevel);
+  const failTop = step(stateTop, 'up', edgeLevel);
+  assert.equal(failTop.status, 'failed');
+  assert.match(failTop.reason, /garden/i);
+
+  // Left boundary
+  const failLeft = step(stateTop, 'left', edgeLevel);
+  assert.equal(failLeft.status, 'failed');
+  assert.match(failLeft.reason, /garden/i);
+
+  // Right boundary
+  const rightLevel = { ...edgeLevel, worm: [[3, 0], [2, 0]] };
+  const failRight = step(initialState(rightLevel), 'right', rightLevel);
+  assert.equal(failRight.status, 'failed');
+  assert.match(failRight.reason, /garden/i);
+
+  // Bottom boundary
+  const bottomLevel = { ...edgeLevel, worm: [[0, 3], [0, 2]] };
+  const failBottom = step(initialState(bottomLevel), 'down', bottomLevel);
+  assert.equal(failBottom.status, 'failed');
+  assert.match(failBottom.reason, /garden/i);
 });
 
 test('step detects body collision', () => {
@@ -77,10 +96,65 @@ test('step detects body collision', () => {
     portal: [5, 5]
   };
   const state = initialState(selfLevel);
-  // Head is at [2, 2]. Body segment at [2, 3] is not the tail (tail is at [1, 3]). Moving down tries to hit [2, 3]
+  // Head is at [2, 2]. Body segment at [2, 3] is not the tail. Moving down tries to hit [2, 3]
   const next = step(state, 'down', selfLevel);
   assert.equal(next.status, 'failed');
   assert.match(next.reason, /tail/i);
+});
+
+test('worm can safely step into its own tail position when not eating', () => {
+  // Loop configuration: worm forms a U-turn where moving forward enters the tile vacated by the tail
+  const loopLevel = {
+    size: 5,
+    moveLimit: 10,
+    worm: [[2, 2], [2, 3], [1, 3], [1, 2]],
+    apples: [],
+    walls: [],
+    portal: [4, 4]
+  };
+  const state = initialState(loopLevel);
+  // Head is at [2, 2]. Moving left aims for [1, 2], which is the current tail position.
+  // Because no apple is eaten, tail vacates [1, 2] simultaneously!
+  const next = step(state, 'left', loopLevel);
+  assert.equal(next.status, 'playing');
+  assert.deepEqual(next.worm[0], [1, 2]);
+  assert.deepEqual(next.worm[next.worm.length - 1], [1, 3]);
+});
+
+test('worm cannot step into tail position if simultaneously eating an apple (tail does not vacate)', () => {
+  const loopLevelWithApple = {
+    size: 5,
+    moveLimit: 10,
+    worm: [[2, 2], [2, 3], [1, 3], [1, 2]],
+    apples: [[1, 2]], // Apple placed on tail position
+    walls: [],
+    portal: [4, 4]
+  };
+  const state = initialState(loopLevelWithApple);
+  const next = step(state, 'left', loopLevelWithApple);
+  assert.equal(next.status, 'failed');
+  assert.match(next.reason, /tail/i);
+});
+
+test('entering portal with apples remaining does not complete the level', () => {
+  const lockedPortalLevel = {
+    size: 6,
+    moveLimit: 10,
+    worm: [[4, 5], [3, 5]],
+    apples: [[1, 1]], // 1 apple remaining!
+    walls: [],
+    portal: [5, 5]
+  };
+  const state = initialState(lockedPortalLevel);
+  const next = step(state, 'right', lockedPortalLevel); // Moves onto portal [5, 5]
+  assert.equal(next.status, 'playing'); // Still playing because apples remaining > 0!
+  assert.notEqual(next.status, 'completed');
+});
+
+test('invalid direction input returns unchanged state', () => {
+  const state = initialState(mockLevel);
+  const next = step(state, 'diagonal_up_left', mockLevel);
+  assert.equal(next, state);
 });
 
 test('step fails if move limit exceeded', () => {

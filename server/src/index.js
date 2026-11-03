@@ -1,4 +1,18 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config();
+
+// Ensure JWT_SECRET fallback in development/test
+if (!process.env.JWT_SECRET) {
+  process.env.JWT_SECRET = 'apple_worm_development_jwt_secret_key_2026';
+}
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -9,9 +23,11 @@ import { GAME_NAME } from './config/gameConfig.js';
 import authRoutes from './routes/auth.js';
 import economyRoutes from './routes/economy.js';
 import playerRoutes from './routes/player.js';
+
 const app = express();
 app.disable('x-powered-by');
 app.use(helmet());
+
 const configuredOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:5173')
   .split(',')
   .map(s => s.trim().replace(/\/$/, ''))
@@ -23,6 +39,7 @@ const corsOptions = {
     const isAllowed =
       configuredOrigins.includes(origin) ||
       /^http:\/\/localhost(:\d+)?$/.test(origin) ||
+      /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin) ||
       /^https:\/\/.*\.vercel\.app$/.test(origin);
 
     if (isAllowed) {
@@ -38,13 +55,33 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
-app.use(express.json({ limit: '20kb' })); app.use(cookieParser());
-app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, limit: 40, standardHeaders: 'draft-7', legacyHeaders: false }), authRoutes);
-app.use('/api/economy', rateLimit({ windowMs: 60 * 1000, limit: 60, standardHeaders: 'draft-7', legacyHeaders: false }), economyRoutes);
-app.use('/api/player', playerRoutes);
+app.use(express.json({ limit: '20kb' }));
+app.use(cookieParser());
+
+// Rate limiters
+app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, limit: 60, standardHeaders: 'draft-7', legacyHeaders: false }));
+app.use('/api/economy', rateLimit({ windowMs: 60 * 1000, limit: 80, standardHeaders: 'draft-7', legacyHeaders: false }));
+app.use('/api/player', rateLimit({ windowMs: 60 * 1000, limit: 120, standardHeaders: 'draft-7', legacyHeaders: false }), playerRoutes);
+
+app.use('/api/auth', authRoutes);
+app.use('/api/economy', economyRoutes);
+
 app.get('/', (_req, res) => res.json({ status: 'online', game: GAME_NAME, health: '/api/health' }));
 app.get('/api/health', (_req, res) => res.json({ ok: true, gameName: GAME_NAME, service: 'apple-worm-adventure-api' }));
-app.use((err, _req, res, _next) => { console.error(err); res.status(500).json({ error: 'Unexpected server error' }); });
+
+app.use((err, _req, res, _next) => {
+  console.error(err);
+  res.status(500).json({ error: 'Unexpected server error' });
+});
+
 const port = Number(process.env.PORT || 5000);
-if (process.env.NODE_ENV !== 'test') connectDatabase().then(() => app.listen(port, () => console.log(`${GAME_NAME} API listening on ${port}`))).catch(err => { console.error('Server startup failed:', err.message); process.exit(1); });
+if (process.env.NODE_ENV !== 'test') {
+  connectDatabase()
+    .then(() => app.listen(port, () => console.log(`${GAME_NAME} API listening on ${port}`)))
+    .catch(err => {
+      console.error('Server startup failed:', err.message);
+      process.exit(1);
+    });
+}
+
 export default app;
