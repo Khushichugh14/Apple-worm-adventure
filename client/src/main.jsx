@@ -6,7 +6,7 @@ import {
   LockKeyhole, RotateCcw, Settings, ShieldCheck, Sparkles, Star,
   Trophy, Volume2, VolumeX, Zap, User as UserIcon, LogOut, Check, X,
   Compass, Play, RefreshCw, Flame, Crown, Flag, AlertCircle,
-  Maximize2, Minimize2, Music, Undo2, HelpCircle
+  Maximize2, Minimize2, Music, Undo2, HelpCircle, MapPin, ShoppingBag
 } from 'lucide-react';
 import { GAME_NAME, API_URL } from './config/gameConfig';
 import { LEVELS, WORLDS } from './data/levels';
@@ -48,7 +48,6 @@ function App() {
   });
   const [sound, setSound] = useState(() => localStorage.getItem('sound') !== 'false');
   const [music, setMusic] = useState(() => localStorage.getItem('music') === 'true');
-  const [mode, setMode] = useState('play'); // 'play' | 'levels' | 'rewards' | 'leaderboard'
   const [history, setHistory] = useState([]);
   const [hint, setHint] = useState(false);
   const [solverHint, setSolverHint] = useState(null);
@@ -60,11 +59,15 @@ function App() {
   const [floatingScores, setFloatingScores] = useState([]);
   const [starPopStage, setStarPopStage] = useState(0);
   const [confettiParticles, setConfettiParticles] = useState([]);
-  const [selectedWorldTab, setSelectedWorldTab] = useState(0); // 0 = all, 1..5 = specific world
-  const [levelPreview, setLevelPreview] = useState(null);
-  const [howToPlayModal, setHowToPlayModal] = useState(false);
-  const [settingsModal, setSettingsModal] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Modals
+  const [mapModal, setMapModal] = useState(false);
+  const [leaderboardModal, setLeaderboardModal] = useState(false);
+  const [shopModal, setShopModal] = useState(false);
+  const [howToPlayModal, setHowToPlayModal] = useState(false);
+  const [levelPreview, setLevelPreview] = useState(null);
+  const [selectedWorldTab, setSelectedWorldTab] = useState(0); // 0 = all, 1..5 = world id
 
   // Leaderboard state
   const [leaderboard, setLeaderboard] = useState([]);
@@ -85,6 +88,9 @@ function App() {
   const level = LEVELS[levelId - 1] || LEVELS[0];
   const [game, setGame] = useState(() => initialState(LEVELS[levelId - 1] || LEVELS[0]));
 
+  // Current World
+  const currentWorld = WORLDS.find(w => levelId >= w.range[0] && levelId <= w.range[1]) || WORLDS[0];
+
   // Persist guest progress to localStorage
   useEffect(() => {
     localStorage.setItem('coins', coins);
@@ -94,30 +100,22 @@ function App() {
     localStorage.setItem('music', String(music));
   }, [coins, completed, levelId, sound, music]);
 
-  // Fullscreen toggle & change detection (supports both Browser Fullscreen & In-App Theater mode)
+  // Fullscreen toggle & change detection
   const toggleFullscreen = useCallback(() => {
     setIsFullscreen(prev => {
       const next = !prev;
       try {
         if (next) {
           const elem = document.documentElement;
-          if (elem.requestFullscreen) {
-            elem.requestFullscreen().catch(() => {});
-          } else if (elem.webkitRequestFullscreen) {
-            elem.webkitRequestFullscreen();
-          }
+          if (elem.requestFullscreen) elem.requestFullscreen().catch(() => {});
+          else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
         } else {
           if (document.fullscreenElement || document.webkitFullscreenElement) {
-            if (document.exitFullscreen) {
-              document.exitFullscreen().catch(() => {});
-            } else if (document.webkitExitFullscreen) {
-              document.webkitExitFullscreen();
-            }
+            if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
           }
         }
-      } catch {
-        // Fallback
-      }
+      } catch {}
       return next;
     });
   }, []);
@@ -125,9 +123,7 @@ function App() {
   useEffect(() => {
     const onFullscreenChange = () => {
       const isNative = !!(document.fullscreenElement || document.webkitFullscreenElement);
-      if (!isNative) {
-        setIsFullscreen(false);
-      }
+      if (!isNative) setIsFullscreen(false);
     };
     document.addEventListener('fullscreenchange', onFullscreenChange);
     document.addEventListener('webkitfullscreenchange', onFullscreenChange);
@@ -141,11 +137,8 @@ function App() {
   const toggleMusic = useCallback(() => {
     setMusic(prev => {
       const next = !prev;
-      if (next) {
-        startBgm(true);
-      } else {
-        stopBgm();
-      }
+      if (next) startBgm(true);
+      else stopBgm();
       return next;
     });
   }, []);
@@ -193,7 +186,7 @@ function App() {
       });
   }, [token]);
 
-  // Fetch leaderboard data when opening leaderboard tab
+  // Fetch leaderboard data
   const fetchLeaderboard = useCallback(() => {
     setLeaderboardLoading(true);
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
@@ -208,10 +201,8 @@ function App() {
   }, [token]);
 
   useEffect(() => {
-    if (mode === 'leaderboard') {
-      fetchLeaderboard();
-    }
-  }, [mode, fetchLeaderboard]);
+    if (leaderboardModal) fetchLeaderboard();
+  }, [leaderboardModal, fetchLeaderboard]);
 
   const startLevel = useCallback(id => {
     const targetLvl = LEVELS[id - 1] || LEVELS[0];
@@ -226,19 +217,19 @@ function App() {
     setStarPopStage(0);
     setConfettiParticles([]);
     setLevelPreview(null);
-    setMode('play');
+    setMapModal(false);
     playSound('click', sound);
   }, [sound]);
 
   // Spawn celebratory confetti
   const triggerConfetti = useCallback(() => {
-    const colors = ['#b9f36c', '#f3d777', '#38bdf8', '#c084fc', '#ff6c72', '#ffffff'];
-    const particles = Array.from({ length: 42 }).map((_, idx) => ({
+    const colors = ['#4ade80', '#fbbf24', '#38bdf8', '#c084fc', '#f43f5e', '#ffffff'];
+    const particles = Array.from({ length: 48 }).map((_, idx) => ({
       id: idx,
       color: colors[idx % colors.length],
-      left: Math.random() * 95 + '%',
+      left: Math.random() * 96 + '%',
       delay: Math.random() * 0.4 + 's',
-      duration: (1.6 + Math.random() * 1) + 's',
+      duration: (1.5 + Math.random() * 1.2) + 's',
       size: (6 + Math.random() * 8) + 'px'
     }));
     setConfettiParticles(particles);
@@ -254,9 +245,7 @@ function App() {
         const delta = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[dir];
         if (delta) {
           const nextHead = [old.worm[0][0] + delta[0], old.worm[0][1] + delta[1]];
-          if (same(nextHead, old.worm[1])) {
-            return old; // Safely ignore 180° neck reverse
-          }
+          if (same(nextHead, old.worm[1])) return old;
         }
       }
 
@@ -267,11 +256,10 @@ function App() {
       const effectiveLevel = { ...level, moveLimit: level.moveLimit + bonusMoves };
       const next = step(old, dir, effectiveLevel);
 
-      // Play sound and animation for apple eaten
+      // Apple collection audio & popup
       const didEat = next.apples.length < old.apples.length;
       if (didEat) {
         playSound('eat', sound);
-        // Show floating +10 animation at eaten apple position
         const eatenApple = old.apples.find(a => same(a, next.worm[0]));
         if (eatenApple) {
           const scoreId = Date.now() + Math.random();
@@ -280,10 +268,9 @@ function App() {
             setFloatingScores(prev => prev.filter(s => s.id !== scoreId));
           }, 850);
         }
-        // If this was the last apple, play portal activation sound!
         if (next.apples.length === 0) {
           playSound('portalOpen', sound);
-          setNotice('✨ All apples collected! The portal has awakened.');
+          setNotice('✨ All apples collected! The Cosmic Portal is open!');
         } else {
           setNotice(`Apple collected! ${next.apples.length} remaining.`);
         }
@@ -303,22 +290,13 @@ function App() {
 
         setCompleted(prev => (prev.includes(levelId + 1) ? prev : [...prev, Math.min(50, levelId + 1)]));
         setCoins(c => c + 25);
-        setNotice(`Garden cleared! Earned ${stars} ★ and +25 coins.`);
 
         // Sync with backend MongoDB if logged in
         if (token) {
           fetch(`${API_URL}/player/progress`, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              levelId,
-              score: next.score,
-              moves: next.moves,
-              stars
-            })
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ levelId, score: next.score, moves: next.moves, stars })
           })
             .then(res => res.ok ? res.json() : null)
             .then(saved => {
@@ -345,10 +323,7 @@ function App() {
   // Touch Swipe Handlers for mobile & tablet
   const handleTouchStart = e => {
     if (e.touches && e.touches.length > 0) {
-      touchStartRef.current = {
-        x: e.touches[0].clientX,
-        y: e.touches[0].clientY
-      };
+      touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     }
   };
 
@@ -359,19 +334,15 @@ function App() {
     const absX = Math.abs(dx);
     const absY = Math.abs(dy);
 
-    if (Math.max(absX, absY) > 26) {
-      if (absX > absY) {
-        move(dx > 0 ? 'right' : 'left');
-      } else {
-        move(dy > 0 ? 'down' : 'up');
-      }
+    if (Math.max(absX, absY) > 24) {
+      if (absX > absY) move(dx > 0 ? 'right' : 'left');
+      else move(dy > 0 ? 'down' : 'up');
     }
   };
 
   // Keyboard navigation & shortcuts
   useEffect(() => {
     const onKey = e => {
-      // Prevent page scrolling on navigation keys while playing
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
         e.preventDefault();
       }
@@ -396,11 +367,8 @@ function App() {
       } else if (e.key === 'm' || e.key === 'M') {
         toggleMusic();
       } else if (e.key === 'Enter' || e.key === ' ') {
-        if (game.status === 'completed') {
-          startLevel(Math.min(50, levelId + 1));
-        } else if (game.status === 'failed') {
-          restart();
-        }
+        if (game.status === 'completed') startLevel(Math.min(50, levelId + 1));
+        else if (game.status === 'failed') restart();
       }
     };
     window.addEventListener('keydown', onKey);
@@ -414,7 +382,7 @@ function App() {
       setGame(prev);
       setHistory(h => h.slice(0, -1));
       setSolverHint(null);
-      setNotice('Move undone. Find a safer path!');
+      setNotice('Move undone. Slither safely!');
     }
   };
 
@@ -448,14 +416,10 @@ function App() {
     playSound('boost', sound);
     setNotice('Apple Boost activated: +5 bonus moves added!');
 
-    // Sync spend with server if logged in
     if (token) {
       fetch(`${API_URL}/player/wallet/spend`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ amount: 30, item: 'APPLE_BOOST' })
       })
         .then(res => res.ok ? res.json() : null)
@@ -531,7 +495,7 @@ function App() {
   );
 
   const cellClass = p => {
-    let c = 'cell';
+    let c = 'grid-cell';
     if (level.walls.some(w => same(w, p))) c += ' wall';
     if (game.worm.some(w => same(w, p))) c += ` worm skin-${wormSkin}`;
     if (game.worm.length && same(game.worm[0], p)) c += ` head skin-head-${wormSkin}`;
@@ -545,10 +509,7 @@ function App() {
   const isHead = p => game.worm.length && same(game.worm[0], p);
   const isApple = p => game.apples.some(a => same(a, p));
 
-  // Determine current world
-  const currentWorld = WORLDS.find(w => levelId >= w.range[0] && levelId <= w.range[1]) || WORLDS[0];
-
-  // Failure reason helpers
+  // Failure type diagnostics
   const failureType = useMemo(() => {
     if (game.status !== 'failed') return null;
     const r = game.reason.toLowerCase();
@@ -558,374 +519,510 @@ function App() {
     return { type: 'moves', icon: '⏳', title: 'Move Limit Exceeded!', tip: 'Find shorter paths with fewer unnecessary detours, or use an Apple Boost (+5 moves)!' };
   }, [game.status, game.reason]);
 
-  // Filtered levels for level map
+  // Live star calculation as player moves
+  const liveStars = useMemo(() => {
+    return calculateStars(game.moves, level.moveLimit + bonusMoves, level.parMoves);
+  }, [game.moves, level.moveLimit, level.parMoves, bonusMoves]);
+
+  // Filtered levels for saga map
   const displayedLevels = useMemo(() => {
     if (selectedWorldTab === 0) return LEVELS;
     return LEVELS.filter(l => l.worldId === selectedWorldTab);
   }, [selectedWorldTab]);
 
-  // Shared Game Board Content (Used in both Standard and Fullscreen modes)
-  const renderGameBoard = () => (
+  return (
     <div
-      className="board-wrap"
+      className="game-viewport"
+      data-world={currentWorld.id}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Floating Score Popups */}
-      {floatingScores.map(s => {
-        const pctX = (s.x / level.size) * 100 + (100 / (level.size * 2));
-        const pctY = (s.y / level.size) * 100;
-        return (
-          <div
-            key={s.id}
-            className="floating-score"
-            style={{ left: `${pctX}%`, top: `${pctY}%` }}
-          >
-            {s.text}
-          </div>
-        );
-      })}
+      {/* AMBIENT FLOATING MOTES */}
+      <div className="ambient-motes">
+        {Array.from({ length: 18 }).map((_, i) => (
+          <span
+            key={i}
+            className="ambient-mote"
+            style={{
+              left: `${(i * 19) % 100}%`,
+              width: `${4 + (i % 5) * 3}px`,
+              height: `${4 + (i % 5) * 3}px`,
+              background: currentWorld.color,
+              animationDuration: `${7 + (i % 6) * 2}s`,
+              animationDelay: `${(i % 5) * 1.5}s`
+            }}
+          />
+        ))}
+      </div>
 
-      <div className="board" data-world={currentWorld.id} style={{ '--grid-size': level.size }}>
-        {board.map((p, i) => {
-          const segmentIdx = game.worm.findIndex(w => same(w, p));
-          const isWormHead = segmentIdx === 0;
-          const isWormTail = segmentIdx > 0 && segmentIdx === game.worm.length - 1;
-
-          return (
-            <div key={i} className={cellClass(p)}>
-              {isWormHead ? (
-                <div className={`worm-head-container face-${facing}`}>
-                  <div className="worm-head-eyes">
-                    <span className="worm-eye"><span className="pupil" /></span>
-                    <span className="worm-eye"><span className="pupil" /></span>
-                  </div>
-                  <div className="worm-cheeks">
-                    <span className="blush" />
-                    <span className="blush" />
-                  </div>
-                  <div className="worm-mouth" />
-                </div>
-              ) : segmentIdx > 0 ? (
-                <div
-                  className={`worm-segment ${isWormTail ? 'worm-tail' : ''}`}
-                  style={{
-                    '--segment-scale': Math.max(0.68, 1 - (segmentIdx * 0.035)),
-                    '--segment-index': segmentIdx
-                  }}
-                >
-                  <span className="worm-segment-shine" />
-                </div>
-              ) : isApple(p) ? (
-                <div className="apple-wrapper">
-                  <div className="apple-stem" />
-                  <div className="apple-leaf" />
-                  <div className="apple-body">
-                    <div className="apple-highlight" />
-                  </div>
-                  <span className="apple-sparkle s1">✦</span>
-                  <span className="apple-sparkle s2">✦</span>
-                </div>
-              ) : same(level.portal, p) ? (
-                <div className={`portal-vortex ${game.apples.length === 0 ? 'portal-unlocked' : 'portal-locked'}`}>
-                  {game.apples.length > 0 ? (
-                    <span className="portal-lock-icon">🔒</span>
-                  ) : (
-                    <span className="portal-ready-icon">🌀</span>
-                  )}
-                </div>
-              ) : level.walls.some(w => same(w, p)) ? (
-                <div className="wall-block">
-                  <span className="wall-rune">❖</span>
-                </div>
-              ) : null}
+      {/* TOP ARCADE GLASS HUD */}
+      <header className="game-hud-top">
+        <div className="hud-group-left">
+          <div className="brand-pill" onClick={() => setMapModal(true)} title="Browse Realms & Levels">
+            <div className="brand-icon-box">
+              <Apple size={18} />
             </div>
-          );
-        })}
-      </div>
-
-      {solverHint && (
-        <div className="hint-banner">
-          <span>
-            <Compass size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
-            Suggested Move: <b>{solverHint.nextDirection}</b> ({solverHint.distance} steps to {solverHint.targetLabel})
-          </span>
-          <button onClick={() => setSolverHint(null)} style={{ background: 'none', border: 'none', color: '#c9c1ff', cursor: 'pointer' }}>×</button>
-        </div>
-      )}
-
-      <div className="board-caption">
-        <span><i className={`legend-dot skin-${wormSkin}`} /> Worm ({SKINS.find(s => s.id === wormSkin)?.name})</span>
-        <span><i className="legend-dot apple-legend" /> Apple ({game.apples.length} left)</span>
-        <span><i className="legend-dot portal-legend" /> Portal</span>
-      </div>
-    </div>
-  );
-
-  return (
-    <div className={`app-shell ${isFullscreen ? 'fullscreen-active' : ''}`}>
-      {/* TOPBAR */}
-      <header className="topbar">
-        <a className="brand" href="#home" onClick={() => setMode('play')}>
-          <span className="brand-icon"><Apple size={22} /></span>
-          <div>
-            <span>{GAME_NAME}</span>
-            <small>PUZZLE GARDENS</small>
+            <span className="brand-title">APPLE WORM</span>
           </div>
-        </a>
 
-        <nav>
-          <button className={mode === 'play' ? 'nav-active' : ''} onClick={() => { setMode('play'); playSound('click', sound); }}>
-            <Gamepad2 size={16} /> Play
-          </button>
-          <button className={mode === 'levels' ? 'nav-active' : ''} onClick={() => { setMode('levels'); playSound('click', sound); }}>
-            <Gem size={16} /> Realms
-          </button>
-          <button className={mode === 'leaderboard' ? 'nav-active' : ''} onClick={() => { setMode('leaderboard'); playSound('click', sound); }}>
-            <Trophy size={16} /> Rank
-          </button>
-          <button className={mode === 'rewards' ? 'nav-active' : ''} onClick={() => { setMode('rewards'); playSound('click', sound); }}>
-            <Sparkles size={16} /> Rewards
-          </button>
-        </nav>
+          <div className="realm-badge" style={{ borderColor: `${currentWorld.color}66` }}>
+            <span className="realm-dot" style={{ backgroundColor: currentWorld.color }} />
+            <span>{currentWorld.name} • Lv. {String(levelId).padStart(2, '0')}</span>
+          </div>
+        </div>
 
-        <div className="top-actions">
-          {user ? (
-            <span className="sync-badge" title="Cloud save active in MongoDB">
-              <Check size={13} /> Cloud Active
-            </span>
-          ) : null}
-          <span className="coin-pill"><Coins size={16} />{coins}</span>
+        {/* Center Live Stats */}
+        <div className="hud-group-center">
+          <div className="hud-stat-pill moves-pill">
+            <span>MOVES:</span>
+            <b>{game.moves}/{level.moveLimit + bonusMoves}</b>
+            <small>(Par: {level.parMoves})</small>
+          </div>
+
+          <div className="hud-stat-pill hud-stars-live" title="Stars rating based on moves">
+            <span className={`hud-star ${liveStars >= 1 ? 'active' : ''}`}>★</span>
+            <span className={`hud-star ${liveStars >= 2 ? 'active' : ''}`}>★</span>
+            <span className={`hud-star ${liveStars >= 3 ? 'active' : ''}`}>★</span>
+          </div>
+
+          <div className="hud-stat-pill hud-apples-pill">
+            <span>🍎 {game.apples.length} left</span>
+          </div>
+        </div>
+
+        {/* Right Actions */}
+        <div className="hud-group-right">
+          <div className="coin-counter" title="Garden Coins">
+            <Coins size={16} />
+            <span>{coins}</span>
+          </div>
+
+          <button className="hud-text-btn" onClick={() => setMapModal(true)} title="Open Level Map">
+            <MapPin size={15} /> Realms
+          </button>
+
+          <button className="hud-text-btn" onClick={() => setLeaderboardModal(true)} title="Hall of Fame">
+            <Trophy size={15} /> Rank
+          </button>
+
+          <button className="hud-icon-btn" onClick={() => setShopModal(true)} title="Skins & Boosters">
+            <ShoppingBag size={16} />
+          </button>
+
           <button
-            className={`icon-button ${music ? 'active-glow' : ''}`}
-            aria-label="Toggle ambient music"
+            className={`hud-icon-btn ${music ? 'active' : ''}`}
             onClick={toggleMusic}
-            title={music ? 'Mute ambient music (M)' : 'Play ambient music (M)'}
+            title={music ? 'Mute Music (M)' : 'Play Music (M)'}
           >
-            <Music size={17} />
+            <Music size={16} />
           </button>
+
           <button
-            className="icon-button"
-            aria-label="Toggle sound effects"
+            className={`hud-icon-btn ${sound ? 'active' : ''}`}
             onClick={() => setSound(!sound)}
-            title={sound ? 'Mute sound (S)' : 'Unmute sound (S)'}
+            title={sound ? 'Mute SFX (S)' : 'Unmute SFX (S)'}
           >
-            {sound ? <Volume2 size={18} /> : <VolumeX size={18} />}
+            {sound ? <Volume2 size={16} /> : <VolumeX size={16} />}
           </button>
+
           <button
-            className="icon-button"
-            aria-label="Toggle Fullscreen"
+            className="hud-icon-btn"
             onClick={toggleFullscreen}
             title={isFullscreen ? 'Exit Fullscreen (F)' : 'Enter Fullscreen (F)'}
           >
-            {isFullscreen ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
+            {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
           </button>
+
           <button
-            className="icon-button"
-            aria-label="How to play"
+            className="hud-icon-btn"
             onClick={() => setHowToPlayModal(true)}
-            title="How to play tutorial"
+            title="How to Play Tutorial"
           >
-            <CircleHelp size={17} />
+            <CircleHelp size={16} />
           </button>
+
           <button
-            className="avatar"
-            title={user ? `${user.name} (Logged in)` : 'Sign in / Profile'}
+            className="hud-avatar-btn"
             onClick={() => setAuthModal(user ? 'profile' : 'login')}
+            title={user ? `${user.name} (Signed in)` : 'Sign in / Profile'}
           >
             {user ? user.name[0].toUpperCase() : 'G'}
           </button>
         </div>
       </header>
 
-      {/* HOW TO PLAY TUTORIAL MODAL */}
-      {howToPlayModal && (
-        <div className="modal-backdrop" onClick={() => setHowToPlayModal(false)}>
-          <div className="modal-card" onClick={e => e.stopPropagation()}>
-            <button className="close-modal" onClick={() => setHowToPlayModal(false)}>×</button>
-            <span className="muted-label" style={{ color: '#b9f36c' }}>GAME TUTORIAL</span>
-            <h2>How to Play</h2>
-            <p>Master the gardens with clever slithering and route planning!</p>
+      {/* NOTICE TOAST */}
+      {notice && game.status === 'playing' && (
+        <div className="notice-toast">
+          <span>{notice}</span>
+          <button onClick={() => setNotice('')} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>×</button>
+        </div>
+      )}
 
-            <div className="tutorial-steps">
-              <div className="tutorial-step-card">
-                <span className="tutorial-icon">🍏</span>
-                <div>
-                  <b>1. Eat All Apples</b>
-                  <p>Every apple gives you +10 points and causes your worm to grow longer by one segment.</p>
-                </div>
+      {/* SOLVER HINT BANNER */}
+      {solverHint && (
+        <div className="hint-banner">
+          <Compass size={16} style={{ color: '#38bdf8' }} />
+          <span>Suggested: Slither <b>{solverHint.nextDirection.toUpperCase()}</b> ({solverHint.distance} steps to {solverHint.targetLabel})</span>
+          <button onClick={() => setSolverHint(null)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>×</button>
+        </div>
+      )}
+
+      {/* CENTER STAGE: 3D FLOATING GARDEN ISLAND */}
+      <main className="game-stage">
+        <div className="board-island-wrapper">
+          {/* Floating score popups */}
+          {floatingScores.map(s => {
+            const pctX = (s.x / level.size) * 100 + (100 / (level.size * 2));
+            const pctY = (s.y / level.size) * 100;
+            return (
+              <div
+                key={s.id}
+                className="floating-score"
+                style={{ left: `${pctX}%`, top: `${pctY}%` }}
+              >
+                {s.text}
               </div>
+            );
+          })}
 
-              <div className="tutorial-step-card">
-                <span className="tutorial-icon">🌀</span>
-                <div>
-                  <b>2. Awaken the Portal</b>
-                  <p>The cosmic portal stays locked until every single apple is consumed. Once open, enter it to win!</p>
-                </div>
+          <div
+            className="board-island"
+            data-world={currentWorld.id}
+          >
+            <div className="game-grid" style={{ '--grid-size': level.size }}>
+              {board.map((p, i) => {
+                const segmentIdx = game.worm.findIndex(w => same(w, p));
+                const isWormHead = segmentIdx === 0;
+                const isWormTail = segmentIdx > 0 && segmentIdx === game.worm.length - 1;
+
+                return (
+                  <div key={i} className={cellClass(p)}>
+                    {isWormHead ? (
+                      <div className={`worm-head-container face-${facing}`}>
+                        <div className="worm-head-sprout">🌿</div>
+                        <div className="worm-head-eyes">
+                          <span className="worm-eye">
+                            <span className="pupil" />
+                            <span className="eye-shine" />
+                          </span>
+                          <span className="worm-eye">
+                            <span className="pupil" />
+                            <span className="eye-shine" />
+                          </span>
+                        </div>
+                        <div className="worm-cheeks">
+                          <span className="blush" />
+                          <span className="blush" />
+                        </div>
+                        <div className="worm-mouth" />
+                      </div>
+                    ) : segmentIdx > 0 ? (
+                      <div
+                        className={`worm-segment ${isWormTail ? 'worm-tail' : ''}`}
+                        style={{
+                          '--segment-scale': Math.max(0.72, 1 - (segmentIdx * 0.032)),
+                          '--segment-index': segmentIdx
+                        }}
+                      >
+                        <span className="worm-segment-shine" />
+                      </div>
+                    ) : isApple(p) ? (
+                      <div className="apple-wrapper">
+                        <div className="apple-stem" />
+                        <div className="apple-leaf" />
+                        <div className="apple-body">
+                          <div className="apple-highlight" />
+                        </div>
+                        <span className="apple-sparkle s1">✦</span>
+                        <span className="apple-sparkle s2">✦</span>
+                      </div>
+                    ) : same(level.portal, p) ? (
+                      <div className={`portal-vortex ${game.apples.length === 0 ? 'portal-unlocked' : 'portal-locked'}`}>
+                        {game.apples.length > 0 ? (
+                          <span className="portal-lock-icon">🔒</span>
+                        ) : (
+                          <span className="portal-ready-icon">🌀</span>
+                        )}
+                      </div>
+                    ) : level.walls.some(w => same(w, p)) ? (
+                      <div className="wall-block">
+                        <span className="wall-rune">❖</span>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* BOTTOM FLOATING CONTROLLER & ACTION DOCK */}
+      <footer className="game-dock">
+        <div className="dock-actions-left">
+          <button className="dock-btn" onClick={undo} disabled={!history.length} title="Undo last move (Z)">
+            <Undo2 size={16} /> UNDO
+          </button>
+          <button className="dock-btn" onClick={restart} title="Restart Garden (R)">
+            <RotateCcw size={16} /> RESET
+          </button>
+          <button className="dock-btn" onClick={triggerSmartHint} title="BFS Shortest Route Hint (H)">
+            <Lightbulb size={16} /> HINT
+          </button>
+          <button className="dock-btn gold" onClick={buyBoost} title="Buy +5 moves for 30 coins">
+            <Zap size={16} /> +5 MOVES
+          </button>
+        </div>
+
+        {/* Virtual D-Pad for Mobile & Tablet touch */}
+        <div className="virtual-dpad">
+          <button className="dpad-key" onClick={() => move('up')} aria-label="Up">
+            <ArrowUp size={20} />
+          </button>
+          <div className="dpad-row">
+            <button className="dpad-key" onClick={() => move('left')} aria-label="Left">
+              <ArrowLeft size={20} />
+            </button>
+            <button className="dpad-key" onClick={() => move('down')} aria-label="Down">
+              <ArrowDown size={20} />
+            </button>
+            <button className="dpad-key" onClick={() => move('right')} aria-label="Right">
+              <ArrowRight size={20} />
+            </button>
+          </div>
+        </div>
+      </footer>
+
+      {/* CELEBRATION CONFETTI CANVAS */}
+      {game.status === 'completed' && (
+        <div className="confetti-canvas">
+          {confettiParticles.map(p => (
+            <span
+              key={p.id}
+              className="confetti-particle"
+              style={{
+                background: p.color,
+                left: p.left,
+                animationDelay: p.delay,
+                animationDuration: p.duration,
+                width: p.size,
+                height: p.size
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* VICTORY MODAL OVERLAY */}
+      {game.status === 'completed' && (
+        <div className="modal-overlay">
+          <div className="modal-dialog result-dialog">
+            <div className="trophy-glow-box">
+              <Trophy size={42} />
+            </div>
+
+            <span style={{ color: '#4ade80', fontSize: 13, fontWeight: 800, letterSpacing: '0.1em' }}>
+              {currentWorld.name.toUpperCase()} • LEVEL {levelId}
+            </span>
+
+            <h2 className="result-title">Garden Cleared!</h2>
+
+            <div className="victory-stars-podium">
+              <div className={`victory-star-node ${starPopStage >= 1 ? 'earned' : ''}`}>
+                <Star size={30} fill={starPopStage >= 1 ? '#78350f' : 'none'} />
               </div>
-
-              <div className="tutorial-step-card">
-                <span className="tutorial-icon">🧱</span>
-                <div>
-                  <b>3. Avoid Obstacles & Your Tail</b>
-                  <p>Hitting stone walls, crossing the garden boundaries, or crashing into your own body fails the puzzle.</p>
-                </div>
+              <div className={`victory-star-node center-star ${starPopStage >= 2 ? 'earned' : ''}`}>
+                <Star size={40} fill={starPopStage >= 2 ? '#78350f' : 'none'} />
               </div>
-
-              <div className="tutorial-step-card">
-                <span className="tutorial-icon">⭐</span>
-                <div>
-                  <b>4. Aim for 3-Star Mastery</b>
-                  <p>Each level has a target Par move limit. Plan tight routes to unlock 3 gold stars!</p>
-                </div>
-              </div>
-
-              <div className="tutorial-step-card">
-                <span className="tutorial-icon">🎮</span>
-                <div>
-                  <b>5. Smooth Controls</b>
-                  <p>Use <b>Arrow Keys</b> or <b>WASD</b> on desktop. On mobile, swipe in any direction or use the virtual D-Pad. Press <b>Z</b> to Undo, <b>R</b> to Reset, and <b>F</b> for Fullscreen!</p>
-                </div>
+              <div className={`victory-star-node ${starPopStage >= 3 ? 'earned' : ''}`}>
+                <Star size={30} fill={starPopStage >= 3 ? '#78350f' : 'none'} />
               </div>
             </div>
 
-            <button
-              className="primary-button"
-              style={{ width: '100%', justifyContent: 'center' }}
-              onClick={() => setHowToPlayModal(false)}
-            >
-              Let's Slither!
-            </button>
+            <div className="result-stats-row">
+              <div className="result-stat-box">
+                <small>MOVES</small>
+                <strong>{game.moves} / {level.parMoves} par</strong>
+              </div>
+              <div className="result-stat-box bonus">
+                <small>COIN REWARD</small>
+                <strong>+25 🪙</strong>
+              </div>
+              <div className="result-stat-box">
+                <small>SCORE</small>
+                <strong>+{game.score}</strong>
+              </div>
+            </div>
+
+            <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 22 }}>
+              {game.moves <= level.parMoves
+                ? '🌟 Flawless precision! You matched the master Par moves target.'
+                : 'Well played! Slither into the next garden or replay to earn 3 stars.'}
+            </p>
+
+            <div className="modal-actions-row">
+              <button
+                className="modal-btn-primary"
+                onClick={() => startLevel(Math.min(50, levelId + 1))}
+              >
+                Next Level <ChevronRight size={18} />
+              </button>
+              <button className="modal-btn-secondary" onClick={restart}>
+                <RotateCcw size={16} /> Replay
+              </button>
+              <button className="modal-btn-secondary" onClick={() => setMapModal(true)}>
+                Realms
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* AUTH MODAL */}
-      {authModal && (
-        <div className="modal-backdrop" onClick={() => setAuthModal(null)}>
-          <div className="modal-card" onClick={e => e.stopPropagation()}>
-            <button className="close-modal" onClick={() => setAuthModal(null)}>×</button>
+      {/* FAILURE MODAL OVERLAY */}
+      {game.status === 'failed' && (
+        <div className="modal-overlay">
+          <div className="modal-dialog result-dialog">
+            <div className="failure-glow-box">
+              <AlertCircle size={42} />
+            </div>
 
-            {authModal === 'profile' ? (
-              <div>
-                <h2>Gardener Profile</h2>
-                <p>Your journey is safely backed up to MongoDB Atlas.</p>
-                <div style={{ marginBottom: 18, background: '#0e101e', padding: 16, borderRadius: 14, border: '1px solid #33364f' }}>
-                  <div style={{ fontWeight: 700, fontSize: 16 }}>{user?.name}</div>
-                  <div style={{ color: '#8f92a9', fontSize: 12, marginTop: 4 }}>{user?.email}</div>
-                  <div style={{ display: 'flex', gap: 16, marginTop: 14, fontSize: 13 }}>
-                    <span>🪙 <b>{coins}</b> Coins</span>
-                    <span>⭐ <b>{user?.totalStars || 0}</b> Stars</span>
-                    <span>🌱 Level <b>{user?.currentLevel || levelId}</b></span>
-                  </div>
-                </div>
-                <div className="modal-actions">
-                  <button className="outline-button" onClick={handleLogout} style={{ width: '100%' }}>
-                    <LogOut size={16} /> Log Out
-                  </button>
-                </div>
+            <span style={{ color: '#f43f5e', fontSize: 13, fontWeight: 800, letterSpacing: '0.1em' }}>
+              PUZZLE ATTEMPT FAILED
+            </span>
+
+            <h2 className="result-title">{failureType?.title || 'Route Blocked'}</h2>
+
+            <p style={{ color: '#cbd5e1', fontSize: 14, marginBottom: 14 }}>
+              {game.reason}
+            </p>
+
+            {failureType && (
+              <div style={{ background: 'rgba(255, 255, 255, 0.06)', borderRadius: 16, padding: '12px 16px', marginBottom: 20, textAlign: 'left', border: '1px solid var(--border-glass)' }}>
+                <b style={{ color: '#fbbf24', fontSize: 12, display: 'block', marginBottom: 4 }}>STRATEGY TIP</b>
+                <p style={{ color: '#94a3b8', fontSize: 13 }}>{failureType.tip}</p>
               </div>
-            ) : (
-              <form onSubmit={handleAuthSubmit}>
-                <h2>{authModal === 'register' ? 'Create Account' : 'Welcome Back'}</h2>
-                <p>
-                  {authModal === 'register'
-                    ? 'Save your progress, stars, and coins across devices.'
-                    : 'Sign in to sync your puzzle progress to the cloud.'}
-                </p>
-
-                {authError && <div className="error-box">{authError}</div>}
-
-                {authModal === 'register' && (
-                  <div className="form-group">
-                    <label>Gardener Name</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Khushi"
-                      value={authForm.name}
-                      onChange={e => setAuthForm({ ...authForm, name: e.target.value })}
-                    />
-                  </div>
-                )}
-
-                <div className="form-group">
-                  <label>Email Address</label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="gardener@example.com"
-                    value={authForm.email}
-                    onChange={e => setAuthForm({ ...authForm, email: e.target.value })}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Password</label>
-                  <input
-                    type="password"
-                    required
-                    minLength={8}
-                    placeholder="At least 8 characters"
-                    value={authForm.password}
-                    onChange={e => setAuthForm({ ...authForm, password: e.target.value })}
-                  />
-                </div>
-
-                <div className="modal-actions">
-                  <button className="primary-button" type="submit" disabled={authLoading} style={{ width: '100%', justifyContent: 'center' }}>
-                    {authLoading ? 'Connecting...' : authModal === 'register' ? 'Sign Up & Save' : 'Sign In'}
-                  </button>
-                  <button
-                    type="button"
-                    className="modal-switch"
-                    onClick={() => {
-                      setAuthError('');
-                      setAuthModal(authModal === 'register' ? 'login' : 'register');
-                    }}
-                  >
-                    {authModal === 'register'
-                      ? 'Already have an account? Sign In'
-                      : "Don't have an account yet? Sign Up"}
-                  </button>
-                </div>
-              </form>
             )}
+
+            <div className="modal-actions-row">
+              {history.length > 0 && (
+                <button className="modal-btn-primary" onClick={undo} style={{ background: '#8b5cf6', borderColor: '#a855f7' }}>
+                  <RotateCcw size={16} /> Undo Move (Z)
+                </button>
+              )}
+              <button className="modal-btn-primary" onClick={restart}>
+                Try Again (R)
+              </button>
+              {failureType?.type === 'moves' && (
+                <button className="modal-btn-secondary" onClick={buyBoost} style={{ borderColor: '#f59e0b', color: '#fbbf24' }}>
+                  <Zap size={14} /> +5 Moves (30🪙)
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SAGA REALMS & LEVEL MAP MODAL */}
+      {mapModal && (
+        <div className="modal-overlay" onClick={() => setMapModal(false)}>
+          <div className="modal-dialog saga-dialog" onClick={e => e.stopPropagation()}>
+            <button className="modal-close-btn" onClick={() => setMapModal(false)}>×</button>
+
+            <div className="saga-header">
+              <span style={{ color: '#4ade80', fontSize: 12, fontWeight: 800, letterSpacing: '0.12em' }}>THE 5 REALMS</span>
+              <h2>Choose Your Garden</h2>
+              <p style={{ color: '#94a3b8', fontSize: 13, marginTop: 4 }}>50 handcrafted puzzle gardens. Click any unlocked level to preview and play.</p>
+            </div>
+
+            {/* Realm Tabs */}
+            <div className="world-tabs-carousel">
+              <button
+                className={`world-tab-card ${selectedWorldTab === 0 ? 'active' : ''}`}
+                onClick={() => setSelectedWorldTab(0)}
+              >
+                <span>🌐 All Realms</span>
+                <span className="world-tab-count">50</span>
+              </button>
+              {WORLDS.map(w => {
+                const worldCompleted = completed.filter(id => id >= w.range[0] && id <= w.range[1]).length;
+                return (
+                  <button
+                    key={w.id}
+                    className={`world-tab-card ${selectedWorldTab === w.id ? 'active' : ''}`}
+                    onClick={() => setSelectedWorldTab(w.id)}
+                  >
+                    <span>{w.icon} {w.name}</span>
+                    <span className="world-tab-count">{worldCompleted}/10</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Level Grid */}
+            <div className="saga-grid">
+              {displayedLevels.map(l => {
+                const unlocked = completed.includes(l.id) || completed.includes(l.id - 1) || l.id === 1;
+                const isDone = completed.includes(l.id) && l.id < Math.max(...completed);
+                const isCurrent = l.id === levelId;
+
+                return (
+                  <button
+                    key={l.id}
+                    className={`saga-node-btn ${unlocked ? '' : 'locked'} ${isCurrent ? 'current' : ''}`}
+                    onClick={() => unlocked && setLevelPreview(l)}
+                  >
+                    {isCurrent && <span className="saga-node-mascot">🐛</span>}
+                    <span className="saga-node-num">
+                      {unlocked ? String(l.id).padStart(2, '0') : <LockKeyhole size={16} />}
+                    </span>
+                    <span className="saga-node-stars">
+                      {isDone ? '★★★' : unlocked ? '★☆☆' : 'LOCKED'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
 
       {/* LEVEL PREVIEW MODAL */}
       {levelPreview && (
-        <div className="modal-backdrop" onClick={() => setLevelPreview(null)}>
-          <div className="modal-card" onClick={e => e.stopPropagation()}>
-            <button className="close-modal" onClick={() => setLevelPreview(null)}>×</button>
-            <div className="muted-label" style={{ color: levelPreview.worldColor }}>{levelPreview.worldName.toUpperCase()}</div>
-            <h2>Level {String(levelPreview.id).padStart(2, '0')}: {levelPreview.title}</h2>
-            <p>{levelPreview.objective}</p>
+        <div className="modal-overlay" onClick={() => setLevelPreview(null)}>
+          <div className="modal-dialog" onClick={e => e.stopPropagation()}>
+            <button className="modal-close-btn" onClick={() => setLevelPreview(null)}>×</button>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, margin: '16px 0 22px' }}>
-              <div style={{ background: '#111322', padding: '10px 12px', borderRadius: 12, border: '1px solid #2d3047' }}>
-                <small style={{ color: '#8c90a8', fontSize: 9, display: 'block', fontWeight: 700 }}>DIFFICULTY</small>
-                <b style={{ color: levelPreview.worldColor, fontSize: 13 }}>{levelPreview.difficulty}</b>
+            <span style={{ color: levelPreview.worldColor, fontSize: 12, fontWeight: 800, letterSpacing: '0.12em' }}>
+              {levelPreview.worldName.toUpperCase()}
+            </span>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 24, marginTop: 4 }}>
+              Level {String(levelPreview.id).padStart(2, '0')}: {levelPreview.title}
+            </h2>
+            <p style={{ color: '#94a3b8', fontSize: 13, margin: '8px 0 16px' }}>{levelPreview.objective}</p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
+              <div style={{ background: 'rgba(255,255,255,0.06)', padding: 12, borderRadius: 14, border: '1px solid var(--border-glass)' }}>
+                <small style={{ color: '#94a3b8', fontSize: 10, fontWeight: 800 }}>DIFFICULTY</small>
+                <div style={{ color: levelPreview.worldColor, fontWeight: 800, fontSize: 14, marginTop: 3 }}>{levelPreview.difficulty}</div>
               </div>
-              <div style={{ background: '#111322', padding: '10px 12px', borderRadius: 12, border: '1px solid #2d3047' }}>
-                <small style={{ color: '#8c90a8', fontSize: 9, display: 'block', fontWeight: 700 }}>APPLES TO EAT</small>
-                <b style={{ fontSize: 13 }}>{levelPreview.apples.length} 🍎</b>
+              <div style={{ background: 'rgba(255,255,255,0.06)', padding: 12, borderRadius: 14, border: '1px solid var(--border-glass)' }}>
+                <small style={{ color: '#94a3b8', fontSize: 10, fontWeight: 800 }}>APPLES TO EAT</small>
+                <div style={{ fontWeight: 800, fontSize: 14, marginTop: 3 }}>{levelPreview.apples.length} 🍎</div>
               </div>
-              <div style={{ background: '#111322', padding: '10px 12px', borderRadius: 12, border: '1px solid #2d3047' }}>
-                <small style={{ color: '#8c90a8', fontSize: 9, display: 'block', fontWeight: 700 }}>PAR MOVES (3★)</small>
-                <b style={{ color: '#f3d777', fontSize: 13 }}>≤ {levelPreview.parMoves} moves</b>
+              <div style={{ background: 'rgba(255,255,255,0.06)', padding: 12, borderRadius: 14, border: '1px solid var(--border-glass)' }}>
+                <small style={{ color: '#94a3b8', fontSize: 10, fontWeight: 800 }}>PAR MOVES (3★)</small>
+                <div style={{ color: '#fbbf24', fontWeight: 800, fontSize: 14, marginTop: 3 }}>≤ {levelPreview.parMoves} moves</div>
               </div>
-              <div style={{ background: '#111322', padding: '10px 12px', borderRadius: 12, border: '1px solid #2d3047' }}>
-                <small style={{ color: '#8c90a8', fontSize: 9, display: 'block', fontWeight: 700 }}>MOVE LIMIT</small>
-                <b style={{ fontSize: 13 }}>{levelPreview.moveLimit} moves</b>
+              <div style={{ background: 'rgba(255,255,255,0.06)', padding: 12, borderRadius: 14, border: '1px solid var(--border-glass)' }}>
+                <small style={{ color: '#94a3b8', fontSize: 10, fontWeight: 800 }}>MOVE LIMIT</small>
+                <div style={{ fontWeight: 800, fontSize: 14, marginTop: 3 }}>{levelPreview.moveLimit} moves</div>
               </div>
             </div>
 
             <button
-              className="primary-button"
-              style={{ width: '100%', justifyContent: 'center' }}
+              className="modal-btn-primary"
+              style={{ width: '100%' }}
               onClick={() => startLevel(levelPreview.id)}
             >
               <Play size={16} fill="currentColor" /> Enter Garden
@@ -934,790 +1031,249 @@ function App() {
         </div>
       )}
 
-      {/* FULLSCREEN CONSOLE MODE */}
-      {isFullscreen && mode === 'play' && (
-        <div className="fullscreen-container">
-          {/* Top Floating HUD */}
-          <div className="fullscreen-top-hud">
-            <div className="fullscreen-level-info">
-              <button
-                className="action-btn-secondary"
-                onClick={toggleFullscreen}
-                title="Exit Fullscreen (F)"
-                style={{ padding: '6px 10px' }}
-              >
-                <Minimize2 size={15} /> Exit
-              </button>
-              <div>
-                <span className="muted-label" style={{ color: currentWorld.color }}>{currentWorld.name}</span>
-                <h3>Level {String(levelId).padStart(2, '0')}: {level.title}</h3>
-              </div>
-            </div>
+      {/* HALL OF FAME LEADERBOARD MODAL */}
+      {leaderboardModal && (
+        <div className="modal-overlay" onClick={() => setLeaderboardModal(false)}>
+          <div className="modal-dialog" onClick={e => e.stopPropagation()} style={{ maxWidth: 640 }}>
+            <button className="modal-close-btn" onClick={() => setLeaderboardModal(false)}>×</button>
 
-            <div className="fullscreen-hud-stats">
-              <span className="moves-chip">
-                MOVES <b>{game.moves}/{level.moveLimit + bonusMoves}</b>
-                <small style={{ color: '#f3d777', marginLeft: 4 }}>(Par: {level.parMoves})</small>
-              </span>
-              <span className="coin-pill"><Coins size={15} />{coins}</span>
-              <button
-                className={`icon-button ${music ? 'active-glow' : ''}`}
-                onClick={toggleMusic}
-                title={music ? 'Mute Music (M)' : 'Play Music (M)'}
-              >
-                <Music size={16} />
-              </button>
-              <button
-                className="icon-button"
-                onClick={() => setSound(!sound)}
-                title={sound ? 'Mute Sound (S)' : 'Unmute Sound (S)'}
-              >
-                {sound ? <Volume2 size={16} /> : <VolumeX size={16} />}
-              </button>
-            </div>
-          </div>
+            <span style={{ color: '#fbbf24', fontSize: 12, fontWeight: 800, letterSpacing: '0.12em' }}>HALL OF FAME</span>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 24, marginTop: 4 }}>Master Gardeners</h2>
+            <p style={{ color: '#94a3b8', fontSize: 13, marginTop: 4 }}>Top players ranked by stars earned, efficiency, and realms conquered.</p>
 
-          {/* Centered Large Board with Swipe Support */}
-          <div
-            className="fullscreen-board-area"
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-          >
-            {renderGameBoard()}
-
-            {/* In-game Overlays in Fullscreen */}
-            {game.status !== 'playing' && (
-              <div className="result-overlay">
-                {game.status === 'completed' ? (
-                  <>
-                    <div className="result-icon-box victory">
-                      <Trophy size={36} />
-                    </div>
-                    <span className="muted-label" style={{ color: '#b9f36c' }}>{currentWorld.name.toUpperCase()}</span>
-                    <h2>Garden Cleared!</h2>
-
-                    <div className="victory-stars-box">
-                      <div className={`star-podium ${starPopStage >= 1 ? 'earned' : 'unearned'}`}>
-                        <Star size={34} fill={starPopStage >= 1 ? '#f3d777' : 'none'} />
-                      </div>
-                      <div className={`star-podium ${starPopStage >= 2 ? 'earned' : 'unearned'}`}>
-                        <Star size={42} fill={starPopStage >= 2 ? '#f3d777' : 'none'} />
-                      </div>
-                      <div className={`star-podium ${starPopStage >= 3 ? 'earned' : 'unearned'}`}>
-                        <Star size={34} fill={starPopStage >= 3 ? '#f3d777' : 'none'} />
-                      </div>
-                    </div>
-
-                    <div className="victory-stats-row">
-                      <div className="victory-stat-card">
-                        <small>MOVES</small>
-                        <strong>{game.moves} <span style={{ fontSize: 11, color: '#8c90a8' }}>/ {level.parMoves} par</span></strong>
-                      </div>
-                      <div className="victory-stat-card bonus">
-                        <small>COIN REWARD</small>
-                        <strong>+25 🪙</strong>
-                      </div>
-                      <div className="victory-stat-card">
-                        <small>SCORE</small>
-                        <strong>+{game.score}</strong>
-                      </div>
-                    </div>
-
-                    <div className="result-actions">
-                      <button
-                        className="primary-button"
-                        onClick={() => startLevel(Math.min(50, levelId + 1))}
-                      >
-                        Next Level <ChevronRight size={17} />
-                      </button>
-                      <button className="outline-button" onClick={restart}>
-                        <RotateCcw size={15} /> Replay
-                      </button>
-                      <button className="outline-button" onClick={() => { toggleFullscreen(); setMode('levels'); }}>
-                        Realms Map
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="result-icon-box failure">
-                      <AlertCircle size={36} />
-                    </div>
-                    <span className="muted-label" style={{ color: '#f87171' }}>TRY AGAIN</span>
-                    <h2>{failureType?.title || 'Route Blocked'}</h2>
-                    <p className="result-reason">{game.reason}</p>
-
-                    {failureType && (
-                      <div className="failure-tip-box">
-                        <span style={{ fontSize: 18 }}>💡</span>
-                        <div>
-                          <b>Strategy Hint</b>
-                          <p>{failureType.tip}</p>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="result-actions">
-                      {history.length > 0 && (
-                        <button className="primary-button" onClick={undo} style={{ background: '#7c3aed', color: '#fff' }}>
-                          <RotateCcw size={15} /> Undo Move (Z)
-                        </button>
-                      )}
-                      <button className="primary-button" onClick={restart}>
-                        Try Again (R)
-                      </button>
-                      {failureType?.type === 'moves' && (
-                        <button className="outline-button" onClick={buyBoost} style={{ borderColor: '#f59e0b', color: '#fcd34d' }}>
-                          <Zap size={14} /> +5 Moves (30🪙)
-                        </button>
-                      )}
-                      <button className="outline-button" onClick={triggerSmartHint}>
-                        <Lightbulb size={14} /> BFS Hint
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Bottom Floating Quick Actions */}
-          <div className="fullscreen-bottom-hud">
-            <div className="fullscreen-quick-actions">
-              <button className="action-btn-primary" onClick={restart} title="Reset puzzle (R)">
-                <RotateCcw size={14} /> RESET
-              </button>
-              <button className="action-btn-secondary" onClick={undo} disabled={!history.length} title="Undo move (Z)">
-                <Undo2 size={14} /> UNDO
-              </button>
-              <button className="action-btn-secondary" onClick={triggerSmartHint} title="BFS Hint (H)">
-                <Lightbulb size={14} /> HINT
-              </button>
-            </div>
-
-            <div className="dpad">
-              <button onClick={() => move('up')} aria-label="Move up"><ArrowUp /></button>
-              <div>
-                <button onClick={() => move('left')} aria-label="Move left"><ArrowLeft /></button>
-                <button onClick={() => move('down')} aria-label="Move down"><ArrowDown /></button>
-                <button onClick={() => move('right')} aria-label="Move right"><ArrowRight /></button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* VIEW: PLAY MODE (Standard) */}
-      {mode === 'play' && !isFullscreen ? (
-        <main className="layout">
-          {/* LEFT COLUMN */}
-          <aside className="left-column">
-            <div className="eyebrow"><span className="live-dot" /> {currentWorld.name}</div>
-            <h1>Eat. Solve.<br /><em>Grow.</em></h1>
-            <p className="intro">{currentWorld.subtitle}</p>
-
-            <div className="level-card">
-              <div className="level-card-top">
-                <div>
-                  <span className="muted-label">LEVEL {String(levelId).padStart(2, '0')}</span>
-                  <h2>{level.title}</h2>
-                </div>
-                <span className={`difficulty ${level.difficulty.toLowerCase()}`}>{level.difficulty}</span>
-              </div>
-
-              <div className="progress-section">
-                <div className="progress-row">
-                  <span>PROGRESS</span>
-                  <b>{Math.round((completed.length / 50) * 100)}%</b>
-                </div>
-                <div className="progress-segmented">
-                  {Array.from({ length: 10 }).map((_, i) => (
-                    <span
-                      key={i}
-                      className={`seg-bar ${i < Math.max(1, Math.round((completed.length / 50) * 10)) ? 'filled' : ''}`}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="quick-action-btns">
-                <button className="action-btn-primary" onClick={restart} title="Reset puzzle (R)">
-                  <RotateCcw size={14} /> RESET
-                </button>
-                <button className="action-btn-secondary" onClick={triggerSmartHint} title="BFS Shortest Path Hint (H)">
-                  <Lightbulb size={14} /> HINT
-                </button>
-                <button className="action-btn-secondary" onClick={toggleFullscreen} title="Enter Fullscreen (F)">
-                  <Maximize2 size={14} /> FULL
-                </button>
-              </div>
-            </div>
-
-            <div className="tip-card">
-              <span className="tip-icon"><Lightbulb size={18} /></span>
-              <div>
-                <b>Pro Strategy</b>
-                <p>{hint ? 'Glowing dots show the shortest BFS route.' : 'Turn corners wisely so you do not corner your growing tail.'}</p>
-              </div>
-            </div>
-
-            <div className="mini-stats">
-              <div>
-                <span className="stat-icon green"><Apple size={18} /></span>
-                <div>
-                  <b>{game.score}</b>
-                  <small>SCORE</small>
-                </div>
-              </div>
-              <div>
-                <span className="stat-icon yellow"><Star size={18} /></span>
-                <div>
-                  <b>{completed.length * 3 - 2}</b>
-                  <small>STARS</small>
-                </div>
-              </div>
-            </div>
-          </aside>
-
-          {/* CENTER GAME COLUMN */}
-          <section className="game-column">
-            <div className="game-panel">
-              <div className="game-panel-head">
-                <div>
-                  <span className="muted-label" style={{ color: currentWorld.color }}>{currentWorld.name.toUpperCase()}</span>
-                  <h2>Level {String(levelId).padStart(2, '0')} <span className="level-sub">/ 50</span></h2>
-                </div>
-                <div className="panel-tools">
-                  <span className="moves-chip">
-                    MOVES <b>{game.moves}/{level.moveLimit + bonusMoves}</b>
-                    {bonusMoves > 0 && <small className="bonus-tag">+{bonusMoves}</small>}
-                  </span>
-                  <button className="small-icon" onClick={undo} disabled={!history.length} title="Undo move (Z)">
-                    <RotateCcw size={16} />
-                  </button>
-                  <button className="small-icon" onClick={restart} title="Reset puzzle (R)">
-                    <RefreshCw size={16} />
-                  </button>
-                  <button className="small-icon" onClick={toggleFullscreen} title="Fullscreen (F)">
-                    <Maximize2 size={16} />
-                  </button>
-                </div>
-              </div>
-
-              {/* 2.5D BOARD */}
-              {renderGameBoard()}
-
-              {/* CELEBRATION CONFETTI */}
-              {game.status === 'completed' && (
-                <div className="confetti-canvas">
-                  {confettiParticles.map(p => (
-                    <span
-                      key={p.id}
-                      className="confetti-particle"
-                      style={{
-                        background: p.color,
-                        left: p.left,
-                        animationDelay: p.delay,
-                        animationDuration: p.duration,
-                        width: p.size,
-                        height: p.size
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* VICTORY & FAILURE OVERLAYS */}
-              {game.status !== 'playing' && (
-                <div className="result-overlay">
-                  {game.status === 'completed' ? (
-                    <>
-                      <div className="result-icon-box victory">
-                        <Trophy size={36} />
-                      </div>
-                      <span className="muted-label" style={{ color: '#b9f36c' }}>{currentWorld.name.toUpperCase()}</span>
-                      <h2>Garden Cleared!</h2>
-
-                      {/* Animated Star Podium */}
-                      <div className="victory-stars-box">
-                        <div className={`star-podium ${starPopStage >= 1 ? 'earned' : 'unearned'}`}>
-                          <Star size={34} fill={starPopStage >= 1 ? '#f3d777' : 'none'} />
-                        </div>
-                        <div className={`star-podium ${starPopStage >= 2 ? 'earned' : 'unearned'}`}>
-                          <Star size={42} fill={starPopStage >= 2 ? '#f3d777' : 'none'} />
-                        </div>
-                        <div className={`star-podium ${starPopStage >= 3 ? 'earned' : 'unearned'}`}>
-                          <Star size={34} fill={starPopStage >= 3 ? '#f3d777' : 'none'} />
-                        </div>
-                      </div>
-
-                      <div className="victory-stats-row">
-                        <div className="victory-stat-card">
-                          <small>MOVES</small>
-                          <strong>{game.moves} <span style={{ fontSize: 11, color: '#8c90a8' }}>/ {level.parMoves} par</span></strong>
-                        </div>
-                        <div className="victory-stat-card bonus">
-                          <small>COIN REWARD</small>
-                          <strong>+25 🪙</strong>
-                        </div>
-                        <div className="victory-stat-card">
-                          <small>SCORE</small>
-                          <strong>+{game.score}</strong>
-                        </div>
-                      </div>
-
-                      <p className="result-reason">
-                        {game.moves <= level.parMoves
-                          ? '🌟 Flawless precision! You met the master par target.'
-                          : 'Well played! Slither into the next garden or replay for 3 stars.'}
-                      </p>
-
-                      <div className="result-actions">
-                        <button
-                          className="primary-button"
-                          onClick={() => startLevel(Math.min(50, levelId + 1))}
-                        >
-                          Next Level <ChevronRight size={17} />
-                        </button>
-                        <button className="outline-button" onClick={restart}>
-                          <RotateCcw size={15} /> Replay
-                        </button>
-                        <button className="outline-button" onClick={() => setMode('levels')}>
-                          Realms Map
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="result-icon-box failure">
-                        <AlertCircle size={36} />
-                      </div>
-                      <span className="muted-label" style={{ color: '#f87171' }}>TRY AGAIN</span>
-                      <h2>{failureType?.title || 'Route Blocked'}</h2>
-
-                      <p className="result-reason">{game.reason}</p>
-
-                      {failureType && (
-                        <div className="failure-tip-box">
-                          <span style={{ fontSize: 18 }}>💡</span>
-                          <div>
-                            <b>Strategy Hint</b>
-                            <p>{failureType.tip}</p>
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="result-actions">
-                        {history.length > 0 && (
-                          <button className="primary-button" onClick={undo} style={{ background: '#7c3aed', color: '#fff' }}>
-                            <RotateCcw size={15} /> Undo Move (Z)
-                          </button>
-                        )}
-                        <button className="primary-button" onClick={restart}>
-                          Try Again (R)
-                        </button>
-                        {failureType?.type === 'moves' && (
-                          <button className="outline-button" onClick={buyBoost} style={{ borderColor: '#f59e0b', color: '#fcd34d' }}>
-                            <Zap size={14} /> +5 Moves (30🪙)
-                          </button>
-                        )}
-                        <button className="outline-button" onClick={triggerSmartHint}>
-                          <Lightbulb size={14} /> BFS Hint
-                        </button>
-                        <button className="outline-button" onClick={() => setMode('levels')}>
-                          Realms Map
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-
-              {notice && game.status === 'playing' && (
-                <div className="notice">
-                  <span>{notice}</span>
-                  <button onClick={() => setNotice('')} aria-label="Dismiss">×</button>
-                </div>
-              )}
-
-              {/* CONTROLS */}
-              <div className="controls-row">
-                <div className="control-copy">
-                  <b>Make your move</b>
-                  <span>Arrow keys / WASD, swipe, or tap pad</span>
-                </div>
-                <div className="dpad">
-                  <button onClick={() => move('up')} aria-label="Move up"><ArrowUp /></button>
-                  <div>
-                    <button onClick={() => move('left')} aria-label="Move left"><ArrowLeft /></button>
-                    <button onClick={() => move('down')} aria-label="Move down"><ArrowDown /></button>
-                    <button onClick={() => move('right')} aria-label="Move right"><ArrowRight /></button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="below-board">
-              <div>
-                <span className="below-icon"><ShieldCheck size={17} /></span>
-                <div>
-                  <b>Fair-play puzzles</b>
-                  <small>Skill-driven gardens, zero paywalls</small>
-                </div>
-              </div>
-              <div>
-                <span className="below-icon purple"><Zap size={17} /></span>
-                <div>
-                  <b>Master precision</b>
-                  <small>Beat Par moves for 3★</small>
-                </div>
-              </div>
-              <button className="text-button" onClick={triggerSmartHint}>
-                <Lightbulb size={16} /> Get a hint
-              </button>
-            </div>
-          </section>
-
-          {/* RIGHT COLUMN */}
-          <aside className="right-column">
-            {/* OBJECTIVES */}
-            <div className="objective-panel">
-              <div className="panel-badge-header">
-                <span className="objective-symbol"><Trophy size={16} /></span>
-                <span className="panel-title">OBJECTIVES</span>
-              </div>
-
-              <div className="objective-box">
-                <div className="objective-label-row">
-                  <span>COLLECTED APPLES</span>
-                  <span className="objective-count">
-                    <b>{level.apples.length - game.apples.length}</b>/{level.apples.length}
-                  </span>
-                </div>
-                <div className="apple-icons-track">
-                  {Array.from({ length: level.apples.length }).map((_, idx) => (
-                    <span
-                      key={idx}
-                      className={`apple-token ${idx < (level.apples.length - game.apples.length) ? 'collected' : 'pending'}`}
-                    >
-                      🍎
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="portal-status-box">
-                <div className="portal-status-label">PORTAL STATUS</div>
-                {game.apples.length > 0 ? (
-                  <div className="portal-badge locked">
-                    <span className="badge-icon">🔒</span>
-                    <div>
-                      <b className="badge-title">LOCKED</b>
-                      <small className="badge-sub">until {game.apples.length} apple{game.apples.length > 1 ? 's are' : ' is'} eaten</small>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="portal-badge ready">
-                    <span className="badge-icon">🌀</span>
-                    <div>
-                      <b className="badge-title">PORTAL OPEN!</b>
-                      <small className="badge-sub">Slither in to complete the level</small>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* REWARD SHOP */}
-            <div className="reward-shop-panel">
-              <div className="panel-badge-header">
-                <span className="reward-symbol"><Sparkles size={16} /></span>
-                <span className="panel-title">GARDEN REWARDS</span>
-              </div>
-
-              <div className="shop-grid">
-                <button className="shop-card" onClick={cycleSkin} title="Cycle to next worm skin">
-                  <div className={`shop-icon-box skin-${wormSkin}`}>🐛</div>
-                  <b>Worm Skin</b>
-                  <span className="shop-sub">{SKINS.find(s => s.id === wormSkin)?.name}</span>
-                  <span className="shop-price-btn">Switch</span>
-                </button>
-
-                <button className="shop-card" onClick={buyBoost} title="Add +5 moves for 30 coins">
-                  <div className="shop-icon-box boost-box">⚡</div>
-                  <b>Apple Boost</b>
-                  <span className="shop-sub">+5 Moves</span>
-                  <span className="shop-price-btn">30 🪙</span>
-                </button>
-
-                <button className="shop-card" onClick={triggerSmartHint} title="BFS Shortest Path Hint">
-                  <div className="shop-icon-box hint-box">💡</div>
-                  <b>Smart Hint</b>
-                  <span className="shop-sub">BFS Solver</span>
-                  <span className="shop-price-btn">Free</span>
-                </button>
-              </div>
-            </div>
-
-            {/* ACHIEVEMENTS */}
-            <div className="achievement-card">
-              <div className="achievement-badge"><Award size={22} /></div>
-              <div>
-                <b>Garden Explorer</b>
-                <p>Complete levels to collect stars and unlock higher realms.</p>
-                <div className="star-row">
-                  <Star size={14} fill="currentColor" />
-                  <Star size={14} fill="currentColor" />
-                  <Star size={14} />
-                  <span>{completed.length}/50 levels unlocked</span>
-                </div>
-              </div>
-            </div>
-          </aside>
-        </main>
-      ) : mode === 'levels' ? (
-        /* VIEW: LEVEL MAP MODE */
-        <main className="secondary-page">
-          <div className="eyebrow">THE 5 REALMS</div>
-          <h1>Choose your <em>garden.</em></h1>
-          <p className="intro">50 masterfully crafted labyrinth gardens across 5 magical realms. Click any unlocked level to preview and play.</p>
-
-          {/* Jump to Current Level Banner */}
-          <div className="jump-banner">
-            <div className="jump-info">
-              <span className="jump-mascot">🐛</span>
-              <div className="jump-text">
-                <b>Active Garden: Level {levelId} - {level.title}</b>
-                <small>World {currentWorld.id}: {currentWorld.name} • {completed.length} of 50 Cleared</small>
-              </div>
-            </div>
-            <button className="primary-button" onClick={() => startLevel(levelId)}>
-              Slither In <ChevronRight size={16} />
-            </button>
-          </div>
-
-          {/* World Filter Tabs */}
-          <div className="world-tabs">
-            <button
-              className={`world-tab-btn ${selectedWorldTab === 0 ? 'active' : ''}`}
-              onClick={() => setSelectedWorldTab(0)}
-            >
-              <span>🌐</span> All Realms <span className="world-tab-badge">50</span>
-            </button>
-            {WORLDS.map(w => {
-              const worldCompleted = completed.filter(id => id >= w.range[0] && id <= w.range[1]).length;
-              return (
-                <button
-                  key={w.id}
-                  className={`world-tab-btn ${selectedWorldTab === w.id ? 'active' : ''}`}
-                  onClick={() => setSelectedWorldTab(w.id)}
-                >
-                  <span>{w.icon}</span> {w.name}
-                  <span className="world-tab-badge">{worldCompleted}/10</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Level Grid */}
-          <div className="level-grid">
-            {displayedLevels.map(l => {
-              const unlocked = completed.includes(l.id) || completed.includes(l.id - 1) || l.id === 1;
-              const isDone = completed.includes(l.id) && l.id < Math.max(...completed);
-              const isCurrent = l.id === levelId;
-
-              return (
-                <button
-                  key={l.id}
-                  className={`level-tile ${unlocked ? '' : 'locked'} ${isCurrent ? 'current-active' : ''}`}
-                  onClick={() => unlocked && setLevelPreview(l)}
-                  title={unlocked ? `Level ${l.id}: ${l.title}` : `Complete Level ${l.id - 1} to unlock`}
-                >
-                  {isCurrent && <span className="current-badge">YOU ARE HERE</span>}
-
-                  <div className="tile-top-row">
-                    <span className="tile-number">
-                      {unlocked ? String(l.id).padStart(2, '0') : <LockKeyhole size={18} />}
-                    </span>
-                    <span className={`difficulty ${l.difficulty.toLowerCase()}`}>{l.difficulty}</span>
-                  </div>
-
-                  <b>{l.title}</b>
-                  <small>{l.worldName}</small>
-
-                  <div className="tile-footer">
-                    <span className="tile-stars">{isDone ? '★★★' : unlocked ? '★☆☆' : 'LOCKED'}</span>
-                    <span className="tile-par">Par: {l.parMoves}</span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </main>
-      ) : mode === 'leaderboard' ? (
-        /* VIEW: LEADERBOARD MODE */
-        <main className="secondary-page">
-          <div className="eyebrow">HALL OF FAME</div>
-          <h1>Master <em>gardeners.</em></h1>
-          <p className="intro">Top players ranked by stars earned, puzzle precision, and realms mastered.</p>
-
-          <div className="leaderboard-container">
             {/* Top 3 Podium */}
             {leaderboard.length >= 3 && (
-              <div className="podium-grid">
-                {/* 2nd Place */}
-                <div className="podium-card rank-2">
-                  <div className="podium-trophy">🥈</div>
-                  <span className="podium-rank-badge">RANK 2</span>
+              <div className="podium-container">
+                <div className="podium-step rank-2">
+                  <div className="podium-crown">🥈</div>
                   <div className="podium-name">{leaderboard[1].name}</div>
-                  <span className="podium-title">Level {leaderboard[1].currentLevel}</span>
-                  <div className="podium-stats">
-                    <span><Star size={13} fill="currentColor" /> {leaderboard[1].totalStars}</span>
-                    <span><Apple size={13} /> {leaderboard[1].totalScore}</span>
-                  </div>
+                  <div className="podium-score">⭐ {leaderboard[1].totalStars}</div>
                 </div>
-
-                {/* 1st Place */}
-                <div className="podium-card rank-1">
-                  <div className="podium-trophy">👑</div>
-                  <span className="podium-rank-badge">CHAMPION</span>
+                <div className="podium-step rank-1">
+                  <div className="podium-crown">👑</div>
                   <div className="podium-name">{leaderboard[0].name}</div>
-                  <span className="podium-title">Level {leaderboard[0].currentLevel}</span>
-                  <div className="podium-stats">
-                    <span><Star size={14} fill="currentColor" /> {leaderboard[0].totalStars}</span>
-                    <span><Apple size={14} /> {leaderboard[0].totalScore}</span>
-                  </div>
+                  <div className="podium-score">⭐ {leaderboard[0].totalStars}</div>
                 </div>
-
-                {/* 3rd Place */}
-                <div className="podium-card rank-3">
-                  <div className="podium-trophy">🥉</div>
-                  <span className="podium-rank-badge">RANK 3</span>
+                <div className="podium-step rank-3">
+                  <div className="podium-crown">🥉</div>
                   <div className="podium-name">{leaderboard[2].name}</div>
-                  <span className="podium-title">Level {leaderboard[2].currentLevel}</span>
-                  <div className="podium-stats">
-                    <span><Star size={13} fill="currentColor" /> {leaderboard[2].totalStars}</span>
-                    <span><Apple size={13} /> {leaderboard[2].totalScore}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Current Player Rank Banner */}
-            {myRank && (
-              <div className="my-rank-banner">
-                <div className="my-rank-left">
-                  <span className="my-rank-number">#{myRank.rank}</span>
-                  <div>
-                    <b>{myRank.name} (You)</b>
-                    <small>Level {myRank.currentLevel} • {myRank.completedCount || completed.length} Gardens Cleared</small>
-                  </div>
-                </div>
-                <div className="my-rank-stats">
-                  <span style={{ color: '#f3d777' }}>⭐ {myRank.totalStars} Stars</span>
-                  <span style={{ color: '#b9f36c' }}>🍎 {myRank.totalScore} Score</span>
+                  <div className="podium-score">⭐ {leaderboard[2].totalStars}</div>
                 </div>
               </div>
             )}
 
             {/* Leaderboard Table */}
-            <table className="leaderboard-table">
-              <tbody>
-                {leaderboard.map((player, idx) => (
-                  <tr
-                    key={player.id || idx}
-                    className={`leaderboard-row ${player.isMe ? 'is-me' : ''}`}
-                  >
-                    <td className="leaderboard-cell">#{player.rank || idx + 1}</td>
-                    <td className="leaderboard-cell">
-                      <div className="gardener-info">
-                        <b>{player.name} {player.isMe ? '(You)' : ''}</b>
-                        <small>Level {player.currentLevel} • {player.completedCount || 0} Cleared</small>
-                      </div>
-                    </td>
-                    <td className="leaderboard-cell" style={{ color: '#f3d777', fontWeight: 700 }}>
-                      ⭐ {player.totalStars}
-                    </td>
-                    <td className="leaderboard-cell" style={{ color: '#b9f36c', fontWeight: 700 }}>
-                      {player.totalScore} pts
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </main>
-      ) : (
-        /* VIEW: REWARDS & WALLET MODE */
-        <main className="secondary-page">
-          <div className="eyebrow">VELOOP ECONOMY</div>
-          <h1>Your reward <em>garden.</em></h1>
-          <p className="intro">Rewards are fair, optional, and transparent. Sync your wallet across devices with your account.</p>
-
-          <div className="wallet-hero">
-            <span className="wallet-icon"><Coins size={32} /></span>
-            <div>
-              <small>{user ? `${user.name.toUpperCase()}'S WALLET` : 'GARDEN WALLET BALANCE'}</small>
-              <strong>{coins} <span>coins</span></strong>
-            </div>
-            <span className="wallet-note">
-              <ShieldCheck size={16} /> {user ? 'Cloud Synced' : 'Guest Ledger'}
-            </span>
-          </div>
-
-          <div className="reward-grid">
-            <div className="reward-detail">
-              <span>💡</span>
-              <h3>Smart Hint</h3>
-              <p>BFS pathfinder highlights the optimal shortest route toward the closest apple or portal.</p>
-              <button className="outline-button" onClick={() => { triggerSmartHint(); setMode('play'); }}>
-                Use Hint
-              </button>
-            </div>
-
-            <div className="reward-detail">
-              <span>⚡</span>
-              <h3>Apple Boost</h3>
-              <p>Add +5 extra moves to your current level budget. Great for exploring challenging mazes.</p>
-              <button className="primary-button" onClick={buyBoost} disabled={coins < 30}>
-                Buy for 30 🪙
-              </button>
-            </div>
-
-            <div className="reward-detail">
-              <span>👤</span>
-              <h3>Cloud Sync</h3>
-              <p>{user ? `Signed in as ${user.email}. Progress backed up to MongoDB.` : 'Sign up or log in to persist your coins & level progress across devices.'}</p>
-              <button className="outline-button" onClick={() => setAuthModal(user ? 'profile' : 'login')}>
-                {user ? 'Manage Profile' : 'Sign In / Register'}
-              </button>
+            <div style={{ maxHeight: 240, overflowY: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <tbody>
+                  {leaderboard.map((player, idx) => (
+                    <tr key={player.id || idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                      <td style={{ padding: '8px 10px', fontWeight: 800, color: '#94a3b8' }}>#{player.rank || idx + 1}</td>
+                      <td style={{ padding: '8px 10px', fontWeight: 700 }}>{player.name} {player.isMe ? '(You)' : ''}</td>
+                      <td style={{ padding: '8px 10px', color: '#fbbf24', fontWeight: 700, textAlign: 'right' }}>⭐ {player.totalStars}</td>
+                      <td style={{ padding: '8px 10px', color: '#4ade80', fontWeight: 700, textAlign: 'right' }}>{player.totalScore} pts</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
-
-          <div className="security-note">
-            <ShieldCheck size={22} />
-            <div>
-              <b>Designed for fair rewards & secure storage</b>
-              <p>Player stats, authentication with bcrypt/JWT, and wallet ledgers are managed by the Express/MongoDB server. Full unit & integration testing is in place.</p>
-            </div>
-          </div>
-        </main>
+        </div>
       )}
 
-      {/* FOOTER */}
-      <footer>
-        <span>© 2026 {GAME_NAME}</span>
-        <span>Made for curious minds <span className="footer-heart">♥</span></span>
-        <button onClick={() => setHowToPlayModal(true)}>
-          <CircleHelp size={15} /> How to play
-        </button>
-        <button onClick={toggleFullscreen}>
-          <Maximize2 size={15} /> Fullscreen (F)
-        </button>
-        <button onClick={() => setNotice('Audio: Sound ' + (sound ? 'ON' : 'OFF') + ', Music ' + (music ? 'ON' : 'OFF'))}>
-          <Settings size={15} /> Audio Settings
-        </button>
-      </footer>
+      {/* SHOP & SKINS WARDROBE MODAL */}
+      {shopModal && (
+        <div className="modal-overlay" onClick={() => setShopModal(false)}>
+          <div className="modal-dialog" onClick={e => e.stopPropagation()}>
+            <button className="modal-close-btn" onClick={() => setShopModal(false)}>×</button>
+
+            <span style={{ color: '#a855f7', fontSize: 12, fontWeight: 800, letterSpacing: '0.12em' }}>GARDEN WARDROBE</span>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 24, marginTop: 4 }}>Skins & Boosters</h2>
+            <p style={{ color: '#94a3b8', fontSize: 13, marginTop: 4 }}>Customize your worm and stock up on booster moves.</p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, margin: '20px 0' }}>
+              {SKINS.map(s => (
+                <div
+                  key={s.id}
+                  onClick={() => { setWormSkin(s.id); localStorage.setItem('wormSkin', s.id); playSound('complete', sound); }}
+                  style={{
+                    padding: 14,
+                    borderRadius: 18,
+                    background: wormSkin === s.id ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)',
+                    border: wormSkin === s.id ? `2px solid ${s.color}` : '1px solid var(--border-glass)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 6
+                  }}
+                >
+                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: s.color, boxShadow: `0 0 14px ${s.color}88` }} />
+                  <b style={{ fontSize: 13 }}>{s.name}</b>
+                  <small style={{ color: '#94a3b8', fontSize: 10 }}>{wormSkin === s.id ? 'EQUIPPED' : 'TAP TO EQUIP'}</small>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ background: 'rgba(251, 191, 36, 0.1)', padding: 14, borderRadius: 16, border: '1px solid rgba(251, 191, 36, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <b style={{ color: '#fbbf24', fontSize: 14, display: 'block' }}>⚡ Apple Boost (+5 Moves)</b>
+                <small style={{ color: '#94a3b8', fontSize: 11 }}>Extend current puzzle move limit</small>
+              </div>
+              <button className="modal-btn-primary" onClick={buyBoost} disabled={coins < 30} style={{ padding: '8px 14px', fontSize: 12 }}>
+                30 🪙 Buy
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* HOW TO PLAY TUTORIAL MODAL */}
+      {howToPlayModal && (
+        <div className="modal-overlay" onClick={() => setHowToPlayModal(false)}>
+          <div className="modal-dialog" onClick={e => e.stopPropagation()}>
+            <button className="modal-close-btn" onClick={() => setHowToPlayModal(false)}>×</button>
+
+            <span style={{ color: '#4ade80', fontSize: 12, fontWeight: 800, letterSpacing: '0.12em' }}>TUTORIAL GUIDE</span>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 24, marginTop: 4 }}>How to Play</h2>
+            <p style={{ color: '#94a3b8', fontSize: 13, margin: '6px 0 16px' }}>Master the labyrinth gardens with smart turns!</p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: 12, borderRadius: 14 }}>
+                <span style={{ fontSize: 24 }}>🍏</span>
+                <div>
+                  <b style={{ fontSize: 13 }}>1. Eat All Apples</b>
+                  <p style={{ color: '#94a3b8', fontSize: 12 }}>Each apple awards +10 score and extends your worm length by one segment.</p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: 12, borderRadius: 14 }}>
+                <span style={{ fontSize: 24 }}>🌀</span>
+                <div>
+                  <b style={{ fontSize: 13 }}>2. Awaken the Portal</b>
+                  <p style={{ color: '#94a3b8', fontSize: 12 }}>The cosmic portal is locked until every apple is consumed. Enter to clear the level!</p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: 12, borderRadius: 14 }}>
+                <span style={{ fontSize: 24 }}>🧱</span>
+                <div>
+                  <b style={{ fontSize: 13 }}>3. Avoid Traps & Tail</b>
+                  <p style={{ color: '#94a3b8', fontSize: 12 }}>Crashing into stone walls, outside garden boundaries, or your own body fails the puzzle.</p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: 12, borderRadius: 14 }}>
+                <span style={{ fontSize: 24 }}>🎮</span>
+                <div>
+                  <b style={{ fontSize: 13 }}>4. Fluid Controls</b>
+                  <p style={{ color: '#94a3b8', fontSize: 12 }}>Desktop: Arrow Keys / WASD. Mobile: Swipe on screen or tap the virtual D-Pad. Hotkeys: Z (Undo), R (Reset), F (Fullscreen), H (BFS Hint).</p>
+                </div>
+              </div>
+            </div>
+
+            <button className="modal-btn-primary" style={{ width: '100%' }} onClick={() => setHowToPlayModal(false)}>
+              Let's Slither!
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* AUTH & PROFILE MODAL */}
+      {authModal && (
+        <div className="modal-overlay" onClick={() => setAuthModal(null)}>
+          <div className="modal-dialog" onClick={e => e.stopPropagation()}>
+            <button className="modal-close-btn" onClick={() => setAuthModal(null)}>×</button>
+
+            {authModal === 'profile' ? (
+              <div>
+                <span style={{ color: '#8b5cf6', fontSize: 12, fontWeight: 800, letterSpacing: '0.12em' }}>GARDENER PROFILE</span>
+                <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 24, marginTop: 4 }}>{user?.name}</h2>
+                <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 16 }}>Progress safely synced with MongoDB Atlas.</p>
+
+                <div style={{ background: 'rgba(255,255,255,0.06)', padding: 16, borderRadius: 16, border: '1px solid var(--border-glass)', marginBottom: 20 }}>
+                  <div style={{ fontSize: 12, color: '#94a3b8' }}>EMAIL: {user?.email}</div>
+                  <div style={{ display: 'flex', gap: 16, marginTop: 12, fontSize: 14 }}>
+                    <span>🪙 <b>{coins}</b> Coins</span>
+                    <span>⭐ <b>{user?.totalStars || 0}</b> Stars</span>
+                    <span>🌱 Level <b>{user?.currentLevel || levelId}</b></span>
+                  </div>
+                </div>
+
+                <button className="modal-btn-secondary" style={{ width: '100%' }} onClick={handleLogout}>
+                  <LogOut size={16} /> Log Out
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleAuthSubmit}>
+                <span style={{ color: '#4ade80', fontSize: 12, fontWeight: 800, letterSpacing: '0.12em' }}>
+                  {authModal === 'register' ? 'NEW GARDENER' : 'WELCOME BACK'}
+                </span>
+                <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 24, marginTop: 4 }}>
+                  {authModal === 'register' ? 'Create Account' : 'Sign In'}
+                </h2>
+                <p style={{ color: '#94a3b8', fontSize: 13, margin: '6px 0 16px' }}>
+                  Sync your coins, stars, and garden progress across all your devices.
+                </p>
+
+                {authError && (
+                  <div style={{ background: 'rgba(244,63,94,0.15)', border: '1px solid #f43f5e', color: '#fca5a5', padding: '8px 12px', borderRadius: 10, fontSize: 12, marginBottom: 14 }}>
+                    {authError}
+                  </div>
+                )}
+
+                {authModal === 'register' && (
+                  <div style={{ marginBottom: 12 }}>
+                    <label style={{ fontSize: 11, fontWeight: 800, color: '#94a3b8', display: 'block', marginBottom: 4 }}>NAME</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Khushi"
+                      value={authForm.name}
+                      onChange={e => setAuthForm({ ...authForm, name: e.target.value })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: 12, background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-glass)', color: '#fff' }}
+                    />
+                  </div>
+                )}
+
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ fontSize: 11, fontWeight: 800, color: '#94a3b8', display: 'block', marginBottom: 4 }}>EMAIL</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="gardener@example.com"
+                    value={authForm.email}
+                    onChange={e => setAuthForm({ ...authForm, email: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: 12, background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-glass)', color: '#fff' }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: 18 }}>
+                  <label style={{ fontSize: 11, fontWeight: 800, color: '#94a3b8', display: 'block', marginBottom: 4 }}>PASSWORD</label>
+                  <input
+                    type="password"
+                    required
+                    minLength={8}
+                    placeholder="At least 8 characters"
+                    value={authForm.password}
+                    onChange={e => setAuthForm({ ...authForm, password: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: 12, background: 'rgba(0,0,0,0.3)', border: '1px solid var(--border-glass)', color: '#fff' }}
+                  />
+                </div>
+
+                <button className="modal-btn-primary" type="submit" disabled={authLoading} style={{ width: '100%', marginBottom: 12 }}>
+                  {authLoading ? 'Connecting...' : authModal === 'register' ? 'Create & Save' : 'Sign In'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => { setAuthError(''); setAuthModal(authModal === 'register' ? 'login' : 'register'); }}
+                  style={{ width: '100%', textAlign: 'center', fontSize: 12, color: '#94a3b8' }}
+                >
+                  {authModal === 'register' ? 'Already have an account? Sign In' : "Don't have an account yet? Sign Up"}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
