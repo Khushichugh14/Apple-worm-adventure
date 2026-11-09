@@ -94,31 +94,40 @@ function App() {
     localStorage.setItem('music', String(music));
   }, [coins, completed, levelId, sound, music]);
 
-  // Fullscreen toggle & change detection
+  // Fullscreen toggle & change detection (supports both Browser Fullscreen & In-App Theater mode)
   const toggleFullscreen = useCallback(() => {
-    try {
-      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-        const elem = document.documentElement;
-        if (elem.requestFullscreen) {
-          elem.requestFullscreen().catch(() => {});
-        } else if (elem.webkitRequestFullscreen) {
-          elem.webkitRequestFullscreen();
+    setIsFullscreen(prev => {
+      const next = !prev;
+      try {
+        if (next) {
+          const elem = document.documentElement;
+          if (elem.requestFullscreen) {
+            elem.requestFullscreen().catch(() => {});
+          } else if (elem.webkitRequestFullscreen) {
+            elem.webkitRequestFullscreen();
+          }
+        } else {
+          if (document.fullscreenElement || document.webkitFullscreenElement) {
+            if (document.exitFullscreen) {
+              document.exitFullscreen().catch(() => {});
+            } else if (document.webkitExitFullscreen) {
+              document.webkitExitFullscreen();
+            }
+          }
         }
-      } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen().catch(() => {});
-        } else if (document.webkitExitFullscreen) {
-          document.webkitExitFullscreen();
-        }
+      } catch {
+        // Fallback
       }
-    } catch {
-      // Fallback
-    }
+      return next;
+    });
   }, []);
 
   useEffect(() => {
     const onFullscreenChange = () => {
-      setIsFullscreen(!!(document.fullscreenElement || document.webkitFullscreenElement));
+      const isNative = !!(document.fullscreenElement || document.webkitFullscreenElement);
+      if (!isNative) {
+        setIsFullscreen(false);
+      }
     };
     document.addEventListener('fullscreenchange', onFullscreenChange);
     document.addEventListener('webkitfullscreenchange', onFullscreenChange);
@@ -255,7 +264,8 @@ function App() {
       setHistory(h => [...h.slice(-35), old]);
       setSolverHint(null);
 
-      const next = step(old, dir, level);
+      const effectiveLevel = { ...level, moveLimit: level.moveLimit + bonusMoves };
+      const next = step(old, dir, effectiveLevel);
 
       // Play sound and animation for apple eaten
       const didEat = next.apples.length < old.apples.length;
@@ -458,7 +468,8 @@ function App() {
 
   const triggerSmartHint = () => {
     setHint(true);
-    const hintResult = findNextHint(game, level);
+    const effectiveLevel = { ...level, moveLimit: level.moveLimit + bonusMoves };
+    const hintResult = findNextHint(game, effectiveLevel);
     if (hintResult) {
       setSolverHint(hintResult);
       playSound('eat', sound);
@@ -966,8 +977,12 @@ function App() {
             </div>
           </div>
 
-          {/* Centered Large Board */}
-          <div className="fullscreen-board-area">
+          {/* Centered Large Board with Swipe Support */}
+          <div
+            className="fullscreen-board-area"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
             {renderGameBoard()}
 
             {/* In-game Overlays in Fullscreen */}
