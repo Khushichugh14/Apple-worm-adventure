@@ -1,39 +1,40 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
 
 :root {
-  --font-game: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-text: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-main: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-ui: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 
-  /* Premium Gaming Palette */
-  --bg-deep: #080914;
-  --bg-surface: rgba(18, 22, 40, 0.75);
-  --bg-surface-solid: #121628;
-  --bg-card: rgba(28, 33, 58, 0.65);
+  /* Theme Colors */
+  --bg-core: #070913;
+  --bg-surface: rgba(15, 20, 38, 0.75);
+  --bg-card: rgba(22, 28, 54, 0.85);
   --border-glass: rgba(255, 255, 255, 0.12);
-  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-glow: rgba(74, 222, 128, 0.4);
 
-  --accent-green: #4ade80;
-  --accent-green-glow: rgba(74, 222, 128, 0.5);
-  --accent-gold: #fbbf24;
-  --accent-gold-glow: rgba(251, 191, 36, 0.5);
-  --accent-ruby: #f43f5e;
-  --accent-ruby-glow: rgba(244, 63, 94, 0.5);
-  --accent-cyan: #38bdf8;
-  --accent-cyan-glow: rgba(56, 189, 248, 0.5);
-  --accent-purple: #a855f7;
-  --accent-purple-glow: rgba(168, 85, 247, 0.5);
+  --green-primary: #10b981;
+  --green-bright: #34d399;
+  --green-glow: rgba(52, 211, 153, 0.5);
 
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --text-dim: #64748b;
+  --gold-primary: #f59e0b;
+  --gold-bright: #fbbf24;
+  --gold-glow: rgba(251, 191, 36, 0.5);
 
-  /* World Realm Palettes */
-  --realm-1: #10b981;
-  --realm-2: #f59e0b;
-  --realm-3: #06b6d4;
-  --realm-4: #ec4899;
-  --realm-5: #8b5cf6;
+  --ruby-primary: #e11d48;
+  --ruby-bright: #f43f5e;
+  --ruby-glow: rgba(244, 63, 94, 0.5);
+
+  --cyan-primary: #0284c7;
+  --cyan-bright: #38bdf8;
+  --cyan-glow: rgba(56, 189, 248, 0.5);
+
+  --purple-primary: #7c3aed;
+  --purple-bright: #a855f7;
+  --purple-glow: rgba(168, 85, 247, 0.5);
+
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
 }
 
 * {
@@ -45,13 +46,13 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-html, body {
+html, body, #root {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: var(--bg-deep);
-  color: var(--text-main);
-  font-family: var(--font-game);
+  background: var(--bg-core);
+  color: var(--text-primary);
+  font-family: var(--font-main);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
@@ -63,23 +64,23 @@ button {
   background: none;
   color: inherit;
   touch-action: manipulation;
-  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 button:active {
-  transform: scale(0.96);
+  transform: scale(0.95);
 }
 
 button:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
   pointer-events: none;
 }
 
 /* ===================================================
-   FULLSCREEN IMMERSIVE GAME VIEWPORT
+   MASTER FULL-SCREEN CONTAINER
    =================================================== */
-.game-viewport {
+.game-master-container {
   position: relative;
   width: 100vw;
   height: 100vh;
@@ -87,30 +88,29 @@ button:disabled {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  background: radial-gradient(ellipse at 50% 15%, #181d36 0%, #080914 85%);
+  background: radial-gradient(ellipse at 50% 15%, #181d36 0%, #070913 85%);
   transition: background 0.6s ease;
 }
 
-/* World-Themed Atmospheric Radial Glows */
-.game-viewport[data-world="1"] {
-  background: radial-gradient(ellipse at 50% 18%, #0f3323 0%, #081a12 40%, #050b08 100%);
+/* Realm Atmospheric Gradients */
+.game-master-container[data-world="1"] {
+  background: radial-gradient(ellipse at 50% 20%, #0d281e 0%, #071711 45%, #030806 100%);
 }
-.game-viewport[data-world="2"] {
-  background: radial-gradient(ellipse at 50% 18%, #362512 0%, #1e1307 40%, #0c0803 100%);
+.game-master-container[data-world="2"] {
+  background: radial-gradient(ellipse at 50% 20%, #2b1d0c 0%, #170f06 45%, #080502 100%);
 }
-.game-viewport[data-world="3"] {
-  background: radial-gradient(ellipse at 50% 18%, #11283d 0%, #081726 40%, #040a12 100%);
+.game-master-container[data-world="3"] {
+  background: radial-gradient(ellipse at 50% 20%, #0b2238 0%, #061421 45%, #02070c 100%);
 }
-.game-viewport[data-world="4"] {
-  background: radial-gradient(ellipse at 50% 18%, #38132e 0%, #200819 40%, #0d030b 100%);
+.game-master-container[data-world="4"] {
+  background: radial-gradient(ellipse at 50% 20%, #290f2b 0%, #170718 45%, #080209 100%);
 }
-.game-viewport[data-world="5"] {
-  background: radial-gradient(ellipse at 50% 18%, #271447 0%, #15092a 40%, #080312 100%);
+.game-master-container[data-world="5"] {
+  background: radial-gradient(ellipse at 50% 20%, #1e0f38 0%, #100720 45%, #06020c 100%);
 }
 
-/* Dynamic Ambient Floating Particles */
-.ambient-motes {
+/* Dynamic Ambient Floating Motes */
+.ambient-particles-layer {
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -118,55 +118,55 @@ button:disabled {
   z-index: 1;
 }
 
-.ambient-mote {
+.ambient-particle-dot {
   position: absolute;
   border-radius: 50%;
   opacity: 0.45;
   filter: blur(1.5px);
-  animation: floatMote linear infinite;
+  animation: floatParticleUp linear infinite;
 }
 
-@keyframes floatMote {
+@keyframes floatParticleUp {
   0% { transform: translateY(105vh) translateX(0) scale(0.6); opacity: 0; }
   20% { opacity: 0.55; }
-  80% { opacity: 0.4; }
-  100% { transform: translateY(-10vh) translateX(30px) scale(1.1); opacity: 0; }
+  80% { opacity: 0.45; }
+  100% { transform: translateY(-10vh) translateX(30px) scale(1.15); opacity: 0; }
 }
 
 /* ===================================================
    TOP ARCADE GLASS HUD
    =================================================== */
-.game-hud-top {
+.game-arcade-hud {
   position: relative;
-  z-index: 20;
+  z-index: 25;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 20px;
+  padding: 10px 22px;
   gap: 12px;
-  background: linear-gradient(180deg, rgba(8, 10, 22, 0.85) 0%, rgba(8, 10, 22, 0.4) 75%, transparent 100%);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: linear-gradient(180deg, rgba(7, 9, 19, 0.9) 0%, rgba(7, 9, 19, 0.4) 80%, transparent 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border-glass);
 }
 
-.hud-group-left, .hud-group-right {
+.hud-cluster-left, .hud-cluster-right {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.hud-group-center {
+.hud-cluster-center {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
-/* Brand Pill */
-.brand-pill {
+/* Brand Button */
+.hud-brand-pill {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
   padding: 6px 14px 6px 8px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid var(--border-glass);
@@ -175,111 +175,116 @@ button:disabled {
   cursor: pointer;
 }
 
-.brand-icon-box {
+.hud-brand-pill:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+.brand-icon-wrapper {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #4ade80 0%, #16a34a 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   display: grid;
   place-items: center;
-  color: #052e16;
-  box-shadow: 0 0 12px var(--accent-green-glow);
+  color: #064e3b;
+  box-shadow: 0 0 12px var(--green-glow);
 }
 
-.brand-title {
-  font-family: var(--font-display);
+.brand-title-text {
+  font-family: var(--font-heading);
   font-weight: 800;
   font-size: 14px;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
   color: #ffffff;
 }
 
-.realm-badge {
+.hud-realm-tag {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+  gap: 7px;
+  padding: 6px 14px;
   border-radius: 999px;
   background: rgba(18, 24, 48, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.03em;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.realm-dot {
+.realm-glow-indicator {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  box-shadow: 0 0 8px currentColor;
+  box-shadow: 0 0 10px currentColor;
 }
 
-/* HUD Live Stats (Center) */
-.hud-stat-pill {
+/* Center HUD Metrics */
+.hud-metric-pill {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   padding: 6px 14px;
-  background: rgba(18, 22, 44, 0.75);
+  background: rgba(15, 20, 42, 0.8);
   border: 1px solid var(--border-glass);
   border-radius: 14px;
   font-size: 13px;
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
-.hud-stat-pill.moves-pill b {
+.hud-metric-pill b {
+  font-family: var(--font-heading);
   font-size: 15px;
   color: #ffffff;
-  font-family: var(--font-display);
 }
 
-.hud-stat-pill.moves-pill small {
-  color: var(--accent-gold);
+.hud-metric-pill small {
+  color: var(--gold-bright);
   font-weight: 700;
   font-size: 11px;
 }
 
-.hud-stars-live {
+.hud-stars-display {
   display: flex;
-  gap: 4px;
+  gap: 3px;
 }
 
-.hud-star {
-  font-size: 17px;
+.star-icon-unit {
+  font-size: 16px;
   color: rgba(255, 255, 255, 0.2);
-  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.hud-star.active {
-  color: var(--accent-gold);
-  filter: drop-shadow(0 0 6px var(--accent-gold-glow));
+.star-icon-unit.earned {
+  color: var(--gold-bright);
+  filter: drop-shadow(0 0 6px var(--gold-glow));
   transform: scale(1.1);
 }
 
-.hud-apples-pill {
+.hud-apples-counter {
   color: #fda4af;
   font-weight: 700;
 }
 
-/* Right HUD Actions */
-.coin-counter {
+/* Right HUD Buttons */
+.coin-badge-pill {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 6px 14px;
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(217, 119, 6, 0.1) 100%);
-  border: 1px solid rgba(251, 191, 36, 0.35);
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.16) 0%, rgba(217, 119, 6, 0.1) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.4);
   border-radius: 999px;
-  font-family: var(--font-display);
+  font-family: var(--font-heading);
   font-weight: 800;
   font-size: 14px;
-  color: var(--accent-gold);
-  box-shadow: 0 0 14px rgba(251, 191, 36, 0.2);
+  color: var(--gold-bright);
+  box-shadow: 0 0 14px rgba(251, 191, 36, 0.25);
 }
 
-.hud-icon-btn {
+.hud-action-icon-btn {
   width: 38px;
   height: 38px;
   border-radius: 12px;
@@ -291,21 +296,21 @@ button:disabled {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
 }
 
-.hud-icon-btn:hover {
-  background: rgba(255, 255, 255, 0.16);
+.hud-action-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
   color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.25);
-  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
 }
 
-.hud-icon-btn.active {
-  background: rgba(74, 222, 128, 0.2);
-  border-color: var(--accent-green);
-  color: var(--accent-green);
-  box-shadow: 0 0 12px var(--accent-green-glow);
+.hud-action-icon-btn.active {
+  background: rgba(16, 185, 129, 0.25);
+  border-color: var(--green-bright);
+  color: var(--green-bright);
+  box-shadow: 0 0 14px var(--green-glow);
 }
 
-.hud-text-btn {
+.hud-nav-tab-btn {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -320,31 +325,23 @@ button:disabled {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
-.hud-text-btn:hover {
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.28);
-  transform: translateY(-1px);
+.hud-nav-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
 }
 
-.hud-avatar-btn {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
-  display: grid;
-  place-items: center;
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 15px;
+.hud-nav-tab-btn.selected {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-color: rgba(52, 211, 153, 0.5);
   color: #ffffff;
-  box-shadow: 0 0 12px var(--accent-purple-glow);
-  border: 2px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
 }
 
 /* ===================================================
    CENTER STAGE: 3D FLOATING GARDEN ISLAND
    =================================================== */
-.game-stage {
+.game-play-stage {
   flex: 1;
   position: relative;
   z-index: 10;
@@ -355,88 +352,88 @@ button:disabled {
   overflow: hidden;
 }
 
-.board-island-wrapper {
+.garden-board-wrapper {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   width: 100%;
-  max-width: min(88vmin, 580px);
+  max-width: min(86vmin, 580px);
 }
 
-/* Floating Score Popups */
-.floating-score {
+/* Floating Points Toast */
+.floating-points-toast {
   position: absolute;
-  z-index: 50;
-  font-family: var(--font-display);
+  z-index: 60;
+  font-family: var(--font-heading);
   font-weight: 900;
-  font-size: 22px;
-  color: #fbbf24;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), 0 0 14px rgba(251, 191, 36, 0.7);
+  font-size: 24px;
+  color: var(--gold-bright);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9), 0 0 16px var(--gold-glow);
   pointer-events: none;
-  animation: floatScoreUp 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: floatScoreText 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes floatScoreUp {
+@keyframes floatScoreText {
   0% { transform: translate(-50%, 0) scale(0.6); opacity: 0; }
-  30% { transform: translate(-50%, -20px) scale(1.3); opacity: 1; }
-  100% { transform: translate(-50%, -55px) scale(0.9); opacity: 0; }
+  35% { transform: translate(-50%, -24px) scale(1.3); opacity: 1; }
+  100% { transform: translate(-50%, -60px) scale(0.9); opacity: 0; }
 }
 
-/* The 3D Floating Beveled Garden Plateau */
-.board-island {
+/* The 3D Floating Beveled Garden Island */
+.garden-floating-island {
   position: relative;
   width: 100%;
   aspect-ratio: 1;
   padding: 14px;
-  border-radius: 26px;
-  background: radial-gradient(circle at 50% 20%, #1e2547 0%, #0f1329 100%);
-  border: 2px solid rgba(255, 255, 255, 0.14);
+  border-radius: 28px;
+  background: radial-gradient(circle at 50% 18%, #1c2242 0%, #0e1227 100%);
+  border: 2px solid rgba(255, 255, 255, 0.16);
   box-shadow:
-    0 25px 60px rgba(0, 0, 0, 0.75),
-    0 0 45px rgba(74, 222, 128, 0.2),
-    inset 0 2px 4px rgba(255, 255, 255, 0.15),
-    inset 0 -4px 8px rgba(0, 0, 0, 0.5);
+    0 30px 70px rgba(0, 0, 0, 0.8),
+    0 0 50px rgba(16, 185, 129, 0.25),
+    inset 0 2px 4px rgba(255, 255, 255, 0.2),
+    inset 0 -5px 10px rgba(0, 0, 0, 0.6);
   transition: all 0.4s ease;
 }
 
-.board-island[data-world="1"] {
-  border-color: rgba(74, 222, 128, 0.3);
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 40px rgba(74, 222, 128, 0.25);
+.garden-floating-island[data-world="1"] {
+  border-color: rgba(52, 211, 153, 0.35);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.8), 0 0 45px rgba(52, 211, 153, 0.25);
 }
-.board-island[data-world="2"] {
-  border-color: rgba(245, 158, 11, 0.3);
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 40px rgba(245, 158, 11, 0.25);
+.garden-floating-island[data-world="2"] {
+  border-color: rgba(251, 191, 36, 0.35);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.8), 0 0 45px rgba(251, 191, 36, 0.25);
 }
-.board-island[data-world="3"] {
-  border-color: rgba(6, 182, 212, 0.3);
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 40px rgba(6, 182, 212, 0.25);
+.garden-floating-island[data-world="3"] {
+  border-color: rgba(56, 189, 248, 0.35);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.8), 0 0 45px rgba(56, 189, 248, 0.25);
 }
-.board-island[data-world="4"] {
-  border-color: rgba(236, 72, 153, 0.3);
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 40px rgba(236, 72, 153, 0.25);
+.garden-floating-island[data-world="4"] {
+  border-color: rgba(168, 85, 247, 0.35);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.8), 0 0 45px rgba(168, 85, 247, 0.25);
 }
-.board-island[data-world="5"] {
-  border-color: rgba(139, 92, 246, 0.3);
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 40px rgba(139, 92, 246, 0.25);
+.garden-floating-island[data-world="5"] {
+  border-color: rgba(236, 72, 153, 0.35);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.8), 0 0 45px rgba(236, 72, 153, 0.25);
 }
 
 /* The Grid Board */
-.game-grid {
+.garden-matrix-grid {
   display: grid;
   grid-template-columns: repeat(var(--grid-size, 8), minmax(0, 1fr));
   width: 100%;
   height: 100%;
   gap: 3px;
-  background: rgba(0, 0, 0, 0.35);
-  border-radius: 18px;
-  padding: 4px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 20px;
+  padding: 5px;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* Cell Bases */
-.grid-cell {
+/* Grid Cells */
+.garden-tile-cell {
   position: relative;
   width: 100%;
   height: 100%;
@@ -444,484 +441,246 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
   transition: all 0.15s ease;
 }
 
-/* Realm Floor Tile Themes */
-.game-viewport[data-world="1"] .grid-cell {
-  background: #1a3324;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), inset 0 -2px 0 rgba(0, 0, 0, 0.3);
-}
-.game-viewport[data-world="1"] .grid-cell:nth-child(odd) {
-  background: #14281c;
-}
-
-.game-viewport[data-world="2"] .grid-cell {
-  background: #2a2016;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 -2px 0 rgba(0, 0, 0, 0.35);
-}
-.game-viewport[data-world="2"] .grid-cell:nth-child(odd) {
-  background: #211911;
-}
-
-.game-viewport[data-world="3"] .grid-cell {
-  background: #122232;
+/* Realm Floor Tile Textures */
+.game-master-container[data-world="1"] .garden-tile-cell {
+  background: #193325;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -2px 0 rgba(0, 0, 0, 0.35);
 }
-.game-viewport[data-world="3"] .grid-cell:nth-child(odd) {
-  background: #0d1a27;
+.game-master-container[data-world="1"] .garden-tile-cell:nth-child(odd) {
+  background: #142a1e;
 }
 
-.game-viewport[data-world="4"] .grid-cell {
-  background: #291223;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), inset 0 -2px 0 rgba(0, 0, 0, 0.35);
+.game-master-container[data-world="2"] .garden-tile-cell {
+  background: #2b1f13;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), inset 0 -2px 0 rgba(0, 0, 0, 0.4);
 }
-.game-viewport[data-world="4"] .grid-cell:nth-child(odd) {
-  background: #1f0b1a;
+.game-master-container[data-world="2"] .garden-tile-cell:nth-child(odd) {
+  background: #21180d;
 }
 
-.game-viewport[data-world="5"] .grid-cell {
-  background: #1b1233;
+.game-master-container[data-world="3"] .garden-tile-cell {
+  background: #122133;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -2px 0 rgba(0, 0, 0, 0.4);
 }
-.game-viewport[data-world="5"] .grid-cell:nth-child(odd) {
-  background: #140d27;
+.game-master-container[data-world="3"] .garden-tile-cell:nth-child(odd) {
+  background: #0d1a29;
+}
+
+.game-master-container[data-world="4"] .garden-tile-cell {
+  background: #281124;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -2px 0 rgba(0, 0, 0, 0.4);
+}
+.game-master-container[data-world="4"] .garden-tile-cell:nth-child(odd) {
+  background: #1e0b1a;
+}
+
+.game-master-container[data-world="5"] .garden-tile-cell {
+  background: #1b1136;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09), inset 0 -2px 0 rgba(0, 0, 0, 0.45);
+}
+.game-master-container[data-world="5"] .garden-tile-cell:nth-child(odd) {
+  background: #130a28;
 }
 
 /* BFS Hint Path Indicator */
-.grid-cell.hint-path::after {
+.garden-tile-cell.hint-path::after {
   content: '';
   position: absolute;
   width: 32%;
   height: 32%;
   border-radius: 50%;
-  background: var(--accent-gold);
-  box-shadow: 0 0 10px var(--accent-gold-glow);
-  animation: pulseHint 1s ease-in-out infinite alternate;
+  background: var(--gold-bright);
+  box-shadow: 0 0 12px var(--gold-glow);
+  animation: pulseHintBeacon 1s ease-in-out infinite alternate;
   z-index: 5;
 }
 
-@keyframes pulseHint {
-  from { transform: scale(0.7); opacity: 0.5; }
-  to { transform: scale(1.15); opacity: 1; }
+@keyframes pulseHintBeacon {
+  from { transform: scale(0.65); opacity: 0.5; }
+  to { transform: scale(1.2); opacity: 1; }
 }
 
 /* ===================================================
-   3D STONE WALLS
+   CUSTOM VECTOR GRAPHICS STYLES
    =================================================== */
-.grid-cell.wall {
-  background: linear-gradient(180deg, #575c7e 0%, #353954 100%) !important;
+
+/* 1. Stone Wall 3D Blocks */
+.wall-svg-container {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.garden-tile-cell.wall {
   border-radius: 9px;
-  box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.3),
-    0 4px 0 #1b1d2e,
-    0 6px 10px rgba(0, 0, 0, 0.5) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6) !important;
   z-index: 6;
 }
 
-.wall-block {
-  width: 100%;
-  height: 100%;
-  display: grid;
-  place-items: center;
+/* 2. Juicy Candy Apple */
+.apple-svg-container {
+  width: 86%;
+  height: 86%;
+  display: block;
+  animation: appleBreathingBob 2.2s ease-in-out infinite alternate;
 }
 
-.wall-rune {
-  font-size: 14px;
-  color: #cbd5e1;
-  opacity: 0.8;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7));
+@keyframes appleBreathingBob {
+  from { transform: translateY(0px) scale(0.96); }
+  to { transform: translateY(-4px) scale(1.05); }
 }
 
-/* ===================================================
-   EXPRESSIVE 3D CARTOON WORM CHARACTER
-   =================================================== */
-.grid-cell.worm {
-  position: relative;
-  z-index: 10;
-}
-
-.grid-cell.head {
-  z-index: 15;
-}
-
-/* Cute Expressive Head Container */
-.worm-head-container {
+/* 3. Cosmic Galaxy Stargate Portal */
+.portal-svg-container {
   width: 90%;
   height: 90%;
-  border-radius: 50%;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.5);
-  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-/* Directional rotations */
-.worm-head-container.face-up { transform: rotate(-90deg); }
-.worm-head-container.face-down { transform: rotate(90deg); }
-.worm-head-container.face-left { transform: scaleX(-1); }
-.worm-head-container.face-right { transform: scaleX(1); }
-
-/* Cute Animated Eyes */
-.worm-head-eyes {
-  display: flex;
-  gap: 5px;
-  position: absolute;
-  top: 22%;
-  z-index: 3;
-}
-
-.worm-eye {
-  width: 9px;
-  height: 9px;
-  background: #ffffff;
-  border-radius: 50%;
-  position: relative;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-  animation: eyeBlink 3.6s infinite;
-}
-
-.worm-eye .pupil {
-  width: 5px;
-  height: 5px;
-  background: #0f172a;
-  border-radius: 50%;
-  position: absolute;
-  right: 1px;
-  top: 2px;
-}
-
-.worm-eye .eye-shine {
-  width: 2px;
-  height: 2px;
-  background: #ffffff;
-  border-radius: 50%;
-  position: absolute;
-  top: 1px;
-  left: 2px;
-}
-
-@keyframes eyeBlink {
-  0%, 93%, 100% { transform: scaleY(1); }
-  96% { transform: scaleY(0.1); }
-}
-
-/* Rosy Blushing Cheeks */
-.worm-cheeks {
-  display: flex;
-  gap: 16px;
-  position: absolute;
-  top: 48%;
-  z-index: 2;
-}
-
-.blush {
-  width: 4px;
-  height: 3px;
-  border-radius: 50%;
-  background: rgba(251, 113, 133, 0.85);
-  filter: blur(0.5px);
-}
-
-/* Cheerful Smile */
-.worm-mouth {
-  width: 7px;
-  height: 4px;
-  border-bottom: 2.5px solid #0f172a;
-  border-radius: 0 0 7px 7px;
-  position: absolute;
-  bottom: 22%;
-}
-
-/* Cute Head Sprout Leaf */
-.worm-head-sprout {
-  position: absolute;
-  top: -6px;
-  font-size: 11px;
-  animation: sproutWiggle 2.2s ease-in-out infinite alternate;
-  transform-origin: bottom center;
-}
-
-@keyframes sproutWiggle {
-  from { transform: rotate(-8deg); }
-  to { transform: rotate(8deg); }
-}
-
-/* Worm Body Segments */
-.worm-segment {
-  width: calc(82% * var(--segment-scale, 1));
-  height: calc(82% * var(--segment-scale, 1));
-  border-radius: 46%;
-  position: relative;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
-  transition: transform 0.15s ease;
-}
-
-.worm-segment-shine {
-  position: absolute;
-  top: 14%;
-  left: 20%;
-  width: 32%;
-  height: 32%;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.45);
-  filter: blur(0.8px);
-}
-
-.worm-tail {
-  border-radius: 50% 30% 30% 50%;
-  animation: tailWiggle 1.5s ease-in-out infinite alternate;
-}
-
-@keyframes tailWiggle {
-  from { transform: scale(0.95) rotate(-5deg); }
-  to { transform: scale(1.05) rotate(5deg); }
-}
-
-/* SKINS COLOR PALETTES */
-/* 1. Emerald (Classic Garden) */
-.skin-emerald .worm-head-container,
-.skin-emerald .worm-segment {
-  background: radial-gradient(circle at 35% 30%, #86efac 0%, #22c55e 65%, #15803d 100%);
-  box-shadow: 0 0 14px rgba(74, 222, 128, 0.5);
-}
-.skin-emerald.head {
-  filter: drop-shadow(0 0 10px rgba(74, 222, 128, 0.8));
-}
-
-/* 2. Golden Sun (Radiant Glow) */
-.skin-golden .worm-head-container,
-.skin-golden .worm-segment {
-  background: radial-gradient(circle at 35% 30%, #fef08a 0%, #eab308 65%, #a16207 100%);
-  box-shadow: 0 0 14px rgba(250, 204, 21, 0.55);
-}
-.skin-golden.head {
-  filter: drop-shadow(0 0 12px rgba(250, 204, 21, 0.85));
-}
-
-/* 3. Ruby Flame (Blazing Spark) */
-.skin-ruby .worm-head-container,
-.skin-ruby .worm-segment {
-  background: radial-gradient(circle at 35% 30%, #fda4af 0%, #f43f5e 65%, #be123c 100%);
-  box-shadow: 0 0 14px rgba(244, 63, 94, 0.55);
-}
-.skin-ruby.head {
-  filter: drop-shadow(0 0 12px rgba(244, 63, 94, 0.85));
-}
-
-/* 4. Cosmic Violet (Mystic Aura) */
-.skin-amethyst .worm-head-container,
-.skin-amethyst .worm-segment {
-  background: radial-gradient(circle at 35% 30%, #e9d5ff 0%, #a855f7 65%, #6b21a8 100%);
-  box-shadow: 0 0 14px rgba(168, 85, 247, 0.55);
-}
-.skin-amethyst.head {
-  filter: drop-shadow(0 0 12px rgba(168, 85, 247, 0.85));
-}
-
-/* ===================================================
-   3D CANDY APPLES (Glossy & Sparkly)
-   =================================================== */
-.apple-wrapper {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 82%;
-  height: 82%;
-  animation: appleHover 2.2s ease-in-out infinite alternate;
-}
-
-@keyframes appleHover {
-  from { transform: translateY(0px) scale(0.97); }
-  to { transform: translateY(-3.5px) scale(1.04); }
-}
-
-.apple-body {
-  width: 84%;
-  height: 84%;
-  border-radius: 46% 46% 42% 42%;
-  background: radial-gradient(circle at 35% 30%, #ff6b6b 0%, #dc2626 55%, #881337 100%);
-  box-shadow:
-    0 5px 14px rgba(220, 38, 38, 0.55),
-    inset 0 3px 5px rgba(255, 255, 255, 0.45);
-  position: relative;
-}
-
-.apple-highlight {
-  position: absolute;
-  top: 14%;
-  left: 20%;
-  width: 32%;
-  height: 32%;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.65);
-  filter: blur(1px);
-}
-
-.apple-stem {
-  position: absolute;
-  top: -4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 3px;
-  height: 6px;
-  background: #78350f;
-  border-radius: 2px;
-}
-
-.apple-leaf {
-  position: absolute;
-  top: -6px;
-  left: 54%;
-  width: 8px;
-  height: 5px;
-  background: linear-gradient(135deg, #4ade80, #15803d);
-  border-radius: 0 8px 0 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  transform: rotate(-12deg);
-}
-
-.apple-sparkle {
-  position: absolute;
-  color: #fef08a;
-  font-size: 10px;
-  filter: drop-shadow(0 0 4px #fbbf24);
-  animation: sparkleTwinkle 1.8s infinite ease-in-out alternate;
-}
-
-.apple-sparkle.s1 { top: 0; left: 10%; animation-delay: 0.1s; }
-.apple-sparkle.s2 { bottom: 6%; right: 8%; animation-delay: 0.8s; }
-
-@keyframes sparkleTwinkle {
-  0% { transform: scale(0.6) rotate(0deg); opacity: 0.3; }
-  100% { transform: scale(1.2) rotate(45deg); opacity: 1; }
-}
-
-/* ===================================================
-   COSMIC GALAXY STARGATE PORTAL
-   =================================================== */
-.portal-vortex {
-  position: relative;
-  width: 88%;
-  height: 88%;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
+  display: block;
   transition: all 0.4s ease;
 }
 
-.portal-vortex.portal-locked {
-  background: radial-gradient(circle, #2d1847 0%, #170d24 75%, transparent 100%);
-  border: 2px dashed rgba(168, 85, 247, 0.45);
-  animation: lockedPulse 3s ease-in-out infinite alternate;
+.portal-svg-container.unlocked {
+  filter: drop-shadow(0 0 14px var(--cyan-glow)) drop-shadow(0 0 24px var(--purple-glow));
 }
 
-@keyframes lockedPulse {
-  from { transform: scale(0.92); opacity: 0.6; }
-  to { transform: scale(1.02); opacity: 0.85; }
+.portal-galaxy-spin {
+  transform-origin: center;
+  animation: galaxySpinOrbit 3.2s linear infinite;
 }
 
-.portal-lock-icon {
-  font-size: 15px;
-  filter: drop-shadow(0 0 6px #a855f7);
+@keyframes galaxySpinOrbit {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-.portal-vortex.portal-unlocked {
-  background: radial-gradient(circle at center, #ffffff 0%, #38bdf8 25%, #a855f7 60%, #06b6d4 100%);
-  border: 2px solid #ffffff;
-  box-shadow: 0 0 24px rgba(56, 189, 248, 0.9), 0 0 50px rgba(168, 85, 247, 0.7);
-  animation: unlockedVortexSpin 2.4s linear infinite;
+.portal-pulse-ring {
+  transform-origin: center;
+  animation: portalRingPulse 2s ease-in-out infinite alternate;
 }
 
-@keyframes unlockedVortexSpin {
-  0% { transform: rotate(0deg) scale(0.98); }
-  50% { transform: rotate(180deg) scale(1.06); }
-  100% { transform: rotate(360deg) scale(0.98); }
+@keyframes portalRingPulse {
+  0% { transform: scale(0.92); opacity: 0.6; }
+  100% { transform: scale(1.08); opacity: 1; }
 }
 
-.portal-ready-icon {
-  font-size: 19px;
-  animation: spinReversed 1.8s linear infinite;
+/* 4. Expressive Worm Character */
+.worm-head-svg-container {
+  width: 92%;
+  height: 92%;
+  display: block;
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
 }
 
-@keyframes spinReversed {
-  from { transform: rotate(360deg); }
-  to { transform: rotate(0deg); }
+.worm-head-svg-container.facing-up { transform: rotate(-90deg); }
+.worm-head-svg-container.facing-down { transform: rotate(90deg); }
+.worm-head-svg-container.facing-left { transform: scaleX(-1); }
+.worm-head-svg-container.facing-right { transform: scaleX(1); }
+
+.worm-segment-svg-container {
+  width: calc(84% * var(--seg-scale, 1));
+  height: calc(84% * var(--seg-scale, 1));
+  display: block;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4));
+  transition: transform 0.12s ease;
+}
+
+.worm-tail-svg-container {
+  width: 78%;
+  height: 78%;
+  display: block;
+  animation: wormTailWiggle 1.4s ease-in-out infinite alternate;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4));
+}
+
+@keyframes wormTailWiggle {
+  from { transform: rotate(-8deg) scale(0.95); }
+  to { transform: rotate(8deg) scale(1.05); }
+}
+
+/* Slither Head Lunge Animation */
+.garden-tile-cell.head {
+  z-index: 15;
+  animation: headSlitherLunge 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes headSlitherLunge {
+  0% { transform: scale(0.88); }
+  50% { transform: scale(1.12); }
+  100% { transform: scale(1); }
 }
 
 /* ===================================================
-   BOTTOM FLOATING CONTROLLER & ACTION DOCK
+   BOTTOM FLOATING ACTION DOCK
    =================================================== */
-.game-dock {
+.game-bottom-dock {
   position: relative;
-  z-index: 20;
+  z-index: 25;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 24px;
+  padding: 12px 26px;
   gap: 16px;
-  background: linear-gradient(0deg, rgba(8, 10, 22, 0.9) 0%, rgba(8, 10, 22, 0.45) 80%, transparent 100%);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: linear-gradient(0deg, rgba(7, 9, 19, 0.95) 0%, rgba(7, 9, 19, 0.5) 80%, transparent 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
-.dock-actions-left {
+.dock-controls-left {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.dock-btn {
+.dock-action-btn {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 9px 16px;
+  gap: 8px;
+  padding: 10px 18px;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid var(--border-glass);
-  font-family: var(--font-display);
+  font-family: var(--font-heading);
   font-weight: 700;
   font-size: 13px;
   letter-spacing: 0.03em;
   color: #f1f5f9;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
-.dock-btn:hover {
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.28);
+.dock-action-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.3);
   transform: translateY(-2px);
 }
 
-.dock-btn.primary {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border-color: rgba(74, 222, 128, 0.5);
-  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.45);
-}
-
-.dock-btn.gold {
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(217, 119, 6, 0.15) 100%);
+.dock-action-btn.boost-btn {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.22) 0%, rgba(217, 119, 6, 0.15) 100%);
   border-color: rgba(251, 191, 36, 0.45);
-  color: var(--accent-gold);
+  color: var(--gold-bright);
 }
 
-/* Virtual D-Pad */
-.virtual-dpad {
+.dock-action-btn.boost-btn:hover {
+  box-shadow: 0 0 16px var(--gold-glow);
+}
+
+/* Virtual Ergonomic D-Pad */
+.virtual-dpad-cluster {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 5px;
 }
 
-.dpad-row {
+.dpad-row-keys {
   display: flex;
   gap: 5px;
 }
 
-.dpad-key {
+.dpad-direction-button {
   width: 44px;
   height: 44px;
   border-radius: 12px;
@@ -930,69 +689,69 @@ button:disabled {
   display: grid;
   place-items: center;
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   transition: all 0.1s ease;
 }
 
-.dpad-key:active {
-  background: var(--accent-green);
-  color: #052e16;
-  box-shadow: 0 0 16px var(--accent-green-glow);
+.dpad-direction-button:active {
+  background: var(--green-primary);
+  color: #064e3b;
+  box-shadow: 0 0 18px var(--green-glow);
   transform: scale(0.92);
 }
 
-/* Hint Banner */
-.hint-banner {
-  position: absolute;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 30;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 18px;
-  background: rgba(18, 24, 52, 0.9);
-  border: 1px solid var(--accent-cyan);
-  border-radius: 999px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5), 0 0 20px var(--accent-cyan-glow);
-  font-size: 13px;
-  font-weight: 600;
-  color: #e0f2fe;
-  backdrop-filter: blur(12px);
-  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
 /* Notice Toast */
-.notice-toast {
+.notice-banner-pill {
   position: absolute;
   top: 76px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 30;
+  z-index: 35;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 18px;
-  background: rgba(15, 23, 42, 0.9);
+  padding: 8px 20px;
+  background: rgba(15, 23, 42, 0.92);
   border: 1px solid var(--border-glass);
   border-radius: 999px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
   font-size: 13px;
   font-weight: 600;
   color: #f1f5f9;
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(14px);
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Solver Hint Bar */
+.solver-hint-pill {
+  position: absolute;
+  bottom: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid var(--cyan-bright);
+  border-radius: 999px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 20px var(--cyan-glow);
+  font-size: 13px;
+  font-weight: 600;
+  color: #e0f2fe;
+  backdrop-filter: blur(14px);
   animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 /* ===================================================
-   MODALS & OVERLAYS (VICTORY, FAILURE, MAP, ETC.)
+   MODALS, OVERLAYS & LEVEL MAP
    =================================================== */
-.modal-overlay {
+.game-modal-backdrop {
   position: fixed;
   inset: 0;
   z-index: 100;
-  background: rgba(4, 6, 15, 0.82);
+  background: rgba(3, 5, 12, 0.85);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   display: grid;
@@ -1012,24 +771,24 @@ button:disabled {
   100% { transform: scale(1); opacity: 1; }
 }
 
-.modal-dialog {
+.game-modal-panel {
   position: relative;
   width: 100%;
-  max-width: 520px;
-  background: radial-gradient(circle at 50% 10%, #1f274a 0%, #101429 100%);
+  max-width: 540px;
+  background: radial-gradient(circle at 50% 10%, #1e254a 0%, #0f132b 100%);
   border: 1px solid var(--border-glass);
   border-radius: 28px;
-  padding: 32px 28px;
-  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 0, 0, 0.5);
+  padding: 34px 28px;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 0, 0, 0.5);
   animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.modal-close-btn {
+.modal-close-cross-btn {
   position: absolute;
   top: 18px;
   right: 18px;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid var(--border-glass);
@@ -1039,59 +798,59 @@ button:disabled {
   font-size: 18px;
 }
 
-.modal-close-btn:hover {
-  background: rgba(255, 255, 255, 0.18);
+.modal-close-cross-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
   color: #ffffff;
 }
 
-/* VICTORY SCREEN */
-.result-dialog {
+/* VICTORY OVERLAY */
+.victory-celebration-dialog {
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.trophy-glow-box {
-  width: 80px;
-  height: 80px;
+.victory-trophy-pedestal {
+  width: 84px;
+  height: 84px;
   border-radius: 50%;
   background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
   display: grid;
   place-items: center;
   color: #ffffff;
-  box-shadow: 0 0 35px var(--accent-gold-glow);
+  box-shadow: 0 0 40px var(--gold-glow);
   margin-bottom: 12px;
-  animation: bounceTrophy 1.2s ease-in-out infinite alternate;
+  animation: trophyFloatBounce 1.2s ease-in-out infinite alternate;
 }
 
-@keyframes bounceTrophy {
+@keyframes trophyFloatBounce {
   from { transform: translateY(0); }
   to { transform: translateY(-8px); }
 }
 
-.failure-glow-box {
-  width: 80px;
-  height: 80px;
+.defeat-warning-pedestal {
+  width: 84px;
+  height: 84px;
   border-radius: 50%;
   background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%);
   display: grid;
   place-items: center;
   color: #ffffff;
-  box-shadow: 0 0 35px var(--accent-ruby-glow);
+  box-shadow: 0 0 40px var(--ruby-glow);
   margin-bottom: 12px;
 }
 
-.result-title {
-  font-family: var(--font-display);
-  font-size: 28px;
+.modal-prominent-title {
+  font-family: var(--font-heading);
+  font-size: 30px;
   font-weight: 800;
   margin: 6px 0 14px;
   color: #ffffff;
 }
 
-/* Victory Stars Podium */
-.victory-stars-podium {
+/* 3-Star Animated Podium */
+.podium-stars-trio {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1099,9 +858,9 @@ button:disabled {
   margin: 10px 0 20px;
 }
 
-.victory-star-node {
-  width: 58px;
-  height: 58px;
+.star-podium-slot {
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--border-glass);
@@ -1111,21 +870,21 @@ button:disabled {
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.victory-star-node.center-star {
-  width: 72px;
-  height: 72px;
+.star-podium-slot.tall-center {
+  width: 76px;
+  height: 76px;
   margin-top: -14px;
 }
 
-.victory-star-node.earned {
+.star-podium-slot.earned {
   background: linear-gradient(135deg, #fef08a 0%, #fbbf24 60%, #b45309 100%);
   color: #78350f;
-  box-shadow: 0 0 26px var(--accent-gold-glow);
-  transform: scale(1.1);
+  box-shadow: 0 0 28px var(--gold-glow);
+  transform: scale(1.12);
 }
 
-/* Result Stats Row */
-.result-stats-row {
+/* Victory Stats Row */
+.stats-summary-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 10px;
@@ -1133,8 +892,8 @@ button:disabled {
   margin-bottom: 22px;
 }
 
-.result-stat-box {
-  background: rgba(18, 22, 42, 0.8);
+.summary-metric-card {
+  background: rgba(15, 20, 42, 0.85);
   border: 1px solid var(--border-glass);
   border-radius: 16px;
   padding: 12px;
@@ -1144,73 +903,73 @@ button:disabled {
   gap: 4px;
 }
 
-.result-stat-box small {
+.summary-metric-card small {
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.1em;
   color: #94a3b8;
 }
 
-.result-stat-box strong {
-  font-family: var(--font-display);
+.summary-metric-card strong {
+  font-family: var(--font-heading);
   font-size: 17px;
   font-weight: 800;
   color: #ffffff;
 }
 
-.result-stat-box.bonus strong {
-  color: var(--accent-gold);
+.summary-metric-card.bonus strong {
+  color: var(--gold-bright);
 }
 
-/* Modal Actions */
-.modal-actions-row {
+/* Modal Button Controls */
+.modal-btn-row {
   display: flex;
   align-items: center;
   gap: 12px;
   width: 100%;
 }
 
-.modal-btn-primary {
+.modal-primary-btn {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 13px 20px;
+  padding: 14px 22px;
   border-radius: 16px;
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border: 1px solid rgba(74, 222, 128, 0.5);
-  font-family: var(--font-display);
+  border: 1px solid rgba(52, 211, 153, 0.5);
+  font-family: var(--font-heading);
   font-weight: 800;
   font-size: 15px;
   letter-spacing: 0.02em;
   color: #ffffff;
-  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.5);
+  box-shadow: 0 4px 22px rgba(16, 185, 129, 0.55);
 }
 
-.modal-btn-secondary {
+.modal-secondary-btn {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 13px 20px;
+  padding: 14px 22px;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid var(--border-glass);
-  font-family: var(--font-display);
+  font-family: var(--font-heading);
   font-weight: 700;
   font-size: 14px;
   color: #f1f5f9;
 }
 
-.modal-btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.28);
+.modal-secondary-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
-/* Confetti Burst */
-.confetti-canvas {
+/* Confetti Shower */
+.celebration-confetti-stage {
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -1218,14 +977,14 @@ button:disabled {
   overflow: hidden;
 }
 
-.confetti-particle {
+.confetti-flake {
   position: absolute;
   top: -10px;
   border-radius: 3px;
-  animation: confettiFall linear forwards;
+  animation: confettiTumble linear forwards;
 }
 
-@keyframes confettiFall {
+@keyframes confettiTumble {
   0% { transform: translateY(0) rotate(0deg); opacity: 1; }
   100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
 }
@@ -1233,36 +992,31 @@ button:disabled {
 /* ===================================================
    SAGA REALMS & LEVEL MAP VIEW
    =================================================== */
-.saga-dialog {
-  max-width: 860px !important;
+.saga-world-map-dialog {
+  max-width: 900px !important;
   max-height: 88vh;
   display: flex;
   flex-direction: column;
 }
 
-.saga-header {
-  margin-bottom: 16px;
-}
-
-.saga-header h2 {
-  font-family: var(--font-display);
+.saga-header-meta h2 {
+  font-family: var(--font-heading);
   font-size: 26px;
   font-weight: 800;
 }
 
-/* World Selector Tabs */
-.world-tabs-carousel {
+.world-carousel-deck {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   overflow-x: auto;
   padding-bottom: 8px;
-  margin-bottom: 18px;
+  margin: 16px 0 18px;
 }
 
-.world-tab-card {
+.world-realm-tab-card {
   flex-shrink: 0;
-  padding: 10px 18px;
-  border-radius: 16px;
+  padding: 12px 18px;
+  border-radius: 18px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--border-glass);
   display: flex;
@@ -1274,84 +1028,85 @@ button:disabled {
   transition: all 0.2s ease;
 }
 
-.world-tab-card.active {
-  background: rgba(255, 255, 255, 0.16);
+.world-realm-tab-card.active {
+  background: rgba(255, 255, 255, 0.18);
   border-color: #ffffff;
   color: #ffffff;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
-.world-tab-count {
+.world-progress-badge {
   font-size: 11px;
-  padding: 2px 7px;
+  padding: 3px 8px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.45);
 }
 
-/* Level Grid */
-.saga-grid {
+/* Level Badges Grid */
+.level-pathway-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(95px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
   gap: 12px;
   max-height: 52vh;
   overflow-y: auto;
   padding: 6px;
 }
 
-.saga-node-btn {
+.level-node-badge {
   aspect-ratio: 1;
-  border-radius: 18px;
-  background: rgba(18, 22, 44, 0.8);
+  border-radius: 20px;
+  background: rgba(18, 24, 48, 0.85);
   border: 1px solid var(--border-glass);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 4px;
   position: relative;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
   transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.saga-node-btn:hover:not(.locked) {
-  transform: translateY(-3px) scale(1.04);
-  background: rgba(28, 35, 68, 0.9);
-  border-color: rgba(255, 255, 255, 0.35);
+.level-node-badge:hover:not(.locked) {
+  transform: translateY(-4px) scale(1.05);
+  background: rgba(28, 36, 72, 0.95);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
-.saga-node-btn.current {
-  border: 2px solid var(--accent-green);
-  box-shadow: 0 0 20px var(--accent-green-glow);
-  animation: currentPulse 2s infinite alternate;
+.level-node-badge.current-active {
+  border: 2px solid var(--green-bright);
+  box-shadow: 0 0 24px var(--green-glow);
+  animation: currentActivePulse 2s infinite alternate;
 }
 
-@keyframes currentPulse {
+@keyframes currentActivePulse {
   from { transform: scale(1); }
-  to { transform: scale(1.05); }
+  to { transform: scale(1.06); }
 }
 
-.saga-node-mascot {
+.level-node-mascot-head {
   position: absolute;
-  top: -12px;
-  font-size: 16px;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+  top: -14px;
+  width: 26px;
+  height: 26px;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.7));
 }
 
-.saga-node-num {
-  font-family: var(--font-display);
-  font-size: 18px;
+.level-node-number {
+  font-family: var(--font-heading);
+  font-size: 19px;
   font-weight: 800;
   color: #ffffff;
 }
 
-.saga-node-stars {
+.level-node-stars-label {
   font-size: 11px;
-  color: var(--accent-gold);
+  color: var(--gold-bright);
 }
 
-.saga-node-btn.locked {
-  opacity: 0.45;
-  background: rgba(12, 15, 30, 0.6);
+.level-node-badge.locked {
+  opacity: 0.4;
+  background: rgba(12, 16, 32, 0.6);
   border-color: rgba(255, 255, 255, 0.05);
   cursor: not-allowed;
 }
@@ -1359,19 +1114,19 @@ button:disabled {
 /* ===================================================
    HALL OF FAME LEADERBOARD
    =================================================== */
-.podium-container {
+.podium-trio-stage {
   display: grid;
   grid-template-columns: 1fr 1.15fr 1fr;
   gap: 12px;
   align-items: flex-end;
-  margin: 16px 0 22px;
+  margin: 18px 0 24px;
 }
 
-.podium-step {
-  background: rgba(18, 22, 44, 0.75);
+.podium-pedestal-card {
+  background: rgba(18, 24, 48, 0.8);
   border: 1px solid var(--border-glass);
   border-radius: 20px;
-  padding: 16px 12px;
+  padding: 18px 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1379,85 +1134,85 @@ button:disabled {
   text-align: center;
 }
 
-.podium-step.rank-1 {
-  background: linear-gradient(180deg, rgba(251, 191, 36, 0.2) 0%, rgba(18, 22, 44, 0.85) 100%);
-  border-color: rgba(251, 191, 36, 0.45);
-  padding-bottom: 24px;
+.podium-pedestal-card.first-place {
+  background: linear-gradient(180deg, rgba(251, 191, 36, 0.22) 0%, rgba(18, 24, 48, 0.9) 100%);
+  border-color: rgba(251, 191, 36, 0.5);
+  padding-bottom: 26px;
 }
 
-.podium-crown {
+.podium-emblem {
   font-size: 28px;
 }
 
-.podium-name {
+.podium-player-name {
   font-weight: 800;
   font-size: 14px;
   color: #ffffff;
 }
 
-.podium-score {
-  font-family: var(--font-display);
+.podium-stars-count {
+  font-family: var(--font-heading);
   font-weight: 800;
   font-size: 13px;
-  color: var(--accent-gold);
+  color: var(--gold-bright);
 }
 
 /* ===================================================
    RESPONSIVE DESIGN (MOBILE & TABLET OPTIMIZATIONS)
    =================================================== */
 @media (max-width: 768px) {
-  .game-hud-top {
-    padding: 8px 12px;
-    gap: 8px;
-  }
-
-  .brand-title {
-    display: none;
-  }
-
-  .realm-badge {
-    font-size: 11px;
-    padding: 5px 9px;
-  }
-
-  .hud-stat-pill {
-    padding: 5px 10px;
-    font-size: 11px;
-  }
-
-  .hud-text-btn {
-    display: none;
-  }
-
-  .game-stage {
-    padding: 6px 10px;
-  }
-
-  .board-island-wrapper {
-    max-width: 94vmin;
-  }
-
-  .board-island {
-    padding: 8px;
-    border-radius: 20px;
-  }
-
-  .game-dock {
+  .game-arcade-hud {
     padding: 8px 14px;
     gap: 8px;
   }
 
-  .dock-btn {
+  .brand-title-text {
+    display: none;
+  }
+
+  .hud-realm-tag {
+    font-size: 11px;
+    padding: 5px 10px;
+  }
+
+  .hud-metric-pill {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+
+  .hud-nav-tab-btn {
+    display: none;
+  }
+
+  .game-play-stage {
+    padding: 6px 10px;
+  }
+
+  .garden-board-wrapper {
+    max-width: 95vmin;
+  }
+
+  .garden-floating-island {
+    padding: 8px;
+    border-radius: 20px;
+  }
+
+  .game-bottom-dock {
+    padding: 8px 16px;
+    gap: 8px;
+  }
+
+  .dock-action-btn {
     padding: 8px 12px;
     font-size: 12px;
   }
 
-  .dpad-key {
+  .dpad-direction-button {
     width: 38px;
     height: 38px;
   }
 
-  .saga-grid {
+  .level-pathway-grid {
     grid-template-columns: repeat(4, 1fr);
   }
 }
