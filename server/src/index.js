@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { existsSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,7 +27,10 @@ import playerRoutes from './routes/player.js';
 
 const app = express();
 app.disable('x-powered-by');
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false, // React app manages its own CSP
+  crossOriginEmbedderPolicy: false,
+}));
 
 const configuredOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:5173')
   .split(',')
@@ -66,8 +70,20 @@ app.use('/api/player', rateLimit({ windowMs: 60 * 1000, limit: 120, standardHead
 app.use('/api/auth', authRoutes);
 app.use('/api/economy', economyRoutes);
 
-app.get('/', (_req, res) => res.json({ status: 'online', game: GAME_NAME, health: '/api/health' }));
 app.get('/api/health', (_req, res) => res.json({ ok: true, gameName: GAME_NAME, service: 'apple-worm-adventure-api' }));
+
+// Serve React frontend static files in production
+const clientDist = path.resolve(__dirname, '../../client/dist');
+if (existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  // All non-API routes → serve React index.html (SPA routing)
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(clientDist, 'index.html'));
+  });
+} else {
+  // Fallback if frontend not built
+  app.get('/', (_req, res) => res.json({ status: 'online', game: GAME_NAME, health: '/api/health' }));
+}
 
 app.use((err, _req, res, _next) => {
   console.error(err);
