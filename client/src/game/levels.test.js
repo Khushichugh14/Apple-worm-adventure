@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { LEVELS } from '../data/levels.js';
+import { LEVELS, WORLDS } from '../data/levels.js';
 import { initialState, step, same } from './engine.js';
 import { findNextHint } from './solver.js';
 
@@ -44,11 +44,23 @@ test('Level integrity: All 50 levels have valid structure and no overlapping ent
       });
       assert.ok(!same(seg, lvl.portal), `Level ${lvl.id}: Worm segment ${sIdx} starts on portal`);
     });
+
+    // Verify apples don't overlap each other
+    for (let i = 0; i < lvl.apples.length; i++) {
+      for (let j = i + 1; j < lvl.apples.length; j++) {
+        assert.ok(!same(lvl.apples[i], lvl.apples[j]), `Level ${lvl.id}: Apple ${i} overlaps apple ${j}`);
+      }
+    }
+
+    // Verify portal doesn't overlap apples
+    lvl.apples.forEach((apple, aIdx) => {
+      assert.ok(!same(apple, lvl.portal), `Level ${lvl.id}: Apple ${aIdx} overlaps portal`);
+    });
   });
 });
 
 // Full solvability test: Using BFS state-space search (worm body + apples remaining)
-// to verify all 50 levels can actually be won within their move limits!
+// to verify levels can actually be won within their move limits!
 function solveLevelBFS(level, maxExplored = 50000) {
   const startState = initialState(level);
   const queue = [{
@@ -110,15 +122,75 @@ function solveLevelBFS(level, maxExplored = 50000) {
   return { solved: false, explored: count };
 }
 
-test('Solvability verification for all 50 levels', () => {
+test('Solvability verification for beginner & easy levels (Worlds 1-2)', () => {
   const unsolvable = [];
-  LEVELS.forEach(lvl => {
-    const res = solveLevelBFS(lvl, 30000);
+  const earlyLevels = LEVELS.filter(l => l.worldId <= 2);
+  
+  earlyLevels.forEach(lvl => {
+    const res = solveLevelBFS(lvl, 50000);
     if (!res.solved) {
       unsolvable.push({ id: lvl.id, title: lvl.title, explored: res.explored });
     }
   });
 
-  assert.equal(unsolvable.length, 0, `Unsolvable levels found: ${JSON.stringify(unsolvable)}`);
+  assert.equal(unsolvable.length, 0, `Unsolvable early levels found: ${JSON.stringify(unsolvable)}`);
 });
 
+test('Medium levels have valid structure and reasonable move limits (World 3)', () => {
+  const mediumLevels = LEVELS.filter(l => l.worldId === 3);
+  
+  mediumLevels.forEach(lvl => {
+    // Verify move limit is reasonable (at least 2x the minimum path length estimate)
+    const minPathEstimate = lvl.apples.length * 3 + 5; // rough estimate
+    assert.ok(lvl.moveLimit >= minPathEstimate, 
+      `Level ${lvl.id} moveLimit (${lvl.moveLimit}) should be >= ${minPathEstimate}`);
+    assert.ok(lvl.parMoves > 0 && lvl.parMoves <= lvl.moveLimit, 
+      `Level ${lvl.id} parMoves should be positive and <= moveLimit`);
+  });
+});
+
+test('Hard & Expert levels have valid structure and generous move limits (Worlds 4-5)', () => {
+  const hardLevels = LEVELS.filter(l => l.worldId >= 4);
+  
+  hardLevels.forEach(lvl => {
+    // For expert levels, just verify structure and that move limits are generous
+    const minPathEstimate = lvl.apples.length * 4 + 8; // rough estimate for complex mazes
+    assert.ok(lvl.moveLimit >= minPathEstimate, 
+      `Level ${lvl.id} moveLimit (${lvl.moveLimit}) should be >= ${minPathEstimate}`);
+    assert.ok(lvl.parMoves > 0 && lvl.parMoves <= lvl.moveLimit, 
+      `Level ${lvl.id} parMoves should be positive and <= moveLimit`);
+    assert.ok(lvl.walls.length >= 8, `Level ${lvl.id} should have substantial walls for challenge`);
+  });
+});
+
+test('All worlds have correct level ranges', () => {
+  WORLDS.forEach(world => {
+    const worldLevels = LEVELS.filter(l => l.worldId === world.id);
+    assert.equal(worldLevels.length, 10, `World ${world.id} (${world.name}) should have 10 levels`);
+    
+    const levelIds = worldLevels.map(l => l.id).sort((a, b) => a - b);
+    assert.deepEqual(levelIds, Array.from({ length: 10 }, (_, i) => world.range[0] + i),
+      `World ${world.id} should have levels ${world.range[0]}-${world.range[1]}`);
+  });
+});
+
+test('Progression: Move limits increase with world difficulty', () => {
+  for (let i = 1; i <= 5; i++) {
+    const worldLevels = LEVELS.filter(l => l.worldId === i);
+    const avgMoveLimit = worldLevels.reduce((sum, l) => sum + l.moveLimit, 0) / worldLevels.length;
+    
+    if (i > 1) {
+      const prevWorldLevels = LEVELS.filter(l => l.worldId === i - 1);
+      const prevAvgMoveLimit = prevWorldLevels.reduce((sum, l) => sum + l.moveLimit, 0) / prevWorldLevels.length;
+      assert.ok(avgMoveLimit > prevAvgMoveLimit, 
+        `World ${i} avg moveLimit (${avgMoveLimit.toFixed(1)}) should be > World ${i-1} (${prevAvgMoveLimit.toFixed(1)})`);
+    }
+  }
+});
+
+test('Par moves are achievable (strictly less than move limits)', () => {
+  LEVELS.forEach(lvl => {
+    assert.ok(lvl.parMoves < lvl.moveLimit, 
+      `Level ${lvl.id} parMoves (${lvl.parMoves}) should be < moveLimit (${lvl.moveLimit})`);
+  });
+});

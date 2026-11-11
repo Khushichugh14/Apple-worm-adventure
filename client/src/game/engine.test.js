@@ -171,7 +171,7 @@ test('step fails if move limit exceeded', () => {
   assert.equal(move1.status, 'playing');
   const move2 = step(move1, 'down', limitedLevel);
   assert.equal(move2.status, 'failed');
-  assert.match(move2.reason, /No moves left/i);
+  assert.match(move2.reason, /Move limit exceeded/i);
 });
 
 test('step completes level when portal reached and all apples are collected', () => {

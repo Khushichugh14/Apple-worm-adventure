@@ -1,0 +1,41 @@
+{
+  "name": "Apple Worm Adventure",
+  "short_name": "Apple Worm",
+  "description": "A premium strategic puzzle game. Guide your worm through 50 handcrafted gardens across 5 mystical realms.",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "portrait-primary",
+  "background_color": "#05070d",
+  "theme_color": "#05070d",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["games", "entertainment"],
+  "shortcuts": [
+    {
+      "name": "Continue Game",
+      "short_name": "Continue",
+      "description": "Continue your current game",
+      "url": "/?continue=true",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Level Map",
+      "short_name": "Map",
+      "description": "Browse all realms and levels",
+      "url": "/?map=true",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
