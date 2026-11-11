@@ -1,0 +1,14 @@
+{
+  "name": "apple-worm-adventure",
+  "version": "1.0.0",
+  "description": "Apple Worm Adventure - Full Stack Puzzle Game",
+  "scripts": {
+    "build": "npm install --prefix server && npm install --prefix client && npm run build --prefix client",
+    "start": "node server/src/index.js",
+    "dev:server": "node server/src/index.js",
+    "dev:client": "npm run dev --prefix client"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
