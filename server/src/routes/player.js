@@ -8,6 +8,29 @@ import WalletTransaction from '../models/WalletTransaction.js';
 
 const router = Router();
 
+function computeAchievements(user, levelProgress = {}) {
+  const lp = levelProgress || {};
+  const completedCount = Object.keys(lp).filter(k => (lp[k]?.bestStars || 0) > 0).length || (user.completedLevels?.length || 0);
+  const perfectLevels = Object.values(lp).filter(p => (p?.bestStars || 0) === 3).length;
+  const skins = user.ownedSkins || ['emerald'];
+  const coins = user.coins || 0;
+  const totalStars = Object.values(lp).reduce((s,p)=>s+(p?.bestStars||0),0) || user.totalStars || 0;
+  const worldRanges = [[1,10],[11,20],[21,30],[31,40],[41,50]];
+  const worldClears = worldRanges.filter(([a,b]) => { for(let i=a;i<=b;i++){ if(!((lp[i]?.bestStars||0)>0 || (user.completedLevels||[]).includes(i))) return false; } return true; }).length;
+  const unlocked = [];
+  if (completedCount >= 1) unlocked.push('first-step');
+  if (completedCount >= 10) unlocked.push('garden-10');
+  if (completedCount >= 25) unlocked.push('garden-25');
+  if (completedCount >= 50) unlocked.push('garden-50');
+  if (perfectLevels >= 5) unlocked.push('perfect-5');
+  if (perfectLevels >= 20) unlocked.push('perfect-20');
+  if (worldClears >= 1) unlocked.push('world-clear');
+  if (skins.length >= 3) unlocked.push('collector');
+  if (coins >= 300) unlocked.push('wealthy');
+  if (totalStars >= 50) unlocked.push('star-50');
+  return Array.from(new Set([...(user.achievements||[]), ...unlocked]));
+}
+
 // Default demo hall of fame gardeners for leaderboard vibrancy
 const DEMO_LEADERBOARD = [
   { rank: 1, name: 'Khushi the Sage', currentLevel: 50, totalStars: 150, totalScore: 8420, completedCount: 50, badge: '👑 Master Gardener' },
@@ -205,8 +228,19 @@ router.post('/progress', requireAuth, async (req, res, next) => {
       user.completedLevels.push(levelId);
     }
 
+    // Persist per-level bests
+    const lp = user.levelProgress ? Object.fromEntries(user.levelProgress) : {};
+    const prev = lp[levelId] || {};
+    lp[levelId] = {
+      bestStars: Math.max(prev.bestStars || 0, stars),
+      bestMoves: prev.bestMoves ? Math.min(prev.bestMoves, moves) : moves,
+      bestScore: Math.max(prev.bestScore || 0, score)
+    };
+    user.levelProgress = lp;
+
     user.totalScore += Math.min(score, 5000);
-    user.totalStars = Math.min(150, user.totalStars + (firstCompletion ? stars : 0));
+    const totalStars = Object.values(lp).reduce((s, p) => s + (p.bestStars || 0), 0);
+    user.totalStars = Math.min(150, totalStars);
     user.currentLevel = Math.min(50, Math.max(user.currentLevel, levelId + (firstCompletion ? 1 : 0)));
 
     if (firstCompletion) {
@@ -223,6 +257,7 @@ router.post('/progress', requireAuth, async (req, res, next) => {
       });
     }
 
+    user.achievements = computeAchievements(user, lp);
     await user.save();
 
     res.json({
@@ -230,11 +265,124 @@ router.post('/progress', requireAuth, async (req, res, next) => {
       coins: user.coins,
       totalScore: user.totalScore,
       totalStars: user.totalStars,
-      completedLevels: user.completedLevels
+      completedLevels: user.completedLevels,
+      levelProgress: user.levelProgress ? Object.fromEntries(user.levelProgress) : lp,
+      achievements: user.achievements || []
     });
   } catch (e) {
     next(e);
   }
+});
+
+// GET /api/player/sync - fetch full player meta for client hydration
+router.get('/sync', requireAuth, async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.sub).lean();
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({
+      user: {
+        id: user._id, name: user.name, email: user.email,
+        coins: user.coins, currentLevel: user.currentLevel,
+        totalScore: user.totalScore, totalStars: user.totalStars,
+        completedLevels: user.completedLevels || [],
+        ownedSkins: user.ownedSkins && user.ownedSkins.length ? user.ownedSkins : ['emerald'],
+        levelProgress: user.levelProgress || {},
+        achievements: user.achievements || [],
+        settings: user.settings || {},
+        dailyRewardClaimedAt: user.dailyRewardClaimedAt || null
+      }
+    });
+  } catch (e) { next(e); }
+});
+
+// POST /api/player/sync - merge client meta (best-effort, non-destructive)
+router.post('/sync', requireAuth, async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.sub);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    const body = req.body || {};
+
+    if (Array.isArray(body.ownedSkins)) {
+      const merged = new Set([...(user.ownedSkins || ['emerald']), ...body.ownedSkins.filter(s => typeof s === 'string').slice(0, 50)]);
+      user.ownedSkins = Array.from(merged);
+    }
+    if (Array.isArray(body.achievements)) {
+      const merged = new Set([...(user.achievements || []), ...body.achievements.filter(a => typeof a === 'string').slice(0, 100)]);
+      user.achievements = Array.from(merged).slice(0, 200);
+    }
+    if (body.settings && typeof body.settings === 'object') {
+      user.settings = { ...(user.settings || {}), ...body.settings };
+    }
+    if (Number.isInteger(body.currentLevel)) {
+      user.currentLevel = Math.min(50, Math.max(user.currentLevel || 1, body.currentLevel));
+    }
+    if (Array.isArray(body.completedLevels)) {
+      const merged = new Set([...(user.completedLevels || []), ...body.completedLevels.filter(n => Number.isInteger(n) && n >= 1 && n <= 50)]);
+      user.completedLevels = Array.from(merged).sort((a,b)=>a-b);
+    }
+    if (body.levelProgress && typeof body.levelProgress === 'object') {
+      const lp = user.levelProgress ? Object.fromEntries(user.levelProgress) : {};
+      for (const [k, v] of Object.entries(body.levelProgress).slice(0, 60)) {
+        if (!v || typeof v !== 'object') continue;
+        const id = Number(k); if (!Number.isInteger(id) || id < 1 || id > 50) continue;
+        const prev = lp[id] || {};
+        lp[id] = {
+          bestStars: Math.max(prev.bestStars || 0, Math.min(3, Number(v.bestStars) || 0)),
+          bestMoves: prev.bestMoves ? Math.min(prev.bestMoves, Number(v.bestMoves) || prev.bestMoves) : (Number(v.bestMoves) || 0),
+          bestScore: Math.max(prev.bestScore || 0, Number(v.bestScore) || 0)
+        };
+      }
+      user.levelProgress = lp;
+    }
+    // Recompute totals and achievements authoritatively
+    const lpVals = user.levelProgress ? Object.values(Object.fromEntries(user.levelProgress)) : [];
+    if (lpVals.length) {
+      const stars = lpVals.reduce((s, p) => s + (p.bestStars || 0), 0);
+      user.totalStars = Math.max(user.totalStars || 0, Math.min(150, stars));
+    }
+    user.achievements = computeAchievements(user, user.levelProgress ? Object.fromEntries(user.levelProgress) : {});
+
+    await user.save();
+    res.json({
+      ok: true,
+      user: {
+        id: user._id, name: user.name, email: user.email,
+        coins: user.coins, currentLevel: user.currentLevel,
+        totalScore: user.totalScore, totalStars: user.totalStars,
+        completedLevels: user.completedLevels || [],
+        ownedSkins: user.ownedSkins || ['emerald'],
+        levelProgress: user.levelProgress ? Object.fromEntries(user.levelProgress) : {},
+        achievements: user.achievements || [],
+        settings: user.settings || {},
+        dailyRewardClaimedAt: user.dailyRewardClaimedAt || null
+      }
+    });
+  } catch (e) { next(e); }
+});
+
+// POST /api/player/daily-reward - claim once per UTC day
+router.post('/daily-reward', requireAuth, async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.sub);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    const now = new Date();
+    const today = now.toISOString().slice(0,10);
+    const last = user.dailyRewardClaimedAt ? new Date(user.dailyRewardClaimedAt).toISOString().slice(0,10) : null;
+    if (last === today) {
+      return res.json({ claimed: false, coins: user.coins, message: 'Daily reward already claimed today.' });
+    }
+    const reward = 20 + (Math.floor(now.getTime()/86400000) % 15);
+    const before = user.coins;
+    user.coins += reward;
+    user.dailyRewardClaimedAt = now;
+    await WalletTransaction.create({
+      userId: user._id, type: 'CREDIT', amount: reward,
+      balanceBefore: before, balanceAfter: user.coins,
+      source: 'DAILY_REWARD', referenceId: `daily-${today}`
+    });
+    await user.save();
+    res.json({ claimed: true, reward, coins: user.coins, message: `Daily reward claimed: +${reward} coins` });
+  } catch (e) { next(e); }
 });
 
 export default router;

@@ -7,6 +7,17 @@ const DIRECTIONS = [
   { name: 'right', delta: [1, 0] }
 ];
 
+function blocked(pos, level, state) {
+  const doors = state.doors ?? level.doors ?? [];
+  const movingBlocks = state.movingBlocks ?? level.movingBlocks ?? [];
+  const hazards = level.hazards ?? [];
+  if (level.walls.some(w => same(w, pos))) return true;
+  if (doors.some(d => same(d, pos))) return true;
+  if (movingBlocks.some(b => same(b, pos))) return true;
+  if (hazards.some(h => same(h, pos))) return true;
+  return false;
+}
+
 export function findNextHint(state, level) {
   if (!state || state.status !== 'playing' || !state.worm || !state.worm.length) {
     return null;
@@ -16,7 +27,6 @@ export function findNextHint(state, level) {
   const targets = state.apples.length > 0 ? state.apples : [level.portal];
   const targetLabel = state.apples.length > 0 ? 'the next apple' : 'the portal';
 
-  // BFS Queue: [x, y, pathOfCoords, firstDirection]
   const queue = [];
   const visited = new Set();
   const key = p => `${p[0]},${p[1]}`;
@@ -28,12 +38,10 @@ export function findNextHint(state, level) {
     const ny = head[1] + dir.delta[1];
     const nextPos = [nx, ny];
 
-    // Bounds check
     if (nx < 0 || ny < 0 || nx >= level.size || ny >= level.size) continue;
-    // Wall check
-    if (level.walls.some(w => same(w, nextPos))) continue;
-    // Body check (exclude tail because it will move forward unless head is eating)
-    const body = state.apples.some(a => same(a, nextPos)) ? state.worm : state.worm.slice(0, -1);
+    if (blocked(nextPos, level, state)) continue;
+    const eating = state.apples.some(a => same(a, nextPos));
+    const body = eating ? state.worm : state.worm.slice(0, -1);
     if (body.some(b => same(b, nextPos))) continue;
 
     visited.add(key(nextPos));
@@ -43,7 +51,6 @@ export function findNextHint(state, level) {
   while (queue.length > 0) {
     const { pos, path, firstDir } = queue.shift();
 
-    // Check if reached any target
     const reachedTarget = targets.find(t => same(t, pos));
     if (reachedTarget) {
       return {
@@ -62,7 +69,7 @@ export function findNextHint(state, level) {
 
       if (nx < 0 || ny < 0 || nx >= level.size || ny >= level.size) continue;
       if (visited.has(key(nextPos))) continue;
-      if (level.walls.some(w => same(w, nextPos))) continue;
+      if (blocked(nextPos, level, state)) continue;
 
       visited.add(key(nextPos));
       queue.push({

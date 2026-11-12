@@ -1,10 +1,12 @@
 // Service Worker for Apple Worm Adventure
-const CACHE_NAME = 'apple-worm-adventure-v1';
+const CACHE_NAME = 'apple-worm-adventure-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icons/icon.svg'
+  '/icons/icon.svg',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png'
 ];
 
 // Install event - cache static assets

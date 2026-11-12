@@ -4,7 +4,21 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import { requireAuth } from '../middleware/auth.js';
 const router = Router();
-const safeUser = user => ({ id: user._id, name: user.name, email: user.email, coins: user.coins, currentLevel: user.currentLevel, totalScore: user.totalScore, totalStars: user.totalStars, completedLevels: user.completedLevels || [] });
+const safeUser = user => ({
+  id: user._id,
+  name: user.name,
+  email: user.email,
+  coins: user.coins,
+  currentLevel: user.currentLevel,
+  totalScore: user.totalScore,
+  totalStars: user.totalStars,
+  completedLevels: user.completedLevels || [],
+  ownedSkins: user.ownedSkins && user.ownedSkins.length ? user.ownedSkins : ['emerald'],
+  levelProgress: user.levelProgress ? Object.fromEntries(user.levelProgress) : {},
+  achievements: user.achievements || [],
+  settings: user.settings || {},
+  dailyRewardClaimedAt: user.dailyRewardClaimedAt || null
+});
 const tokenFor = user => jwt.sign({ sub: user._id.toString(), email: user.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
 router.post('/register', async (req, res, next) => {
   try {

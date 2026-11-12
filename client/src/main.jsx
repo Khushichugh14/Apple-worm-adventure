@@ -7,7 +7,7 @@ import {
   Trophy, Volume2, VolumeX, Zap, User as UserIcon, LogOut, Check, X,
   Compass, Play, RefreshCw, Flame, Crown, Flag, AlertCircle,
   Maximize2, Minimize2, Music, Undo2, HelpCircle, MapPin, ShoppingBag,
-  Heart, Gift, Palette, Crown as CrownIcon
+  Heart, Gift, Palette, Crown as CrownIcon, KeyRound
 } from 'lucide-react';
 import { GAME_NAME, API_URL } from './config/gameConfig';
 import { LEVELS, WORLDS } from './data/levels';
@@ -24,6 +24,14 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.log('SW registration failed:', err));
   });
 }
+
+const hideSplash = () => {
+  const splash = document.getElementById('app-splash');
+  if (splash) {
+    splash.classList.add('hidden');
+    setTimeout(() => splash.remove(), 450);
+  }
+};
 
 const SKINS = [
   { id: 'emerald', name: 'Emerald', primary: '#10b981', secondary: '#059669', highlight: '#86efac', glow: 'rgba(52, 211, 153, 0.6)', label: 'Classic Garden', price: 0, owned: true },
@@ -45,7 +53,7 @@ function calculateStars(moves, limit, parMoves) {
    PREMIUM CUSTOM VECTOR GRAPHIC COMPONENTS
    =================================================== */
 
-// 1. Cute Expressive Worm Head with Dynamic Expressions
+// 1. Expressive Worm Head with Dynamic Expressions
 function WormHeadSVG({ facing = 'right', skinId = 'emerald', expression = 'idle', skinColor = {} }) {
   const skin = SKINS.find(s => s.id === skinId) || SKINS[0];
   const primary = skinColor.primary || skin.primary;
@@ -56,75 +64,69 @@ function WormHeadSVG({ facing = 'right', skinId = 'emerald', expression = 'idle'
   const isEating = expression === 'eating';
   const isMoving = expression === 'moving';
   const isHappy = expression === 'happy';
+  const eyeRy = isEating ? 6 : isHappy ? 7 : 11;
+  const pupilR = isEating ? 3.2 : 5.2;
 
   return (
-    <svg className={`worm-head-svg-container facing-${facing} ${isMoving ? 'moving' : ''} ${isEating ? 'eating' : ''} ${!isMoving && !isEating ? 'idle' : ''}`} viewBox="0 0 100 100" style={{ filter: 'drop-shadow(0 5px 10px rgba(0,0,0,0.6))' }}>
+    <svg className={`worm-head-svg-container facing-${facing} ${isMoving ? 'moving' : ''} ${isEating ? 'eating' : ''} ${!isMoving && !isEating ? 'idle' : ''}`} viewBox="0 0 100 100">
       <defs>
-        <radialGradient id={gradId} cx="35%" cy="30%" r="65%">
+        <radialGradient id={gradId} cx="32%" cy="28%" r="70%">
           <stop offset="0%" stopColor={highlight} />
-          <stop offset="60%" stopColor={primary} />
+          <stop offset="45%" stopColor={primary} />
           <stop offset="100%" stopColor={secondary} />
         </radialGradient>
-        <filter id="headDropShadow" x="-10%" y="-10%" width="130%" height="130%">
-          <feDropShadow dx="0" dy="4" stdDeviation="3" floodColor="#000000" floodOpacity="0.45" />
+        <linearGradient id={`${gradId}-shine`} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.45" />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+        </linearGradient>
+        <filter id="headDropShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="5" stdDeviation="4" floodColor="#000000" floodOpacity="0.5" />
         </filter>
       </defs>
 
-      {/* Head Leaf Sprout - animated */}
-      <g className="head-sprout-leaf" transform="translate(46, 8)" style={{ transformOrigin: '50% 100%' }}>
-        <path d="M4 14 C4 4, 18 2, 20 8 C22 14, 12 18, 4 14 Z" fill="#4ade80" stroke="#15803d" strokeWidth="1.5" />
-        <path d="M4 14 C10 10, 16 9, 19 8" stroke="#166534" strokeWidth="1" fill="none" />
-        <path d="M4 14 Q2 20 4 24" stroke="#78350f" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-        {isHappy && <animateTransform attributeName="transform" type="rotate" from="10 20 20" to="-10 20 20" dur="0.5s" repeatCount="indefinite" />}
+      <ellipse cx="50" cy="60" rx="32" ry="14" fill="rgba(0,0,0,0.25)" />
+      <g className="head-sprout-leaf" transform="translate(46, 6)" style={{ transformOrigin: '50% 100%' }}>
+        <path d="M4 16 C2 6, 16 0, 24 8 C28 14, 18 20, 6 16 Z" fill="#4ade80" stroke="#166534" strokeWidth="1.6" />
+        <path d="M5 16 C12 10, 18 9, 22 9" stroke="#14532d" strokeWidth="1.2" fill="none" />
+        <path d="M4 16 Q1 22 3 28" stroke="#78350f" strokeWidth="3" strokeLinecap="round" fill="none" />
       </g>
 
-      {/* Main Head Base */}
-      <circle cx="50" cy="54" r="40" fill={`url(#${gradId})`} filter="url(#headDropShadow)" />
+      <ellipse cx="50" cy="54" rx="41" ry="39" fill={`url(#${gradId})`} filter="url(#headDropShadow)" />
+      <ellipse cx="50" cy="48" rx="34" ry="24" fill={`url(#${gradId}-shine)`} opacity="0.35" />
+      <path d="M18 56 Q50 72 82 56" stroke="rgba(255,255,255,0.18)" strokeWidth="5" fill="none" strokeLinecap="round" />
 
-      {/* Specular Head Highlight */}
-      <ellipse cx="38" cy="32" rx="14" ry="9" fill="#ffffff" opacity="0.45" transform="rotate(-20 38 32)" />
+      <ellipse cx="37" cy="31" rx="14" ry="9" fill="#ffffff" opacity="0.45" transform="rotate(-18 37 31)" />
+      <ellipse cx="24" cy="63" rx={isEating ? 8.5 : 6.5} ry={isEating ? 5.5 : 4.2} fill="#fb7185" opacity={isEating ? 0.95 : 0.75} />
+      <ellipse cx="76" cy="63" rx={isEating ? 8.5 : 6.5} ry={isEating ? 5.5 : 4.2} fill="#fb7185" opacity={isEating ? 0.95 : 0.75} />
 
-      {/* Rosy Cheeks - animate when eating */}
-      <ellipse cx="24" cy="62" rx={isEating ? 8 : 6} ry={isEating ? 5 : 4} fill="#fb7185" opacity={isEating ? 1 : 0.8} style={{ transition: 'all 0.1s' }} />
-      <ellipse cx="76" cy="62" rx={isEating ? 8 : 6} ry={isEating ? 5 : 4} fill="#fb7185" opacity={isEating ? 1 : 0.8} style={{ transition: 'all 0.1s' }} />
-
-      {/* Kawaii Cartoon Eyes - expressive */}
-      {/* Left Eye */}
-      <g transform="translate(32, 42)" style={{ transformOrigin: '0 0' }}>
-        <ellipse cx="0" cy="0" rx="8" ry={isEating ? 6 : 11} fill="#ffffff" stroke="#0f172a" strokeWidth="1.5" />
-        <circle cx="2" cy={isEating ? 0 : 0} r={isEating ? 3 : 5} fill="#0f172a" style={{ transition: 'all 0.1s' }} />
-        <circle cx="0.5" cy="-2" r="2.5" fill="#ffffff" />
-        <circle cx="3" cy="2" r="1" fill="#ffffff" />
-        {isHappy && (
-          <g transform="scale(1, 0.3)">
-            <ellipse cx="0" cy="6" rx="8" ry="3" fill="#0f172a" />
-          </g>
-        )}
+      <g transform="translate(33, 43)">
+        <ellipse cx="0" cy="0" rx="9" ry={eyeRy} fill="#ffffff" stroke="#0f172a" strokeWidth="1.6" />
+        <g className="worm-eye-pupil">
+          <circle cx="2.2" cy={isEating ? 0.5 : 0} r={pupilR} fill="#0f172a" />
+          <circle cx="0.2" cy="-2.2" r="2.6" fill="#ffffff" />
+          <circle cx="3.6" cy="1.8" r="1.1" fill="#ffffff" opacity="0.9" />
+        </g>
+        {isHappy && <path d="M-6 1 Q0 -4 6 1" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" fill="none" />}
+      </g>
+      <g transform="translate(67, 43)">
+        <ellipse cx="0" cy="0" rx="9" ry={eyeRy} fill="#ffffff" stroke="#0f172a" strokeWidth="1.6" />
+        <g className="worm-eye-pupil">
+          <circle cx="2.2" cy={isEating ? 0.5 : 0} r={pupilR} fill="#0f172a" />
+          <circle cx="0.2" cy="-2.2" r="2.6" fill="#ffffff" />
+          <circle cx="3.6" cy="1.8" r="1.1" fill="#ffffff" opacity="0.9" />
+        </g>
+        {isHappy && <path d="M-6 1 Q0 -4 6 1" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" fill="none" />}
       </g>
 
-      {/* Right Eye */}
-      <g transform="translate(68, 42)" style={{ transformOrigin: '0 0' }}>
-        <ellipse cx="0" cy="0" rx="8" ry={isEating ? 6 : 11} fill="#ffffff" stroke="#0f172a" strokeWidth="1.5" />
-        <circle cx="2" cy={isEating ? 0 : 0} r={isEating ? 3 : 5} fill="#0f172a" style={{ transition: 'all 0.1s' }} />
-        <circle cx="0.5" cy="-2" r="2.5" fill="#ffffff" />
-        <circle cx="3" cy="2" r="1" fill="#ffffff" />
-        {isHappy && (
-          <g transform="scale(1, 0.3)">
-            <ellipse cx="0" cy="6" rx="8" ry="3" fill="#0f172a" />
-          </g>
-        )}
-      </g>
-
-      {/* Mouth - expressive based on state */}
       {isEating ? (
-        <g transform="translate(50, 70)">
-          <ellipse cx="0" cy="0" rx="12" ry="8" fill="#0f172a" />
-          <ellipse cx="0" cy="0" rx="8" ry="4" fill="#1e293b" />
+        <g transform="translate(50, 71)">
+          <ellipse cx="0" cy="0" rx="11" ry="8" fill="#450a0a" stroke="#0f172a" strokeWidth="1.5" />
+          <ellipse cx="0" cy="2" rx="6" ry="3.5" fill="#fb7185" opacity="0.85" />
         </g>
       ) : isHappy ? (
-        <path d="M35 70 Q50 82 65 70" stroke="#0f172a" strokeWidth="4" strokeLinecap="round" fill="none" />
+        <path d="M36 70 Q50 83 64 70" stroke="#0f172a" strokeWidth="4" strokeLinecap="round" fill="none" />
       ) : (
-        <path d="M42 66 Q50 75 58 66" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" fill="none" />
+        <path d="M41 67 Q50 75 59 67" stroke="#0f172a" strokeWidth="3.2" strokeLinecap="round" fill="none" />
       )}
     </svg>
   );
@@ -137,19 +139,27 @@ function WormSegmentSVG({ skinId = 'emerald', scale = 1, index = 0, skinColor = 
   const secondary = skinColor.secondary || skin.secondary;
   const highlight = skinColor.highlight || skin.highlight;
   const gradId = `segGrad-${skin.id}-${index}`;
+  const stripe = index % 2 === 0;
 
   return (
-    <svg className="worm-segment-svg-container" style={{ '--seg-scale': scale }} viewBox="0 0 100 100">
+    <svg className="worm-segment-svg-container" style={{ '--seg-scale': scale, '--seg-i': index }} viewBox="0 0 100 100">
       <defs>
-        <radialGradient id={gradId} cx="32%" cy="28%" r="68%">
+        <radialGradient id={gradId} cx="30%" cy="26%" r="70%">
           <stop offset="0%" stopColor={highlight} />
-          <stop offset="65%" stopColor={primary} />
+          <stop offset="55%" stopColor={primary} />
           <stop offset="100%" stopColor={secondary} />
         </radialGradient>
+        <linearGradient id={`${gradId}-shade`} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#000000" stopOpacity="0.18" />
+        </linearGradient>
       </defs>
+      <ellipse cx="50" cy="56" rx="34" ry="16" fill="rgba(0,0,0,0.22)" />
       <circle cx="50" cy="50" r="42" fill={`url(#${gradId})`} />
-      <ellipse cx="38" cy="34" rx="14" ry="8" fill="#ffffff" opacity="0.4" transform="rotate(-25 38 34)" />
-      <circle cx="50" cy="50" r="38" fill="none" stroke="#ffffff" strokeWidth="1" opacity="0.1" />
+      <circle cx="50" cy="50" r="42" fill={`url(#${gradId}-shade)`} />
+      <path d={`M18 ${stripe ? 52 : 46} Q50 ${stripe ? 62 : 38} 82 ${stripe ? 52 : 46}`} stroke="rgba(255,255,255,0.22)" strokeWidth="5" fill="none" strokeLinecap="round" />
+      <ellipse cx="37" cy="34" rx="14" ry="8" fill="#ffffff" opacity="0.38" transform="rotate(-22 37 34)" />
+      <circle cx="50" cy="50" r="37" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" />
     </svg>
   );
 }
@@ -165,14 +175,17 @@ function WormTailSVG({ skinId = 'emerald', skinColor = {} }) {
   return (
     <svg className="worm-tail-svg-container" viewBox="0 0 100 100">
       <defs>
-        <radialGradient id={gradId} cx="35%" cy="30%" r="65%">
+        <radialGradient id={gradId} cx="35%" cy="30%" r="70%">
           <stop offset="0%" stopColor={highlight} />
-          <stop offset="60%" stopColor={primary} />
+          <stop offset="55%" stopColor={primary} />
           <stop offset="100%" stopColor={secondary} />
         </radialGradient>
       </defs>
-      <path d="M20 50 C20 28, 48 20, 75 35 C90 44, 90 56, 75 65 C48 80, 20 72, 20 50 Z" fill={`url(#${gradId})`} />
-      <circle cx="38" cy="44" r="7" fill="#ffffff" opacity="0.35" />
+      <ellipse cx="46" cy="58" rx="24" ry="10" fill="rgba(0,0,0,0.2)" />
+      <path d="M16 50 C18 26, 46 18, 74 34 C90 44, 90 58, 72 66 C46 80, 16 74, 16 50 Z" fill={`url(#${gradId})`} />
+      <path d="M28 50 Q48 42 68 50" stroke="rgba(255,255,255,0.2)" strokeWidth="4" fill="none" strokeLinecap="round" />
+      <circle cx="36" cy="43" r="7" fill="#ffffff" opacity="0.32" />
+      <circle cx="72" cy="50" r="4" fill={highlight} opacity="0.5" />
     </svg>
   );
 }
@@ -182,21 +195,27 @@ function JuicyAppleSVG({ collected = false }) {
   return (
     <svg className="apple-svg-container" viewBox="0 0 100 100" style={{ animation: collected ? 'none' : 'appleBreathingBob 2.5s ease-in-out infinite alternate' }}>
       <defs>
-        <radialGradient id="appleBodyGrad" cx="35%" cy="30%" r="70%">
-          <stop offset="0%" stopColor="#ff7b7b" />
-          <stop offset="45%" stopColor="#ef4444" />
+        <radialGradient id="appleBodyGrad" cx="32%" cy="28%" r="72%">
+          <stop offset="0%" stopColor="#ffd1d1" />
+          <stop offset="25%" stopColor="#ff6b6b" />
+          <stop offset="55%" stopColor="#ef4444" />
           <stop offset="85%" stopColor="#b91c1c" />
-          <stop offset="100%" stopColor="#7f1d1d" />
+          <stop offset="100%" stopColor="#6b1010" />
         </radialGradient>
         <linearGradient id="appleLeafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#4ade80" />
-          <stop offset="100%" stopColor="#15803d" />
+          <stop offset="0%" stopColor="#86efac" />
+          <stop offset="50%" stopColor="#22c55e" />
+          <stop offset="100%" stopColor="#166534" />
         </linearGradient>
+        <radialGradient id="appleGlowAura" cx="50%" cy="60%" r="50%">
+          <stop offset="0%" stopColor="rgba(239,68,68,0.35)" />
+          <stop offset="100%" stopColor="rgba(239,68,68,0)" />
+        </radialGradient>
         <filter id="appleGlow">
-          <feDropShadow dx="0" dy="5" stdDeviation="4" floodColor="#ef4444" floodOpacity="0.55" />
+          <feDropShadow dx="0" dy="6" stdDeviation="5" floodColor="#ef4444" floodOpacity="0.6" />
         </filter>
         <filter id="appleSparkle">
-          <feGaussianBlur stdDeviation="1" result="blur" />
+          <feGaussianBlur stdDeviation="0.6" result="blur" />
           <feMerge>
             <feMergeNode in="blur" />
             <feMergeNode in="SourceGraphic" />
@@ -204,33 +223,35 @@ function JuicyAppleSVG({ collected = false }) {
         </filter>
       </defs>
 
-      {/* Wooden Stem */}
-      <path d="M50 26 Q55 14 62 10" stroke="#78350f" strokeWidth="4.5" strokeLinecap="round" fill="none" />
+      <ellipse cx="50" cy="78" rx="26" ry="10" fill="url(#appleGlowAura)" />
+      <path d="M50 28 Q55 15 63 10" stroke="#78350f" strokeWidth="5" strokeLinecap="round" fill="none" />
+      <path d="M50 28 Q47 18 44 14" stroke="#92400e" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.7" />
 
-      {/* Vibrant Green Leaf */}
-      <path d="M54 22 C64 12, 78 14, 82 20 C84 26, 72 32, 58 26 Z" fill="url(#appleLeafGrad)" stroke="#166534" strokeWidth="1.5" />
-      <path d="M54 22 Q68 18 80 20" stroke="#14532d" strokeWidth="1" fill="none" />
+      <g transform="translate(52, 12) rotate(8)">
+        <path d="M2 12 C10 2, 28 2, 34 10 C36 18, 22 24, 4 16 Z" fill="url(#appleLeafGrad)" stroke="#14532d" strokeWidth="1.5" />
+        <path d="M2 12 Q16 8 30 10" stroke="#14532d" strokeWidth="1.2" fill="none" opacity="0.8" />
+        <path d="M10 11 Q14 14 18 16" stroke="#bbf7d0" strokeWidth="1" fill="none" opacity="0.6" />
+      </g>
 
-      {/* 3D Apple Main Body */}
       <path
-        d="M50 34 C30 34, 14 48, 14 68 C14 86, 32 94, 50 90 C68 94, 86 86, 86 68 C86 48, 70 34, 50 34 Z"
+        d="M50 34 C28 34, 12 50, 12 69 C12 88, 30 96, 50 91 C70 96, 88 88, 88 69 C88 50, 72 34, 50 34 Z"
         fill="url(#appleBodyGrad)"
         filter="url(#appleGlow)"
       />
+      <path d="M50 36 C40 36, 34 42, 34 50 C34 54, 38 56, 42 54 C46 50, 46 44, 50 44 C54 44, 54 50, 58 54 C62 56, 66 54, 66 50 C66 42, 60 36, 50 36 Z" fill="#7f1d1d" opacity="0.18" />
 
-      {/* Specular Curved Gloss Highlight */}
-      <path d="M26 48 C24 60, 30 74, 38 80" stroke="#ffffff" strokeWidth="4" strokeLinecap="round" fill="none" opacity="0.65" />
-      <circle cx="34" cy="44" r="3.5" fill="#ffffff" opacity="0.8" />
+      <ellipse cx="32" cy="46" rx="10" ry="14" fill="#ffffff" opacity="0.28" transform="rotate(-18 32 46)" />
+      <ellipse cx="30" cy="42" rx="4" ry="5" fill="#ffffff" opacity="0.55" />
+      <circle cx="26" cy="52" r="2" fill="#ffffff" opacity="0.45" />
 
-      {/* Orbiting Sparkle Stars - animated */}
-      <g className="apple-sparkle-star s1" transform="translate(18, 28)" style={{ animation: 'sparkleOrbit 3s ease-in-out infinite' }}>
-        <polygon points="6,0 8,4 12,6 8,8 6,12 4,8 0,6 4,4" fill="#fef08a" filter="url(#appleSparkle)" />
+      <g className="apple-sparkle-star s1" transform="translate(16, 26)" style={{ animation: 'sparkleOrbit 3s ease-in-out infinite' }}>
+        <polygon points="6,0 7.5,4 12,6 7.5,8 6,12 4.5,8 0,6 4.5,4" fill="#fef08a" filter="url(#appleSparkle)" />
       </g>
-      <g className="apple-sparkle-star s2" transform="translate(76, 74)" style={{ animation: 'sparkleOrbit 3s ease-in-out infinite reverse' }}>
-        <polygon points="5,0 7,3 10,5 7,7 5,10 3,7 0,5 3,3" fill="#fef08a" filter="url(#appleSparkle)" />
+      <g className="apple-sparkle-star s2" transform="translate(76, 72)" style={{ animation: 'sparkleOrbit 3.4s ease-in-out infinite reverse' }}>
+        <polygon points="5,0 6.5,3 10,5 6.5,7 5,10 3.5,7 0,5 3.5,3" fill="#fde68a" filter="url(#appleSparkle)" />
       </g>
-      <g className="apple-sparkle-star s3" transform="translate(82, 30)" style={{ animation: 'sparkleOrbit 4s ease-in-out infinite' }}>
-        <polygon points="4,0 5,2 7,4 5,6 4,8 3,6 1,4 3,2" fill="#fef08a" filter="url(#appleSparkle)" opacity="0.8" />
+      <g className="apple-sparkle-star s3" transform="translate(80, 28)" style={{ animation: 'sparkleOrbit 4.2s ease-in-out infinite' }}>
+        <polygon points="4,0 5,2 8,4 5,6 4,8 3,6 0,4 3,2" fill="#fff7ed" filter="url(#appleSparkle)" opacity="0.9" />
       </g>
     </svg>
   );
@@ -242,18 +263,18 @@ function CosmicPortalSVG({ unlocked = false }) {
     <svg className={`portal-svg-container ${unlocked ? 'unlocked' : 'locked'}`} viewBox="0 0 100 100">
       <defs>
         <radialGradient id="portalVoidGrad" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor={unlocked ? '#ffffff' : '#3b0764'} />
-          <stop offset="35%" stopColor={unlocked ? '#38bdf8' : '#1e1b4b'} />
-          <stop offset="70%" stopColor={unlocked ? '#8b5cf6' : '#0f172a'} />
-          <stop offset="100%" stopColor="transparent" />
+          <stop offset="0%" stopColor={unlocked ? '#ffffff' : '#4c1d95'} />
+          <stop offset="30%" stopColor={unlocked ? '#67e8f9' : '#312e81'} />
+          <stop offset="60%" stopColor={unlocked ? '#8b5cf6' : '#0f172a'} />
+          <stop offset="100%" stopColor="rgba(2,6,23,0.1)" />
         </radialGradient>
         <linearGradient id="portalRuneGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#38bdf8" />
-          <stop offset="50%" stopColor="#c084fc" />
-          <stop offset="100%" stopColor="#f43f5e" />
+          <stop offset="0%" stopColor="#22d3ee" />
+          <stop offset="45%" stopColor="#a78bfa" />
+          <stop offset="100%" stopColor="#fb7185" />
         </linearGradient>
-        <filter id="portalGlow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="8" result="blur" />
+        <filter id="portalGlow" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="7" result="blur" />
           <feMerge>
             <feMergeNode in="blur" />
             <feMergeNode in="SourceGraphic" />
@@ -261,38 +282,27 @@ function CosmicPortalSVG({ unlocked = false }) {
         </filter>
       </defs>
 
-      {/* Outer Runic Stargate Ring */}
-      <circle
-        cx="50"
-        cy="50"
-        r="44"
-        fill="none"
-        stroke={unlocked ? 'url(#portalRuneGrad)' : '#475569'}
-        strokeWidth="3.5"
-        strokeDasharray={unlocked ? '10 4 6 4' : '6 6'}
-        filter={unlocked ? 'url(#portalGlow)' : 'none'}
-      />
-
-      {/* Galaxy Core Vortex */}
-      <circle className="portal-pulse-ring" cx="50" cy="50" r="38" fill="url(#portalVoidGrad)" />
+      <circle cx="50" cy="50" r="46" fill="none" stroke={unlocked ? 'url(#portalRuneGrad)' : '#334155'} strokeWidth="4" strokeDasharray={unlocked ? '12 5 4 5' : '7 7'} opacity={unlocked ? 1 : 0.7} filter={unlocked ? 'url(#portalGlow)' : 'none'} />
+      <circle cx="50" cy="50" r="41" fill="none" stroke={unlocked ? '#e0f2fe' : '#475569'} strokeWidth="1.5" opacity="0.5" />
+      <circle className="portal-pulse-ring" cx="50" cy="50" r="36" fill="url(#portalVoidGrad)" />
 
       {unlocked ? (
-        /* Unlocked Spiraling Nebula Rays */
         <g className="portal-galaxy-spin" filter="url(#portalGlow)">
-          <path d="M50 50 Q65 30 85 45" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.9" />
-          <path d="M50 50 Q35 70 15 55" stroke="#a855f7" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.9" />
-          <path d="M50 50 Q70 65 55 85" stroke="#fbbf24" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.8" />
-          <path d="M50 50 Q30 35 45 15" stroke="#f43f5e" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.8" />
-          <circle cx="50" cy="50" r="9" fill="#ffffff" />
-          <circle cx="50" cy="50" r="5" fill="#38bdf8" />
+          <path d="M50 50 Q66 28 86 44" stroke="#22d3ee" strokeWidth="3.2" strokeLinecap="round" fill="none" opacity="0.95" />
+          <path d="M50 50 Q34 72 14 56" stroke="#a78bfa" strokeWidth="3.2" strokeLinecap="round" fill="none" opacity="0.95" />
+          <path d="M50 50 Q72 66 56 86" stroke="#fbbf24" strokeWidth="2.6" strokeLinecap="round" fill="none" opacity="0.85" />
+          <path d="M50 50 Q28 34 44 14" stroke="#fb7185" strokeWidth="2.6" strokeLinecap="round" fill="none" opacity="0.85" />
+          <circle cx="50" cy="50" r="10" fill="#ffffff" opacity="0.95" />
+          <circle cx="50" cy="50" r="6" fill="#22d3ee" />
+          <circle cx="66" cy="38" r="2" fill="#fff" />
+          <circle cx="36" cy="62" r="1.8" fill="#fff" opacity="0.9" />
         </g>
       ) : (
-        /* Locked Dormant Padlock */
-        <g transform="translate(36, 34)">
-          <rect x="5" y="12" width="18" height="15" rx="3" fill="#64748b" stroke="#cbd5e1" strokeWidth="1.5" />
-          <path d="M8 12 V7 C8 3.5, 20 3.5, 20 7 V12" stroke="#cbd5e1" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-          <circle cx="14" cy="18" r="2" fill="#0f172a" />
-          <path d="M14 20 V23" stroke="#0f172a" strokeWidth="1.5" strokeLinecap="round" />
+        <g transform="translate(35, 33)" opacity="0.9">
+          <rect x="4" y="12" width="22" height="17" rx="4" fill="#334155" stroke="#94a3b8" strokeWidth="1.5" />
+          <path d="M8 12 V8 C8 3.5, 22 3.5, 22 8 V12" stroke="#cbd5e1" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+          <circle cx="15" cy="19" r="2.2" fill="#020617" />
+          <rect x="14" y="20" width="2" height="4" rx="1" fill="#020617" />
         </g>
       )}
     </svg>
@@ -305,27 +315,32 @@ function StoneWallSVG() {
     <svg className="wall-svg-container" viewBox="0 0 100 100">
       <defs>
         <linearGradient id="wallTopGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#64748b" />
-          <stop offset="100%" stopColor="#334155" />
-        </linearGradient>
-        <linearGradient id="wallBevelGrad" x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" stopColor="#94a3b8" />
+          <stop offset="45%" stopColor="#475569" />
           <stop offset="100%" stopColor="#1e293b" />
         </linearGradient>
+        <linearGradient id="wallEdgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#cbd5e1" stopOpacity="0.45" />
+          <stop offset="100%" stopColor="#020617" stopOpacity="0.4" />
+        </linearGradient>
         <filter id="wallShadow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#000000" floodOpacity="0.6" />
+          <feDropShadow dx="0" dy="5" stdDeviation="4" floodColor="#000000" floodOpacity="0.65" />
         </filter>
       </defs>
 
-      {/* Main Beveled Block */}
-      <rect x="4" y="4" width="92" height="92" rx="10" fill="url(#wallTopGrad)" stroke="#1e293b" strokeWidth="3" filter="url(#wallShadow)" />
-      <rect x="8" y="8" width="84" height="84" rx="8" fill="none" stroke="#94a3b8" strokeWidth="1.5" opacity="0.35" />
+      <rect x="4" y="4" width="92" height="92" rx="12" fill="url(#wallTopGrad)" stroke="#0f172a" strokeWidth="3" filter="url(#wallShadow)" />
+      <rect x="8" y="8" width="84" height="84" rx="9" fill="none" stroke="#e2e8f0" strokeWidth="1.2" opacity="0.22" />
+      <path d="M10 28 H90 M10 52 H90 M10 76 H90" stroke="#0f172a" strokeWidth="1.2" opacity="0.28" />
+      <path d="M32 10 V28 M68 28 V52 M45 52 V76 M58 76 V90 M24 52 V76" stroke="#0f172a" strokeWidth="1.2" opacity="0.22" />
+      <rect x="12" y="12" width="76" height="76" rx="8" fill="url(#wallEdgeGrad)" opacity="0.35" />
 
-      {/* Carved Ancient Rune Glyph */}
-      <path d="M50 24 L74 50 L50 76 L26 50 Z" stroke="#cbd5e1" strokeWidth="2" fill="none" opacity="0.75" />
-      <circle cx="50" cy="50" r="6" fill="#38bdf8" opacity="0.75" />
-      <line x1="50" y1="24" x2="50" y2="76" stroke="#cbd5e1" strokeWidth="1.5" opacity="0.6" />
-      <line x1="26" y1="50" x2="74" y2="50" stroke="#cbd5e1" strokeWidth="1.5" opacity="0.6" />
+      <g opacity="0.85">
+        <path d="M50 22 L76 50 L50 78 L24 50 Z" stroke="#cbd5e1" strokeWidth="2.2" fill="rgba(56,189,248,0.08)" />
+        <circle cx="50" cy="50" r="6.5" fill="#38bdf8" opacity="0.8" />
+        <circle cx="50" cy="50" r="3" fill="#e0f2fe" opacity="0.9" />
+        <line x1="50" y1="22" x2="50" y2="78" stroke="#cbd5e1" strokeWidth="1.4" opacity="0.55" />
+        <line x1="24" y1="50" x2="76" y2="50" stroke="#cbd5e1" strokeWidth="1.4" opacity="0.55" />
+      </g>
     </svg>
   );
 }
@@ -373,12 +388,21 @@ function App() {
       return [1];
     }
   });
+  const [levelProgress, setLevelProgress] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('levelProgress'));
+      return saved && typeof saved === 'object' ? saved : {};
+    } catch {
+      return {};
+    }
+  });
   const [coins, setCoins] = useState(() => {
     const saved = localStorage.getItem('coins');
     return saved !== null ? Number(saved) : 125;
   });
   const [sound, setSound] = useState(() => localStorage.getItem('sound') !== 'false');
   const [music, setMusic] = useState(() => localStorage.getItem('music') === 'true');
+  const [reducedMotion, setReducedMotion] = useState(() => localStorage.getItem('reducedMotion') === 'true');
   const [history, setHistory] = useState([]);
   const [hint, setHint] = useState(false);
   const [solverHint, setSolverHint] = useState(null);
@@ -402,14 +426,23 @@ function App() {
   const [wormExpression, setWormExpression] = useState('idle');
   const [particleBurst, setParticleBurst] = useState([]);
   const [screenShake, setScreenShake] = useState(false);
+  const [levelIntro, setLevelIntro] = useState(false);
 
   // Modals & Screen States
   const [mapModal, setMapModal] = useState(false);
   const [leaderboardModal, setLeaderboardModal] = useState(false);
   const [shopModal, setShopModal] = useState(false);
   const [howToPlayModal, setHowToPlayModal] = useState(false);
+  const [achievementsModal, setAchievementsModal] = useState(false);
   const [levelPreview, setLevelPreview] = useState(null);
   const [selectedWorldTab, setSelectedWorldTab] = useState(0);
+  const [onboardingOpen, setOnboardingOpen] = useState(() => localStorage.getItem('onboardingSeen') !== '1');
+  const [highContrast, setHighContrast] = useState(() => localStorage.getItem('highContrast') === 'true');
+  const [colorblindMode, setColorblindMode] = useState(() => localStorage.getItem('colorblindMode') === 'true');
+  const [dailyRewardMsg, setDailyRewardMsg] = useState('');
+  const [dailyRewardClaimed, setDailyRewardClaimed] = useState(() => localStorage.getItem('dailyRewardClaimedDate') === new Date().toISOString().slice(0,10));
+  const [showHintPath, setShowHintPath] = useState(true);
+  const [boardFx, setBoardFx] = useState({ trail: [], warp: false, impact: false, eat: false });
 
   // Leaderboard state
   const [leaderboard, setLeaderboard] = useState([]);
@@ -427,9 +460,16 @@ function App() {
   // Touch gesture tracking
   const touchStartRef = useRef({ x: 0, y: 0 });
   const moveTimeoutRef = useRef(null);
+  const prevWormRef = useRef(null);
+  const animFrameRef = useRef(null);
+  const boardViewportRef = useRef(null);
+  const panRef = useRef({ x: 0, y: 0, dragging: false, startX: 0, startY: 0, ox: 0, oy: 0 });
 
   const level = LEVELS[levelId - 1] || LEVELS[0];
   const [game, setGame] = useState(() => initialState(LEVELS[levelId - 1] || LEVELS[0]));
+  const [renderWorm, setRenderWorm] = useState(() => (LEVELS[levelId - 1] || LEVELS[0]).worm.map(p => [...p]));
+  const [moveTick, setMoveTick] = useState(0);
+  const [camera, setCamera] = useState({ zoom: 1, panX: 0, panY: 0 });
 
   // Current World
   const currentWorld = WORLDS.find(w => levelId >= w.range[0] && levelId <= w.range[1]) || WORLDS[0];
@@ -439,12 +479,65 @@ function App() {
   useEffect(() => {
     localStorage.setItem('coins', coins);
     localStorage.setItem('completedLevels', JSON.stringify(completed));
+    localStorage.setItem('levelProgress', JSON.stringify(levelProgress));
     localStorage.setItem('currentLevel', levelId);
     localStorage.setItem('sound', String(sound));
     localStorage.setItem('music', String(music));
+    localStorage.setItem('reducedMotion', String(reducedMotion));
+    localStorage.setItem('highContrast', String(highContrast));
+    localStorage.setItem('colorblindMode', String(colorblindMode));
     localStorage.setItem('wormSkin', wormSkin);
     localStorage.setItem('ownedSkins', JSON.stringify(ownedSkins));
-  }, [coins, completed, levelId, sound, music, wormSkin, ownedSkins]);
+  }, [coins, completed, levelProgress, levelId, sound, music, reducedMotion, highContrast, colorblindMode, wormSkin, ownedSkins]);
+
+  useEffect(() => { hideSplash(); }, []);
+
+  // Tile-to-tile worm interpolation
+  useEffect(() => {
+    if (reducedMotion) {
+      setRenderWorm(game.worm.map(p => [...p]));
+      return;
+    }
+    const prev = prevWormRef.current;
+    if (!prev) {
+      setRenderWorm(game.worm.map(p => [...p]));
+      return;
+    }
+    const duration = 140;
+    const start = performance.now();
+    const ease = t => 1 - Math.pow(1 - t, 3);
+    const animate = (now) => {
+      const t = Math.min(1, (now - start) / duration);
+      const k = ease(t);
+      const nextWorm = game.worm.map((seg, i) => {
+        const from = prev[i] || prev[prev.length - 1] || seg;
+        return [from[0] + (seg[0] - from[0]) * k, from[1] + (seg[1] - from[1]) * k];
+      });
+      setRenderWorm(nextWorm);
+      if (t < 1) animFrameRef.current = requestAnimationFrame(animate);
+      else prevWormRef.current = null;
+    };
+    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    animFrameRef.current = requestAnimationFrame(animate);
+    return () => { if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current); };
+  }, [moveTick, game.worm, reducedMotion]);
+
+  const zoomIn = () => setCamera(c => ({ ...c, zoom: Math.min(1.6, +(c.zoom + 0.1).toFixed(2)) }));
+  const zoomOut = () => setCamera(c => ({ ...c, zoom: Math.max(0.7, +(c.zoom - 0.1).toFixed(2)) }));
+  const resetCamera = () => setCamera({ zoom: 1, panX: 0, panY: 0 });
+  const onBoardPointerDown = (e) => {
+    if (e.button !== 0) return;
+    if (e.target.closest('button')) return;
+    panRef.current = { ...panRef.current, dragging: true, startX: e.clientX, startY: e.clientY, ox: camera.panX, oy: camera.panY };
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+  const onBoardPointerMove = (e) => {
+    if (!panRef.current.dragging) return;
+    const dx = e.clientX - panRef.current.startX;
+    const dy = e.clientY - panRef.current.startY;
+    setCamera(c => ({ ...c, panX: panRef.current.ox + dx, panY: panRef.current.oy + dy }));
+  };
+  const onBoardPointerUp = (e) => { panRef.current.dragging = false; try { e.currentTarget.releasePointerCapture?.(e.pointerId); } catch {} };
 
   // Fullscreen toggle & change detection
   const toggleFullscreen = useCallback(() => {
@@ -511,29 +604,66 @@ function App() {
   // Restore authenticated session on start
   useEffect(() => {
     if (!token) return;
-    fetch(`${API_URL}/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => res.ok ? res.json() : Promise.reject())
-      .then(data => {
-        if (data.user) {
-          setUser(data.user);
-          if (data.user.coins !== undefined) setCoins(data.user.coins);
-          if (data.user.completedLevels && data.user.completedLevels.length) {
-            setCompleted(prev => Array.from(new Set([...prev, ...data.user.completedLevels, data.user.currentLevel])));
-            setLevelId(data.user.currentLevel || 1);
-          }
-          if (data.user.ownedSkins && data.user.ownedSkins.length) {
-            setOwnedSkins(prev => Array.from(new Set([...prev, ...data.user.ownedSkins])));
-          }
-        }
-      })
-      .catch(() => {
+    const headers = { Authorization: `Bearer ${token}` };
+    const applyUser = (u) => {
+      setUser(u);
+      if (u.coins !== undefined) setCoins(u.coins);
+      if (u.completedLevels && u.completedLevels.length) {
+        setCompleted(prev => Array.from(new Set([...prev, ...u.completedLevels, u.currentLevel || 1])));
+        setLevelId(prev => Math.max(prev, u.currentLevel || 1));
+      }
+      if (u.ownedSkins && u.ownedSkins.length) {
+        setOwnedSkins(prev => Array.from(new Set([...prev, ...u.ownedSkins])));
+      }
+      if (u.levelProgress && typeof u.levelProgress === 'object') {
+        setLevelProgress(prev => ({ ...u.levelProgress, ...prev }));
+      }
+      if (u.settings && typeof u.settings === 'object') {
+        if (typeof u.settings.sound === 'boolean') setSound(u.settings.sound);
+        if (typeof u.settings.music === 'boolean') setMusic(u.settings.music);
+        if (typeof u.settings.reducedMotion === 'boolean') setReducedMotion(u.settings.reducedMotion);
+      }
+      if (u.dailyRewardClaimedAt) {
+        const claimed = String(u.dailyRewardClaimedAt).slice(0,10) === new Date().toISOString().slice(0,10);
+        setDailyRewardClaimed(claimed);
+        if (claimed) localStorage.setItem('dailyRewardClaimedDate', new Date().toISOString().slice(0,10));
+      }
+    };
+    fetch(`${API_URL}/player/sync`, { headers })
+      .then(res => res.ok ? res.json() : fetch(`${API_URL}/auth/me`, { headers }).then(r => r.ok ? r.json() : Promise.reject()))
+      .then(data => { if (data.user) applyUser(data.user); })
+      .catch(() => fetch(`${API_URL}/auth/me`, { headers }).then(r => r.ok ? r.json() : Promise.reject()).then(data => { if (data.user) applyUser(data.user); }).catch(() => {
         localStorage.removeItem('token');
         setToken('');
         setUser(null);
-      });
+      }));
   }, [token]);
+
+  const claimDailyReward = useCallback(async () => {
+    if (!token) { setDailyRewardMsg('Sign in to claim daily rewards.'); setNotice('Sign in to claim daily rewards.'); return; }
+    try {
+      const res = await fetch(`${API_URL}/player/daily-reward`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      if (res.ok) {
+        if (data.claimed) {
+          setCoins(data.coins ?? coins);
+          setDailyRewardClaimed(true);
+          localStorage.setItem('dailyRewardClaimedDate', new Date().toISOString().slice(0,10));
+          setDailyRewardMsg(data.message || `+${data.reward} coins claimed!`);
+          setNotice(data.message || `Daily reward: +${data.reward} coins`);
+          playSound('boost', sound);
+        } else {
+          setDailyRewardClaimed(true);
+          localStorage.setItem('dailyRewardClaimedDate', new Date().toISOString().slice(0,10));
+          setDailyRewardMsg(data.message || 'Already claimed today.');
+        }
+      } else {
+        setDailyRewardMsg(data.error || 'Could not claim reward.');
+      }
+    } catch {
+      setDailyRewardMsg('Network error claiming reward.');
+    }
+  }, [token, coins, sound]);
 
   // Fetch leaderboard data
   const fetchLeaderboard = useCallback(() => {
@@ -580,7 +710,10 @@ function App() {
   const startLevel = useCallback(id => {
     const targetLvl = LEVELS[id - 1] || LEVELS[0];
     setLevelId(id);
-    setGame(initialState(targetLvl));
+    const init = initialState(targetLvl);
+    setGame(init);
+    setRenderWorm(init.worm.map(p => [...p]));
+    prevWormRef.current = null;
     setBonusMoves(0);
     setHistory([]);
     setHint(false);
@@ -590,10 +723,14 @@ function App() {
     setWormExpression('idle');
     setStarPopStage(0);
     setConfettiParticles([]);
+    setBoardFx({ trail: [], warp: false, impact: false, eat: false });
+    setCamera({ zoom: 1, panX: 0, panY: 0 });
     setLevelPreview(null);
     setMapModal(false);
+    setLevelIntro(true);
+    setTimeout(() => setLevelIntro(false), reducedMotion ? 0 : 900);
     playSound('click', sound);
-  }, [sound]);
+  }, [sound, reducedMotion]);
 
   // Spawn celebratory confetti
   const triggerConfetti = useCallback(() => {
@@ -625,17 +762,22 @@ function App() {
 
       setFacing(dir);
       setWormExpression('moving');
+      prevWormRef.current = old.worm.map(p => [...p]);
       setHistory(h => [...h.slice(-35), old]);
       setSolverHint(null);
 
       const effectiveLevel = { ...level, moveLimit: level.moveLimit + bonusMoves };
       const next = step(old, dir, effectiveLevel);
+      setMoveTick(t => t + 1);
+      setBoardFx(fx => ({ ...fx, trail: [old.worm[0], ...(fx.trail || [])].slice(0, 6) }));
 
       // Apple collection audio & popup
       const didEat = next.apples.length < old.apples.length;
       if (didEat) {
         playSound('eat', sound);
         setWormExpression('eating');
+        setBoardFx(fx => ({ ...fx, eat: true }));
+        setTimeout(() => setBoardFx(fx => ({ ...fx, eat: false })), 420);
         const eatenApple = old.apples.find(a => same(a, next.worm[0]));
         if (eatenApple) {
           const scoreId = Date.now() + Math.random();
@@ -649,9 +791,9 @@ function App() {
             setFloatingScores(prev => prev.filter(s => s.id !== scoreId));
           }, 850);
         }
+        // Portal open notice handled in render when all apples are collected
         if (next.apples.length === 0) {
           playSound('portalOpen', sound);
-          setNotice('✨ All apples collected! The Cosmic Portal has awakened!');
         } else {
           setNotice(`Apple collected! ${next.apples.length} remaining.`);
         }
@@ -666,6 +808,8 @@ function App() {
         playSound('complete', sound);
         triggerConfetti();
         triggerScreenShake();
+        setBoardFx(fx => ({ ...fx, warp: true }));
+        setTimeout(() => setBoardFx(fx => ({ ...fx, warp: false })), 900);
 
         // Stagger star pops
         setStarPopStage(0);
@@ -675,6 +819,17 @@ function App() {
 
         setCompleted(prev => (prev.includes(levelId + 1) ? prev : [...prev, Math.min(50, levelId + 1)]));
         setCoins(c => c + 25);
+        setLevelProgress(prev => {
+          const oldp = prev[levelId] || {};
+          return {
+            ...prev,
+            [levelId]: {
+              bestStars: Math.max(oldp.bestStars || 0, stars),
+              bestMoves: oldp.bestMoves ? Math.min(oldp.bestMoves, next.moves) : next.moves,
+              bestScore: Math.max(oldp.bestScore || 0, next.score),
+            }
+          };
+        });
 
         // Sync with backend MongoDB if logged in
         if (token) {
@@ -702,6 +857,8 @@ function App() {
         setNotice(next.reason);
         triggerScreenShake();
         setWormExpression('idle');
+        setBoardFx(fx => ({ ...fx, impact: true }));
+        setTimeout(() => setBoardFx(fx => ({ ...fx, impact: false })), 520);
       } else if (!didEat) {
         playSound('move', sound);
         // Reset expression after move
@@ -768,26 +925,19 @@ function App() {
   }, [move, game.status, levelId, startLevel, toggleFullscreen, toggleMusic]);
 
   const undo = () => {
-    if (history.length) {
-      playSound('undo', sound);
-      const prev = history[history.length - 1];
-      setGame(prev);
-      setHistory(h => h.slice(0, -1));
-      setSolverHint(null);
-      setNotice('Move undone. Slither safely!');
-    }
+    if (!history.length) return;
+    playSound('click', sound);
+    const prev = history[history.length - 1];
+    setGame(prev);
+    setRenderWorm(prev.worm.map(p => [...p]));
+    prevWormRef.current = null;
+    setHistory(h => h.slice(0, -1));
+    setSolverHint(null);
   };
 
   const restart = () => {
-    playSound('undo', sound);
-    setGame(initialState(level));
-    setBonusMoves(0);
-    setHistory([]);
-    setSolverHint(null);
-    setStarPopStage(0);
-    setConfettiParticles([]);
-    setWormExpression('idle');
-    setNotice('Garden reset. Plan your turns carefully!');
+    playSound('click', sound);
+    startLevel(levelId);
   };
 
   const buyBoost = () => {
@@ -922,12 +1072,17 @@ function App() {
   const cellClass = p => {
     let c = 'garden-tile-cell';
     if (level.walls.some(w => same(w, p))) c += ' wall';
+    if ((game.keys || level.keys || []).some(k => same(k, p))) c += ' key-tile';
+    if ((game.doors || level.doors || []).some(d => same(d, p))) c += ' door-tile';
+    if ((level.hazards || []).some(h => same(h, p))) c += ' hazard-tile';
+    if ((game.movingBlocks || level.movingBlocks || []).some(b => same(b, p))) c += ' block-tile';
     if (game.worm.some(w => same(w, p))) c += ' worm';
     if (game.worm.length && same(game.worm[0], p)) c += ' head';
     if (game.apples.some(a => same(a, p))) c += ' apple';
     if (same(level.portal, p)) c += ' portal';
     if (hint && game.apples.length && same(game.apples[0], p)) c += ' hinted';
-    if (solverHint && solverHint.path && solverHint.path.some(pt => same(pt, p))) c += ' hint-path';
+    if (showHintPath && solverHint && solverHint.path && solverHint.path.some(pt => same(pt, p))) c += ' hint-path hint-path-anim';
+    if (boardFx?.trail?.some(t => same(t, p))) c += ' worm-trail';
     return c;
   };
 
@@ -944,10 +1099,47 @@ function App() {
     return { type: 'moves', title: 'Move Limit Exceeded!', tip: 'Find shorter paths with fewer unnecessary detours, or use an Apple Boost (+5 moves)!' };
   }, [game.status, game.reason]);
 
+  const totalStarsEarned = useMemo(
+    () => Object.values(levelProgress).reduce((sum, p) => sum + (p.bestStars || 0), 0),
+    [levelProgress]
+  );
+
+  const achievements = useMemo(() => {
+    const completedCount = Object.keys(levelProgress).length;
+    const perfectLevels = Object.values(levelProgress).filter(p => p.bestStars === 3).length;
+    const worldClears = WORLDS.filter(w => LEVELS.slice(w.range[0] - 1, w.range[1]).every(l => (levelProgress[l.id]?.bestStars || 0) > 0)).length;
+    return [
+      { id: 'first-step', title: 'First Bite', desc: 'Complete any level', icon: '🍎', unlocked: completedCount >= 1 },
+      { id: 'garden-10', title: 'Garden Explorer', desc: 'Complete 10 levels', icon: '🌿', unlocked: completedCount >= 10 },
+      { id: 'garden-25', title: 'Trailblazer', desc: 'Complete 25 levels', icon: '🧭', unlocked: completedCount >= 25 },
+      { id: 'garden-50', title: 'Realm Master', desc: 'Complete all 50 levels', icon: '🏆', unlocked: completedCount >= 50 },
+      { id: 'perfect-5', title: 'Precision', desc: 'Earn 3 stars on 5 levels', icon: '⭐', unlocked: perfectLevels >= 5 },
+      { id: 'perfect-20', title: 'Perfectionist', desc: 'Earn 3 stars on 20 levels', icon: '✨', unlocked: perfectLevels >= 20 },
+      { id: 'world-clear', title: 'World Conqueror', desc: 'Clear every level in any realm', icon: '🗺️', unlocked: worldClears >= 1 },
+      { id: 'collector', title: 'Skin Collector', desc: 'Own 3 or more worm skins', icon: '🎨', unlocked: ownedSkins.length >= 3 },
+      { id: 'wealthy', title: 'Coin Hoarder', desc: 'Hold 300+ coins', icon: '🪙', unlocked: coins >= 300 },
+      { id: 'star-50', title: 'Stargazer', desc: 'Earn 50 total stars', icon: '🌟', unlocked: totalStarsEarned >= 50 },
+    ];
+  }, [levelProgress, ownedSkins.length, coins, totalStarsEarned]);
+
+  const dailyChallenge = useMemo(() => {
+    const day = Math.floor(Date.now() / 86400000);
+    const pick = LEVELS[day % LEVELS.length];
+    const bonus = 15 + (day % 20);
+    return { levelId: pick.id, title: pick.title, worldName: pick.worldName, bonus };
+  }, []);
+
   // Live star calculation
   const liveStars = useMemo(() => {
     return calculateStars(game.moves, level.moveLimit + bonusMoves, level.parMoves);
   }, [game.moves, level.moveLimit, level.parMoves, bonusMoves]);
+
+  const moveProgress = useMemo(() => {
+    const limit = level.moveLimit + bonusMoves;
+    const used = Math.min(game.moves, limit);
+    const par = level.parMoves || Math.ceil(limit * 0.55);
+    return { pct: (used / Math.max(1, limit)) * 100, parPct: (par / Math.max(1, limit)) * 100 };
+  }, [game.moves, level.moveLimit, bonusMoves, level.parMoves]);
 
   // Filtered levels for saga map
   const displayedLevels = useMemo(() => {
@@ -973,13 +1165,32 @@ function App() {
     { color: currentWorld.color === '#38bdf8' ? '#fbbf24' : currentWorld.color === '#a855f7' ? '#10b981' : '#38bdf8', top: '30%', left: '50%', size: 250 },
   ], [currentWorld.color]);
 
+  const moveBudgetState = moveProgress.pct >= 100 ? 'danger' : moveProgress.pct >= 85 ? 'warn' : moveProgress.pct >= moveProgress.parPct ? 'caution' : 'safe';
+  const boardScale = level.size >= 11 ? 0.9 : level.size >= 9 ? 0.96 : 1;
+
   return (
     <div
-      className={`game-master-container ${screenShake ? 'screen-shake' : ''}`}
+      className={`game-master-container ${screenShake ? 'screen-shake' : ''} ${reducedMotion ? 'reduced-motion' : ''} ${highContrast ? 'high-contrast' : ''} ${colorblindMode ? 'colorblind' : ''} ${levelIntro ? 'level-intro' : ''} ${boardFx.warp ? 'fx-warp' : ''} ${boardFx.impact ? 'fx-impact' : ''} ${boardFx.eat ? 'fx-eat' : ''}`}
       data-world={currentWorld.id}
+      data-budget={moveBudgetState}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
+      <div className="world-parallax" aria-hidden="true">
+        <span className="parallax-layer p1" />
+        <span className="parallax-layer p2" />
+        <span className="parallax-layer p3" />
+      </div>
+
+      {levelIntro && (
+        <div className="level-intro-overlay" aria-live="polite">
+          <div className="level-intro-card" style={{ '--intro-color': currentWorld.color }}>
+            <span className="level-intro-world">{currentWorld.icon} {currentWorld.name}</span>
+            <strong>Level {String(levelId).padStart(2, '0')}</strong>
+            <p>{level.title}</p>
+          </div>
+        </div>
+      )}
 
       {/* AMBIENT LAYERS */}
       <div className="ambient-layers">
@@ -1013,16 +1224,18 @@ function App() {
 
           <div className="hud-realm-tag" style={{ borderColor: `${currentWorld.color}66` }}>
             <span className="realm-glow-indicator" style={{ backgroundColor: currentWorld.color }} />
-            <span>{currentWorld.name} • Lv. {String(levelId).padStart(2, '0')}</span>
+            <span>{currentWorld.icon} {currentWorld.name} • Lv. {String(levelId).padStart(2, '0')}</span>
           </div>
         </div>
 
         {/* Center Live Metrics */}
         <div className="hud-cluster hud-cluster-center">
-          <div className="hud-metric-pill">
-            <span>MOVES:</span>
-            <b>{game.moves}/{level.moveLimit + bonusMoves}</b>
-            <small>(Par: {level.parMoves})</small>
+          <div className="hud-metric-pill hud-moves-pill">
+            <div className="hud-moves-top"><span>MOVES:</span> <b>{game.moves}/{level.moveLimit + bonusMoves}</b> <small>(Par: {level.parMoves})</small></div>
+            <div className="move-progress-bar" aria-hidden="true">
+              <span className="move-progress-fill" style={{ width: `${moveProgress.pct}%` }} />
+              <span className="move-progress-par" style={{ left: `${moveProgress.parPct}%` }} title="Par target" />
+            </div>
           </div>
 
           <div className="hud-metric-pill hud-stars-display" title="Stars rating based on moves">
@@ -1031,9 +1244,9 @@ function App() {
             <span className={`star-icon-unit ${liveStars >= 3 ? 'earned' : ''}`}>★</span>
           </div>
 
-          <div className="hud-metric-pill hud-apples-counter">
-            <span>🍎 {game.apples.length} left</span>
-          </div>
+              <div className="hud-metric-pill hud-apples-counter">
+                <span><Apple size={14} /> {game.apples.length} left</span>
+              </div>
         </div>
 
         {/* Right Action Controls */}
@@ -1042,6 +1255,10 @@ function App() {
             <Coins size={16} />
             <span>{coins}</span>
           </div>
+          <div className="coin-badge-pill hud-stars-total" title="Total stars earned">
+            <Star size={15} />
+            <span>{totalStarsEarned}/150</span>
+          </div>
 
           <button className="hud-nav-tab-btn" onClick={() => setMapModal(true)} title="Open Level Map (M)">
             <MapPin size={15} /> Realms
@@ -1049,6 +1266,10 @@ function App() {
 
           <button className="hud-nav-tab-btn" onClick={() => setLeaderboardModal(true)} title="Hall of Fame (L)">
             <Trophy size={15} /> Rank
+          </button>
+
+          <button className="hud-nav-tab-btn" onClick={() => setAchievementsModal(true)} title="Achievements & badges">
+            <Award size={15} /> Badges
           </button>
 
           <button className="hud-action-icon-btn" onClick={() => setShopModal(true)} title="Skins & Boosters (S)">
@@ -1069,6 +1290,15 @@ function App() {
             title={sound ? 'Mute SFX' : 'Unmute SFX'}
           >
             {sound ? <Volume2 size={16} /> : <VolumeX size={16} />}
+          </button>
+
+          <button
+            className={`hud-action-icon-btn ${reducedMotion ? 'active' : ''}`}
+            onClick={() => setReducedMotion(v => !v)}
+            title={reducedMotion ? 'Enable motion effects' : 'Reduce motion effects'}
+            aria-label={reducedMotion ? 'Enable motion effects' : 'Reduce motion effects'}
+          >
+            <Sparkles size={16} />
           </button>
 
           <button
@@ -1098,21 +1328,25 @@ function App() {
       </header>
 
       {/* NOTICE TOAST */}
-      {notice && game.status === 'playing' && (
-        <div className="notice-banner-pill">
-          <span>{notice}</span>
-          <button className="toast-dismiss" onClick={() => setNotice('')}>×</button>
-        </div>
-      )}
+            {game.apples.length === 0 ? (
+              <div className="notice-banner-pill notice-success" key="portal-open">
+                <Sparkles size={16} /> <span>All apples collected! The portal is open.</span>
+              </div>
+            ) : notice && game.status === 'playing' ? (
+              <div className="notice-banner-pill">
+                <span>{notice}</span>
+                <button className="toast-dismiss" onClick={() => setNotice('')}>×</button>
+              </div>
+            ) : null}
 
       {/* SOLVER HINT BANNER */}
-      {solverHint && (
-        <div className="solver-hint-pill">
-          <Compass size={16} style={{ color: '#38bdf8' }} />
-          <span>Suggested: Slither <b>{solverHint.nextDirection.toUpperCase()}</b> ({solverHint.distance} steps to {solverHint.targetLabel})</span>
-          <button className="toast-dismiss" onClick={() => setSolverHint(null)}>×</button>
-        </div>
-      )}
+          {solverHint && (
+            <div className="solver-hint-pill">
+              <Compass size={16} style={{ color: '#38bdf8' }} />
+              <span>Suggested: Slither <b>{solverHint.nextDirection.toUpperCase()}</b> ({solverHint.distance} steps to {solverHint.targetLabel})</span>
+              <button className="toast-dismiss" onClick={() => setSolverHint(null)}>×</button>
+            </div>
+          )}
 
       {/* PARTICLE BURSTS */}
       {particleBurst.map(p => (
@@ -1137,62 +1371,105 @@ function App() {
 
       {/* CENTER STAGE: 3D FLOATING GARDEN ISLAND */}
       <main className="game-play-stage">
-        <div className="garden-board-wrapper">
+        <div className="camera-controls-bar" aria-label="Camera controls">
+          <button className="dock-action-btn mini" onClick={zoomOut} title="Zoom out">−</button>
+          <span className="camera-zoom-label">{Math.round(camera.zoom * 100)}%</span>
+          <button className="dock-action-btn mini" onClick={zoomIn} title="Zoom in">+</button>
+          <button className="dock-action-btn mini" onClick={resetCamera} title="Reset camera"><Maximize2 size={14} /></button>
+          <span className="camera-hint">Drag to pan</span>
+        </div>
+        <div
+          className="garden-board-wrapper camera-viewport"
+          ref={boardViewportRef}
+          onPointerDown={onBoardPointerDown}
+          onPointerMove={onBoardPointerMove}
+          onPointerUp={onBoardPointerUp}
+          onPointerLeave={onBoardPointerUp}
+          onWheel={(e) => { e.preventDefault(); setCamera(c => ({ ...c, zoom: Math.min(1.8, Math.max(0.6, +(c.zoom + (e.deltaY < 0 ? 0.08 : -0.08)).toFixed(2))) })); }}
+        >
           {/* Floating score popups */}
           {floatingScores.map(s => {
             const pctX = (s.x / level.size) * 100 + (100 / (level.size * 2));
             const pctY = (s.y / level.size) * 100;
             return (
-              <div
-                key={s.id}
-                className="floating-points-toast"
-                style={{ left: `${pctX}%`, top: `${pctY}%` }}
-              >
+              <div key={s.id} className="floating-points-toast" style={{ left: `${pctX}%`, top: `${pctY}%` }}>
                 {s.text}
               </div>
             );
           })}
 
           <div
-            className="garden-floating-island"
+            className="garden-floating-island camera-surface"
             data-world={currentWorld.id}
+            style={{ transform: `translate(${camera.panX}px, ${camera.panY}px) scale(${boardScale * camera.zoom})`, transformOrigin: 'center center' }}
           >
             <div className="garden-matrix-grid" style={{ '--grid-size': level.size }}>
               {board.map((p, i) => {
-                const segmentIdx = game.worm.findIndex(w => same(w, p));
-                const isWormHead = segmentIdx === 0;
-                const isWormTail = segmentIdx > 0 && segmentIdx === game.worm.length - 1;
+                const decorSeed = (i * 9301 + 49297) % 233280;
+                const decor = decorSeed / 233280;
+                const isWallCell = level.walls.some(w => same(w, p));
+                const isPortalCell = same(level.portal, p);
                 const isAppleCell = isApple(p);
-                const justCollected = isAppleCell && game.apples.length < (level.apples.length);
+                const isKeyCell = (game.keys || []).some(k => same(k, p));
+                const isDoorCell = (game.doors || []).some(d => same(d, p));
+                const isHazardCell = (level.hazards || []).some(h => same(h, p));
+                const isBlockCell = (game.movingBlocks || level.movingBlocks || []).some(b => same(b, p));
+                const isEmpty = !isWallCell && !isPortalCell && !isAppleCell && !isKeyCell && !isDoorCell && !isHazardCell && !isBlockCell && !game.worm.some(w => same(w, p));
+                const showDecor = isEmpty && decor > 0.78;
+                const justCollected = false;
+                let c = 'garden-tile-cell';
+                if (isWallCell) c += ' wall';
+                if (isKeyCell) c += ' key-tile';
+                if (isDoorCell) c += ' door-tile';
+                if (isHazardCell) c += ' hazard-tile';
+                if (isBlockCell) c += ' block-tile';
+                if (isAppleCell) c += ' apple';
+                if (isPortalCell) c += ' portal';
+                if (hint && game.apples.length && same(game.apples[0], p)) c += ' hinted';
+                if (showHintPath && solverHint && solverHint.path && solverHint.path.some(pt => same(pt, p))) c += ' hint-path hint-path-anim';
+                if (boardFx?.trail?.some(t => same(t, p))) c += ' worm-trail';
 
                 return (
-                  <div key={i} className={cellClass(p) + (justCollected ? ' apple-collected' : '')}>
-                    {isWormHead ? (
-                      <WormHeadSVG
-                        facing={facing}
-                        skinId={wormSkin}
-                        expression={wormExpression}
-                        skinColor={currentSkin}
-                      />
-                    ) : isWormTail ? (
-                      <WormTailSVG skinId={wormSkin} skinColor={currentSkin} />
-                    ) : segmentIdx > 0 ? (
-                      <WormSegmentSVG
-                        skinId={wormSkin}
-                        scale={Math.max(0.7, 1 - (segmentIdx * 0.035))}
-                        index={segmentIdx}
-                        skinColor={currentSkin}
-                      />
-                    ) : isAppleCell ? (
+                  <div key={i} className={c + (showDecor ? ' has-decor' : '')}>
+                    {showDecor && <span className={`tile-decor decor-${currentWorld.id} d-${Math.floor(decor * 4)}`} aria-hidden="true" />}
+                    {boardFx?.trail?.some(t => same(t, p)) && <span className="tile-trail-fx" aria-hidden="true" />}
+                    {isAppleCell ? (
                       <JuicyAppleSVG collected={justCollected} />
-                    ) : same(level.portal, p) ? (
+                    ) : isPortalCell ? (
                       <CosmicPortalSVG unlocked={game.apples.length === 0} />
-                    ) : level.walls.some(w => same(w, p)) ? (
+                    ) : isKeyCell ? (
+                      <span className="mechanic-icon key-icon" title="Key"><KeyRound size={18} /></span>
+                    ) : isDoorCell ? (
+                      <span className="mechanic-icon door-icon" title="Locked Gate"><LockKeyhole size={18} /></span>
+                    ) : isHazardCell ? (
+                      <span className="mechanic-icon hazard-icon" title="Hazard"><Flame size={18} /></span>
+                    ) : isBlockCell ? (
+                      <span className="mechanic-icon block-icon" title="Block"><ShieldCheck size={18} /></span>
+                    ) : isWallCell ? (
                       <StoneWallSVG />
                     ) : null}
                   </div>
                 );
               })}
+              <div className="worm-overlay-layer" aria-hidden="true">
+                {renderWorm.map((seg, idx) => {
+                  const x = (seg[0] / level.size) * 100;
+                  const y = (seg[1] / level.size) * 100;
+                  const isHeadSeg = idx === 0;
+                  const isTailSeg = idx === renderWorm.length - 1 && idx > 0;
+                  return (
+                    <div key={`w-${idx}`} className={`worm-overlay-seg ${isHeadSeg ? 'head' : ''} ${isTailSeg ? 'tail' : ''}`} style={{ left: `${x}%`, top: `${y}%`, width: `${100 / level.size}%`, height: `${100 / level.size}%`, zIndex: 30 - idx }}>
+                      {isHeadSeg ? (
+                        <WormHeadSVG facing={facing} skinId={wormSkin} expression={wormExpression} skinColor={currentSkin} />
+                      ) : isTailSeg ? (
+                        <WormTailSVG skinId={wormSkin} skinColor={currentSkin} />
+                      ) : (
+                        <WormSegmentSVG skinId={wormSkin} scale={Math.max(0.7, 1 - (idx * 0.035))} index={idx} skinColor={currentSkin} />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
@@ -1276,11 +1553,23 @@ function App() {
               </div>
               <div className="summary-metric-card bonus">
                 <small>COIN REWARD</small>
-                <strong>+25 🪙</strong>
+                <strong>+25 <Coins size={14} style={{ verticalAlign: 'middle' }} /></strong>
               </div>
               <div className="summary-metric-card">
                 <small>SCORE</small>
                 <strong>+{game.score}</strong>
+              </div>
+              <div className="summary-metric-card">
+                <small>BEST STARS</small>
+                <strong style={{ color: '#fbbf24' }}>{'★'.repeat(levelProgress[levelId]?.bestStars || earnedStars) || '—'}</strong>
+              </div>
+              <div className="summary-metric-card">
+                <small>BEST MOVES</small>
+                <strong>{levelProgress[levelId]?.bestMoves || game.moves}</strong>
+              </div>
+              <div className="summary-metric-card">
+                <small>TOTAL STARS</small>
+                <strong style={{ color: '#fbbf24' }}>{totalStarsEarned}/150</strong>
               </div>
             </div>
 
@@ -1395,7 +1684,7 @@ function App() {
               {displayedLevels.map(l => {
                 const world = WORLDS.find(w => w.id === l.worldId) || WORLDS[0];
                 const unlocked = completed.includes(l.id) || completed.includes(l.id - 1) || l.id === 1;
-                const isDone = completed.includes(l.id) && l.id < Math.max(...completed);
+                const best = levelProgress[l.id]?.bestStars || 0;
                 const isCurrent = l.id === levelId;
 
                 return (
@@ -1417,7 +1706,7 @@ function App() {
                       {unlocked ? String(l.id).padStart(2, '0') : <LockKeyhole size={18} />}
                     </span>
                     <span className="level-node-stars-label">
-                      {isDone ? '★★★' : unlocked ? '★☆☆' : 'LOCKED'}
+                      {best >= 3 ? '★★★' : best === 2 ? '★★☆' : best === 1 ? '★☆☆' : unlocked ? '☆☆☆' : 'LOCKED'}
                     </span>
                   </button>
                 );
@@ -1572,7 +1861,7 @@ function App() {
                     <span className="skin-badge owned">Owned</span>
                   )}
                   {!ownedSkins.includes(skin.id) && (
-                    <span className="skin-badge locked">{skin.price} 🪙</span>
+                    <span className="skin-badge locked">{skin.price} <Coins size={10} /></span>
                   )}
                   <div className="skin-preview" style={{
                     '--skin-primary': skin.primary,
@@ -1694,6 +1983,78 @@ function App() {
                 <li>Use the BFS Hint (H) for the optimal next move toward apples or portal.</li>
                 <li>Apple Boost (+5 moves) costs 30 coins - save it for tricky expert levels.</li>
               </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ACHIEVEMENTS & DAILY CHALLENGE MODAL */}
+      {achievementsModal && (
+        <div className="game-modal-backdrop" onClick={() => setAchievementsModal(false)}>
+          <div className="game-modal-panel achievements-modal" onClick={e => e.stopPropagation()}>
+            <button className="modal-close-cross-btn" onClick={() => setAchievementsModal(false)}>×</button>
+            <span style={{ color: '#a78bfa', fontSize: 12, fontWeight: 800, letterSpacing: '0.12em' }}>PROGRESSION</span>
+            <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 26, marginTop: 4 }}>Badges & Daily Challenge</h2>
+            <p style={{ color: '#94a3b8', fontSize: 13, marginTop: 4 }}>Track milestones, replay highlights, and take on today’s featured garden.</p>
+
+            <div className="daily-challenge-card" style={{ '--challenge-color': WORLDS.find(w => dailyChallenge.levelId >= w.range[0] && dailyChallenge.levelId <= w.range[1])?.color || '#38bdf8' }}>
+              <div className="daily-challenge-head"><Gift size={18} /> <span>Daily Challenge</span></div>
+              <strong>Level {String(dailyChallenge.levelId).padStart(2, '0')} — {dailyChallenge.title}</strong>
+              <p>{dailyChallenge.worldName} • Bonus reward: +{dailyChallenge.bonus} coins on clear</p>
+              <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+                <button className="modal-primary-btn" style={{ flex: 1 }} onClick={() => { setAchievementsModal(false); startLevel(dailyChallenge.levelId); }}>
+                  <Play size={15} /> Play Challenge
+                </button>
+                <button className="modal-secondary-btn" style={{ flex: 1 }} onClick={claimDailyReward} disabled={dailyRewardClaimed && !!token}>
+                  <Coins size={14} /> {dailyRewardClaimed && token ? 'Reward Claimed' : 'Claim Daily Reward'}
+                </button>
+              </div>
+              {dailyRewardMsg && <p style={{ marginTop: 8, fontSize: 12, color: '#a7f3d0' }}>{dailyRewardMsg}</p>}
+            </div>
+
+            <div className="achievements-grid">
+              {achievements.map(a => (
+                <div key={a.id} className={`achievement-card ${a.unlocked ? 'unlocked' : 'locked'}`}>
+                  <div className="achievement-icon" aria-hidden="true">{a.icon}</div>
+                  <div className="achievement-title">{a.title}</div>
+                  <div className="achievement-desc">{a.desc}</div>
+                  <div className="achievement-state">{a.unlocked ? 'Unlocked' : 'Locked'}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="undo-timeline-wrap">
+              <div className="undo-timeline-head"><Undo2 size={14} /> Undo Timeline</div>
+              <div className="undo-timeline" role="list" aria-label="Recent moves timeline">
+                {history.length === 0 && <span className="undo-timeline-empty">No moves yet. Your recent steps will appear here for quick review.</span>}
+                {history.slice(-12).map((h, idx, arr) => (
+                  <button key={idx} className="undo-timeline-node" role="listitem" title={`Step ${history.length - arr.length + idx + 1}`} onClick={() => { setGame(h); setHistory(prev => prev.slice(0, prev.length - arr.length + idx)); }}>
+                    <span>{history.length - arr.length + idx + 1}</span>
+                  </button>
+                ))}
+                {history.length > 0 && <button className="undo-timeline-node current" role="listitem" title="Current state"><span>Now</span></button>}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ONBOARDING MODAL */}
+      {onboardingOpen && (
+        <div className="game-modal-backdrop" onClick={() => { setOnboardingOpen(false); localStorage.setItem('onboardingSeen', '1'); }}>
+          <div className="game-modal-panel onboarding-modal" onClick={e => e.stopPropagation()}>
+            <span style={{ color: '#34d399', fontSize: 12, fontWeight: 800, letterSpacing: '0.12em' }}>WELCOME</span>
+            <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 28, marginTop: 4 }}>Start Your Adventure</h2>
+            <p style={{ color: '#94a3b8', marginTop: 6 }}>A quick guide to the polished garden journey.</p>
+            <div className="onboarding-grid">
+              <div className="onboarding-card"><strong>Slither Smart</strong><p>Swipe or use arrows/WASD. Plan around your growing tail and move budget.</p></div>
+              <div className="onboarding-card"><strong>Collect & Unlock</strong><p>Eat all apples to open the cosmic portal, then escape to clear the level.</p></div>
+              <div className="onboarding-card"><strong>Master Realms</strong><p>Earn stars, unlock skins, chase badges, and take on daily challenges.</p></div>
+              <div className="onboarding-card"><strong>Accessibility</strong><p>Use reduced motion, high contrast, and colorblind modes from the HUD anytime.</p></div>
+            </div>
+            <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+              <button className="modal-primary-btn" style={{ flex: 1 }} onClick={() => { setOnboardingOpen(false); localStorage.setItem('onboardingSeen', '1'); setHowToPlayModal(true); }}><CircleHelp size={16} /> Full Tutorial</button>
+              <button className="modal-secondary-btn" style={{ flex: 1 }} onClick={() => { setOnboardingOpen(false); localStorage.setItem('onboardingSeen', '1'); }}><Play size={16} /> Start Playing</button>
             </div>
           </div>
         </div>

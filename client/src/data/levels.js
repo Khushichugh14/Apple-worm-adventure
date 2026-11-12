@@ -1,4 +1,4 @@
-export const WORLDS = [
+﻿export const WORLDS = [
   {
     id: 1,
     name: 'Mossy Meadow',
@@ -7,7 +7,7 @@ export const WORLDS = [
     color: '#10b981',
     accentBg: 'rgba(16, 185, 129, 0.15)',
     difficulty: 'Beginner',
-    icon: '🌱'
+    icon: 'ðŸŒ±'
   },
   {
     id: 2,
@@ -17,7 +17,7 @@ export const WORLDS = [
     color: '#f59e0b',
     accentBg: 'rgba(245, 158, 11, 0.15)',
     difficulty: 'Easy',
-    icon: '🏛️'
+    icon: 'ðŸ›ï¸'
   },
   {
     id: 3,
@@ -27,7 +27,7 @@ export const WORLDS = [
     color: '#38bdf8',
     accentBg: 'rgba(56, 189, 248, 0.15)',
     difficulty: 'Medium',
-    icon: '💎'
+    icon: 'ðŸ’Ž'
   },
   {
     id: 4,
@@ -37,7 +37,7 @@ export const WORLDS = [
     color: '#a855f7',
     accentBg: 'rgba(168, 85, 247, 0.15)',
     difficulty: 'Hard',
-    icon: '🔮'
+    icon: 'ðŸ”®'
   },
   {
     id: 5,
@@ -47,7 +47,7 @@ export const WORLDS = [
     color: '#ec4899',
     accentBg: 'rgba(236, 72, 153, 0.15)',
     difficulty: 'Expert',
-    icon: '✨'
+    icon: 'âœ¨'
   }
 ];
 
@@ -629,7 +629,9 @@ const LEVEL_DESIGNS = [
     portal: [4, 6],
     walls: [[2, 3], [3, 3], [4, 3], [2, 5], [4, 5], [6, 4], [3, 5], [1, 3]],
     moveLimit: 41,
-    parMoves: 28
+    parMoves: 28,
+    doors: [[5,5]],
+    keys: [[1,1]]
   },
   {
     id: 39,
@@ -796,7 +798,8 @@ const LEVEL_DESIGNS = [
     portal: [4, 1],
     walls: [[3, 6], [1, 4], [5, 4], [4, 3], [2, 5], [5, 2], [0, 3], [6, 1], [1, 3]],
     moveLimit: 47,
-    parMoves: 34
+    parMoves: 34,
+    hazards: [[0,7],[7,7]]
   },
   {
     id: 50,
