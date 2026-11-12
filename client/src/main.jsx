@@ -462,14 +462,11 @@ function App() {
   const moveTimeoutRef = useRef(null);
   const prevWormRef = useRef(null);
   const animFrameRef = useRef(null);
-  const boardViewportRef = useRef(null);
-  const panRef = useRef({ x: 0, y: 0, dragging: false, startX: 0, startY: 0, ox: 0, oy: 0 });
 
   const level = LEVELS[levelId - 1] || LEVELS[0];
   const [game, setGame] = useState(() => initialState(LEVELS[levelId - 1] || LEVELS[0]));
   const [renderWorm, setRenderWorm] = useState(() => (LEVELS[levelId - 1] || LEVELS[0]).worm.map(p => [...p]));
   const [moveTick, setMoveTick] = useState(0);
-  const [camera, setCamera] = useState({ zoom: 1, panX: 0, panY: 0 });
 
   // Current World
   const currentWorld = WORLDS.find(w => levelId >= w.range[0] && levelId <= w.range[1]) || WORLDS[0];
@@ -521,23 +518,6 @@ function App() {
     animFrameRef.current = requestAnimationFrame(animate);
     return () => { if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current); };
   }, [moveTick, game.worm, reducedMotion]);
-
-  const zoomIn = () => setCamera(c => ({ ...c, zoom: Math.min(1.6, +(c.zoom + 0.1).toFixed(2)) }));
-  const zoomOut = () => setCamera(c => ({ ...c, zoom: Math.max(0.7, +(c.zoom - 0.1).toFixed(2)) }));
-  const resetCamera = () => setCamera({ zoom: 1, panX: 0, panY: 0 });
-  const onBoardPointerDown = (e) => {
-    if (e.button !== 0) return;
-    if (e.target.closest('button')) return;
-    panRef.current = { ...panRef.current, dragging: true, startX: e.clientX, startY: e.clientY, ox: camera.panX, oy: camera.panY };
-    e.currentTarget.setPointerCapture?.(e.pointerId);
-  };
-  const onBoardPointerMove = (e) => {
-    if (!panRef.current.dragging) return;
-    const dx = e.clientX - panRef.current.startX;
-    const dy = e.clientY - panRef.current.startY;
-    setCamera(c => ({ ...c, panX: panRef.current.ox + dx, panY: panRef.current.oy + dy }));
-  };
-  const onBoardPointerUp = (e) => { panRef.current.dragging = false; try { e.currentTarget.releasePointerCapture?.(e.pointerId); } catch {} };
 
   // Fullscreen toggle & change detection
   const toggleFullscreen = useCallback(() => {
@@ -724,7 +704,6 @@ function App() {
     setStarPopStage(0);
     setConfettiParticles([]);
     setBoardFx({ trail: [], warp: false, impact: false, eat: false });
-    setCamera({ zoom: 1, panX: 0, panY: 0 });
     setLevelPreview(null);
     setMapModal(false);
     setLevelIntro(true);
@@ -746,12 +725,12 @@ function App() {
     setConfettiParticles(particles);
   }, []);
 
-  // Smooth move with 180-degree neck collision prevention
+  // Apply a move in the chosen direction
   const move = useCallback(dir => {
     setGame(old => {
       if (old.status !== 'playing') return old;
 
-      // Prevent 180Â° instant reverse into neck if worm length >= 2
+      // Ignore direct reverse into the neck (common snake behavior)
       if (old.worm.length >= 2) {
         const delta = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[dir];
         if (delta) {
@@ -768,6 +747,7 @@ function App() {
 
       const effectiveLevel = { ...level, moveLimit: level.moveLimit + bonusMoves };
       const next = step(old, dir, effectiveLevel);
+      if (next === old) return old;
       setMoveTick(t => t + 1);
       setBoardFx(fx => ({ ...fx, trail: [old.worm[0], ...(fx.trail || [])].slice(0, 6) }));
 
@@ -1272,15 +1252,7 @@ function App() {
 
       {/* CENTER STAGE: 3D FLOATING GARDEN ISLAND */}
       <main className="game-play-stage">
-        <div
-          className="garden-board-wrapper camera-viewport"
-          ref={boardViewportRef}
-          onPointerDown={onBoardPointerDown}
-          onPointerMove={onBoardPointerMove}
-          onPointerUp={onBoardPointerUp}
-          onPointerLeave={onBoardPointerUp}
-          onWheel={(e) => { e.preventDefault(); setCamera(c => ({ ...c, zoom: Math.min(1.8, Math.max(0.6, +(c.zoom + (e.deltaY < 0 ? 0.08 : -0.08)).toFixed(2))) })); }}
-        >
+        <div className="garden-board-wrapper">
           {/* Floating score popups */}
           {floatingScores.map(s => {
             const pctX = (s.x / level.size) * 100 + (100 / (level.size * 2));
@@ -1293,9 +1265,8 @@ function App() {
           })}
 
           <div
-            className="garden-floating-island camera-surface"
+            className="garden-floating-island"
             data-world={currentWorld.id}
-            style={{ transform: `translate(${camera.panX}px, ${camera.panY}px) scale(${boardScale * camera.zoom})`, transformOrigin: 'center center' }}
           >
             <div className="garden-matrix-grid" style={{ '--grid-size': level.size }}>
               {board.map((p, i) => {
@@ -1378,27 +1349,24 @@ function App() {
           <button className="dock-action-btn" onClick={restart} title="Restart Garden (R)">
             <RotateCcw size={16} /> <span>RESET</span>
           </button>
-          <button className="dock-action-btn hint-btn" onClick={triggerSmartHint} title="BFS Shortest Route Hint (H)">
+          <button className="dock-action-btn hint-btn" onClick={triggerSmartHint} title="Show hint (H)">
             <Lightbulb size={16} /> <span>HINT</span>
-          </button>
-          <button className="dock-action-btn boost-btn" onClick={buyBoost} title="Buy +5 moves for 30 coins">
-            <Zap size={16} /> <span>+5 MOVES</span>
           </button>
         </div>
 
         {/* Virtual Ergonomic D-Pad */}
-        <div className="virtual-dpad-cluster">
-          <button className="dpad-direction-button" onClick={() => move('up')} aria-label="Move Up">
+        <div className="virtual-dpad-cluster" onTouchStart={e => e.stopPropagation()} onTouchEnd={e => e.stopPropagation()}>
+          <button type="button" className="dpad-direction-button" onPointerDown={e => { e.preventDefault(); e.stopPropagation(); move('up'); }} aria-label="Move Up">
             <ArrowUp size={22} />
           </button>
           <div className="dpad-row-keys">
-            <button className="dpad-direction-button" onClick={() => move('left')} aria-label="Move Left">
+            <button type="button" className="dpad-direction-button" onPointerDown={e => { e.preventDefault(); e.stopPropagation(); move('left'); }} aria-label="Move Left">
               <ArrowLeft size={22} />
             </button>
-            <button className="dpad-direction-button" onClick={() => move('down')} aria-label="Move Down">
+            <button type="button" className="dpad-direction-button" onPointerDown={e => { e.preventDefault(); e.stopPropagation(); move('down'); }} aria-label="Move Down">
               <ArrowDown size={22} />
             </button>
-            <button className="dpad-direction-button" onClick={() => move('right')} aria-label="Move Right">
+            <button type="button" className="dpad-direction-button" onPointerDown={e => { e.preventDefault(); e.stopPropagation(); move('right'); }} aria-label="Move Right">
               <ArrowRight size={22} />
             </button>
           </div>
