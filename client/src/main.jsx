@@ -1187,60 +1187,44 @@ function App() {
         </div>
       </div>
 
-      {/* TOP ARCADE GLASS HUD */}
-      <header className="game-arcade-hud">
-        <div className="hud-cluster hud-cluster-left">
-          <div className="hud-brand-pill" onClick={() => setMapModal(true)} title="Browse Realms & Levels">
-            <div className="brand-icon-wrapper">
-              <Apple size={20} />
+      {/* TOP BAR - restructured */}
+      <header className="game-arcade-hud redesigned-hud">
+        <div className="hud-top-row">
+          <button className="hud-level-chip" onClick={() => setMapModal(true)} title="Levels & realms">
+            <span className="hud-level-dot" style={{ background: currentWorld.color }} />
+            <span className="hud-level-text"><strong>Level {levelId}</strong> <small>{currentWorld.name}</small></span>
+          </button>
+
+          <div className="hud-stats-row">
+            <div className="hud-stat" title="Moves used / limit (par)">
+              <span className="hud-stat-label">Moves</span>
+              <span className="hud-stat-value">{game.moves}<small>/{level.moveLimit + bonusMoves}</small></span>
             </div>
-            <span className="brand-title-text">APPLE WORM</span>
-          </div>
-
-          <div className="hud-realm-tag" style={{ borderColor: `${currentWorld.color}66` }}>
-            <span className="realm-glow-indicator" style={{ backgroundColor: currentWorld.color }} />
-            <span>{currentWorld.icon} {currentWorld.name} • Lv. {String(levelId).padStart(2, '0')}</span>
-          </div>
-        </div>
-
-        {/* Center Live Metrics */}
-        <div className="hud-cluster hud-cluster-center">
-          <div className="hud-metric-pill hud-moves-pill">
-            <div className="hud-moves-top"><span>Moves</span> <b>{game.moves}/{level.moveLimit + bonusMoves}</b> <small>Par {level.parMoves}</small></div>
-            <div className="move-progress-bar" aria-hidden="true">
-              <span className="move-progress-fill" style={{ width: `${moveProgress.pct}%` }} />
-              <span className="move-progress-par" style={{ left: `${moveProgress.parPct}%` }} title="Par target" />
+            <div className="hud-stat" title="Apples remaining">
+              <Apple size={14} />
+              <span className="hud-stat-value">{game.apples.length}</span>
+            </div>
+            <div className="hud-stat stars" title="Current star rating">
+              <span className={`star-icon-unit ${liveStars >= 1 ? 'earned' : ''}`}>★</span>
+              <span className={`star-icon-unit ${liveStars >= 2 ? 'earned' : ''}`}>★</span>
+              <span className={`star-icon-unit ${liveStars >= 3 ? 'earned' : ''}`}>★</span>
             </div>
           </div>
 
-          <div className="hud-metric-pill hud-stars-display" title="Current rating">
-            <span className={`star-icon-unit ${liveStars >= 1 ? 'earned' : ''}`}>★</span>
-            <span className={`star-icon-unit ${liveStars >= 2 ? 'earned' : ''}`}>★</span>
-            <span className={`star-icon-unit ${liveStars >= 3 ? 'earned' : ''}`}>★</span>
-          </div>
-
-          <div className="hud-metric-pill hud-apples-counter" title="Apples remaining">
-            <Apple size={15} /> <b>{game.apples.length}</b>
-          </div>
-
-          <div className="hud-metric-pill hud-stars-inline" title="Total stars earned">
-            <Star size={14} /> <b>{totalStarsEarned}</b><small>/150</small>
+          <div className="hud-actions-compact">
+            <div className="coin-badge-pill compact" title="Coins"><Coins size={14} /><span>{coins}</span></div>
+            <button className={`hud-action-icon-btn ${sound ? 'active' : ''}`} onClick={() => setSound(!sound)} title="Sound">{sound ? <Volume2 size={15} /> : <VolumeX size={15} />}</button>
+            <button className="hud-action-icon-btn" onClick={() => setShopModal(true)} title="Shop"><ShoppingBag size={15} /></button>
+            <button className="hud-action-icon-btn" onClick={() => setAchievementsModal(true)} title="Badges"><Award size={15} /></button>
+            <button className="hud-action-icon-btn hud-user-avatar" onClick={() => setAuthModal(user ? 'profile' : 'login')} title={user ? user.name : 'Sign in'}>{user ? user.name[0].toUpperCase() : <UserIcon size={14} />}</button>
           </div>
         </div>
-
-        {/* Right Action Controls */}
-        <div className="hud-cluster hud-cluster-right">
-          <div className="coin-badge-pill" title="Garden Coins">
-            <Coins size={16} />
-            <span>{coins}</span>
+        <div className="hud-progress-strip" aria-hidden="true">
+          <div className="hud-progress-track">
+            <span className="hud-progress-fill" style={{ width: `${moveProgress.pct}%` }} />
+            <span className="hud-progress-par" style={{ left: `${moveProgress.parPct}%` }} />
           </div>
-          <button className="hud-action-icon-btn" onClick={() => setMapModal(true)} title="Levels"><MapPin size={16} /></button>
-          <button className="hud-action-icon-btn" onClick={() => setShopModal(true)} title="Shop"><ShoppingBag size={16} /></button>
-          <button className={`hud-action-icon-btn ${sound ? 'active' : ''}`} onClick={() => setSound(!sound)} title="Sound">{sound ? <Volume2 size={16} /> : <VolumeX size={16} />}</button>
-          <button className={`hud-action-icon-btn ${music ? 'active' : ''}`} onClick={toggleMusic} title="Music"><Music size={16} /></button>
-          <button className="hud-action-icon-btn" onClick={() => setHowToPlayModal(true)} title="Help"><CircleHelp size={16} /></button>
-          <button className="hud-action-icon-btn" onClick={toggleFullscreen} title="Fullscreen">{isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}</button>
-          <button className="hud-action-icon-btn hud-user-avatar" onClick={() => setAuthModal(user ? 'profile' : 'login')} title={user ? user.name : 'Sign in'}>{user ? user.name[0].toUpperCase() : <UserIcon size={16} />}</button>
+          <span className="hud-progress-meta">Par {level.parMoves} · {totalStarsEarned}/150 ★</span>
         </div>
       </header>
 

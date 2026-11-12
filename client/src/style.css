@@ -2874,3 +2874,36 @@ button:focus-visible {
 .worm-overlay-seg.head { z-index: 40; filter: drop-shadow(0 6px 10px rgba(0,0,0,.35)); }
 .worm-overlay-seg .worm-head-svg-container, .worm-overlay-seg .worm-segment-svg-container, .worm-overlay-seg .worm-tail-svg-container { width: 92%; height: 92%; }
 @media (max-width: 640px){ .camera-hint{ display:none; } .camera-controls-bar{ gap:6px; padding:5px 8px; } }
+
+/* Redesigned HUD structure */
+.game-arcade-hud.redesigned-hud { flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 14px 8px; }
+.hud-top-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; }
+.hud-level-chip { display: inline-flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; cursor: pointer; min-width: 0; }
+.hud-level-chip:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.18); }
+.hud-level-dot { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 10px currentColor; flex: 0 0 auto; }
+.hud-level-text { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.1; }
+.hud-level-text strong { font-size: 14px; font-family: var(--font-heading); }
+.hud-level-text small { font-size: 11px; color: #94a3b8; font-weight: 600; }
+.hud-stats-row { display: flex; align-items: center; gap: 10px; flex: 1; justify-content: center; flex-wrap: wrap; }
+.hud-stat { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: #e2e8f0; font-size: 13px; }
+.hud-stat-label { color: #94a3b8; font-weight: 600; font-size: 12px; }
+.hud-stat-value { font-family: var(--font-heading); font-weight: 700; color: #fff; }
+.hud-stat-value small { color: #94a3b8; font-weight: 600; margin-left: 1px; }
+.hud-stat.stars { gap: 2px; padding: 6px 8px; }
+.hud-actions-compact { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.coin-badge-pill.compact { padding: 6px 10px; font-size: 13px; }
+.hud-progress-strip { display: flex; align-items: center; gap: 10px; width: 100%; }
+.hud-progress-track { position: relative; flex: 1; height: 6px; border-radius: 999px; background: rgba(255,255,255,0.08); overflow: hidden; }
+.hud-progress-fill { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: linear-gradient(90deg, #34d399, #38bdf8); }
+.hud-progress-par { position: absolute; top: -3px; bottom: -3px; width: 2px; background: #fbbf24; box-shadow: 0 0 8px rgba(251,191,36,0.7); }
+.hud-progress-meta { font-size: 11px; color: #94a3b8; font-weight: 600; white-space: nowrap; }
+
+@media (max-width: 800px) {
+  .hud-top-row { flex-wrap: wrap; }
+  .hud-stats-row { order: 3; width: 100%; justify-content: flex-start; }
+  .hud-actions-compact { margin-left: auto; }
+}
+@media (max-width: 520px) {
+  .hud-level-text small { display: none; }
+  .hud-progress-meta { display: none; }
+}
