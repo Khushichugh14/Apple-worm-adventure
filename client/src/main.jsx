@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   Apple, ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Award,
@@ -751,7 +751,7 @@ function App() {
     setGame(old => {
       if (old.status !== 'playing') return old;
 
-      // Prevent 180° instant reverse into neck if worm length >= 2
+      // Prevent 180Â° instant reverse into neck if worm length >= 2
       if (old.worm.length >= 2) {
         const delta = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[dir];
         if (delta) {
@@ -1109,16 +1109,16 @@ function App() {
     const perfectLevels = Object.values(levelProgress).filter(p => p.bestStars === 3).length;
     const worldClears = WORLDS.filter(w => LEVELS.slice(w.range[0] - 1, w.range[1]).every(l => (levelProgress[l.id]?.bestStars || 0) > 0)).length;
     return [
-      { id: 'first-step', title: 'First Bite', desc: 'Complete any level', icon: '🍎', unlocked: completedCount >= 1 },
-      { id: 'garden-10', title: 'Garden Explorer', desc: 'Complete 10 levels', icon: '🌿', unlocked: completedCount >= 10 },
-      { id: 'garden-25', title: 'Trailblazer', desc: 'Complete 25 levels', icon: '🧭', unlocked: completedCount >= 25 },
-      { id: 'garden-50', title: 'Realm Master', desc: 'Complete all 50 levels', icon: '🏆', unlocked: completedCount >= 50 },
-      { id: 'perfect-5', title: 'Precision', desc: 'Earn 3 stars on 5 levels', icon: '⭐', unlocked: perfectLevels >= 5 },
-      { id: 'perfect-20', title: 'Perfectionist', desc: 'Earn 3 stars on 20 levels', icon: '✨', unlocked: perfectLevels >= 20 },
-      { id: 'world-clear', title: 'World Conqueror', desc: 'Clear every level in any realm', icon: '🗺️', unlocked: worldClears >= 1 },
-      { id: 'collector', title: 'Skin Collector', desc: 'Own 3 or more worm skins', icon: '🎨', unlocked: ownedSkins.length >= 3 },
-      { id: 'wealthy', title: 'Coin Hoarder', desc: 'Hold 300+ coins', icon: '🪙', unlocked: coins >= 300 },
-      { id: 'star-50', title: 'Stargazer', desc: 'Earn 50 total stars', icon: '🌟', unlocked: totalStarsEarned >= 50 },
+      { id: 'first-step', title: 'First Bite', desc: 'Complete any level', icon: 'ðŸŽ', unlocked: completedCount >= 1 },
+      { id: 'garden-10', title: 'Garden Explorer', desc: 'Complete 10 levels', icon: 'ðŸŒ¿', unlocked: completedCount >= 10 },
+      { id: 'garden-25', title: 'Trailblazer', desc: 'Complete 25 levels', icon: 'ðŸ§­', unlocked: completedCount >= 25 },
+      { id: 'garden-50', title: 'Realm Master', desc: 'Complete all 50 levels', icon: 'ðŸ†', unlocked: completedCount >= 50 },
+      { id: 'perfect-5', title: 'Precision', desc: 'Earn 3 stars on 5 levels', icon: 'â­', unlocked: perfectLevels >= 5 },
+      { id: 'perfect-20', title: 'Perfectionist', desc: 'Earn 3 stars on 20 levels', icon: 'âœ¨', unlocked: perfectLevels >= 20 },
+      { id: 'world-clear', title: 'World Conqueror', desc: 'Clear every level in any realm', icon: 'ðŸ—ºï¸', unlocked: worldClears >= 1 },
+      { id: 'collector', title: 'Skin Collector', desc: 'Own 3 or more worm skins', icon: 'ðŸŽ¨', unlocked: ownedSkins.length >= 3 },
+      { id: 'wealthy', title: 'Coin Hoarder', desc: 'Hold 300+ coins', icon: 'ðŸª™', unlocked: coins >= 300 },
+      { id: 'star-50', title: 'Stargazer', desc: 'Earn 50 total stars', icon: 'ðŸŒŸ', unlocked: totalStarsEarned >= 50 },
     ];
   }, [levelProgress, ownedSkins.length, coins, totalStarsEarned]);
 
@@ -1176,40 +1176,15 @@ function App() {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="world-parallax" aria-hidden="true">
-        <span className="parallax-layer p1" />
-        <span className="parallax-layer p2" />
-        <span className="parallax-layer p3" />
-      </div>
 
-      {levelIntro && (
-        <div className="level-intro-overlay" aria-live="polite">
-          <div className="level-intro-card" style={{ '--intro-color': currentWorld.color }}>
-            <span className="level-intro-world">{currentWorld.icon} {currentWorld.name}</span>
-            <strong>Level {String(levelId).padStart(2, '0')}</strong>
-            <p>{level.title}</p>
-          </div>
-        </div>
-      )}
 
       {/* AMBIENT LAYERS */}
-      <div className="ambient-layers">
-        {/* Gradient Orbs */}
+      <div className="ambient-layers" aria-hidden="true">
         <div className="ambient-layer ambient-orbs-layer" style={{ '--orb-color-1': ambientOrbs[0].color, '--orb-color-2': ambientOrbs[1].color, '--orb-color-3': ambientOrbs[2].color }}>
-          {ambientOrbs.map((orb, i) => (
+          {ambientOrbs.slice(0, 2).map((orb, i) => (
             <div key={i} className="ambient-orb" style={{ ...orb }} />
           ))}
         </div>
-
-        {/* Floating Motes */}
-        <div className="ambient-layer ambient-motes-layer">
-          {ambientMotes.map((mote, i) => (
-            <FloatingParticle key={i} {...mote} />
-          ))}
-        </div>
-
-        {/* Grid Overlay */}
-        <div className="ambient-layer ambient-grid-overlay" />
       </div>
 
       {/* TOP ARCADE GLASS HUD */}
@@ -1231,22 +1206,26 @@ function App() {
         {/* Center Live Metrics */}
         <div className="hud-cluster hud-cluster-center">
           <div className="hud-metric-pill hud-moves-pill">
-            <div className="hud-moves-top"><span>MOVES:</span> <b>{game.moves}/{level.moveLimit + bonusMoves}</b> <small>(Par: {level.parMoves})</small></div>
+            <div className="hud-moves-top"><span>Moves</span> <b>{game.moves}/{level.moveLimit + bonusMoves}</b> <small>Par {level.parMoves}</small></div>
             <div className="move-progress-bar" aria-hidden="true">
               <span className="move-progress-fill" style={{ width: `${moveProgress.pct}%` }} />
               <span className="move-progress-par" style={{ left: `${moveProgress.parPct}%` }} title="Par target" />
             </div>
           </div>
 
-          <div className="hud-metric-pill hud-stars-display" title="Stars rating based on moves">
+          <div className="hud-metric-pill hud-stars-display" title="Current rating">
             <span className={`star-icon-unit ${liveStars >= 1 ? 'earned' : ''}`}>★</span>
             <span className={`star-icon-unit ${liveStars >= 2 ? 'earned' : ''}`}>★</span>
             <span className={`star-icon-unit ${liveStars >= 3 ? 'earned' : ''}`}>★</span>
           </div>
 
-              <div className="hud-metric-pill hud-apples-counter">
-                <span><Apple size={14} /> {game.apples.length} left</span>
-              </div>
+          <div className="hud-metric-pill hud-apples-counter" title="Apples remaining">
+            <Apple size={15} /> <b>{game.apples.length}</b>
+          </div>
+
+          <div className="hud-metric-pill hud-stars-inline" title="Total stars earned">
+            <Star size={14} /> <b>{totalStarsEarned}</b><small>/150</small>
+          </div>
         </div>
 
         {/* Right Action Controls */}
@@ -1255,75 +1234,13 @@ function App() {
             <Coins size={16} />
             <span>{coins}</span>
           </div>
-          <div className="coin-badge-pill hud-stars-total" title="Total stars earned">
-            <Star size={15} />
-            <span>{totalStarsEarned}/150</span>
-          </div>
-
-          <button className="hud-nav-tab-btn" onClick={() => setMapModal(true)} title="Open Level Map (M)">
-            <MapPin size={15} /> Realms
-          </button>
-
-          <button className="hud-nav-tab-btn" onClick={() => setLeaderboardModal(true)} title="Hall of Fame (L)">
-            <Trophy size={15} /> Rank
-          </button>
-
-          <button className="hud-nav-tab-btn" onClick={() => setAchievementsModal(true)} title="Achievements & badges">
-            <Award size={15} /> Badges
-          </button>
-
-          <button className="hud-action-icon-btn" onClick={() => setShopModal(true)} title="Skins & Boosters (S)">
-            <ShoppingBag size={16} />
-          </button>
-
-          <button
-            className={`hud-action-icon-btn ${music ? 'active' : ''}`}
-            onClick={toggleMusic}
-            title={music ? 'Mute Music (M)' : 'Play Music (M)'}
-          >
-            <Music size={16} />
-          </button>
-
-          <button
-            className={`hud-action-icon-btn ${sound ? 'active' : ''}`}
-            onClick={() => setSound(!sound)}
-            title={sound ? 'Mute SFX' : 'Unmute SFX'}
-          >
-            {sound ? <Volume2 size={16} /> : <VolumeX size={16} />}
-          </button>
-
-          <button
-            className={`hud-action-icon-btn ${reducedMotion ? 'active' : ''}`}
-            onClick={() => setReducedMotion(v => !v)}
-            title={reducedMotion ? 'Enable motion effects' : 'Reduce motion effects'}
-            aria-label={reducedMotion ? 'Enable motion effects' : 'Reduce motion effects'}
-          >
-            <Sparkles size={16} />
-          </button>
-
-          <button
-            className="hud-action-icon-btn"
-            onClick={toggleFullscreen}
-            title={isFullscreen ? 'Exit Fullscreen (F)' : 'Enter Fullscreen (F)'}
-          >
-            {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-          </button>
-
-          <button
-            className="hud-action-icon-btn"
-            onClick={() => setHowToPlayModal(true)}
-            title="How to Play Tutorial"
-          >
-            <CircleHelp size={16} />
-          </button>
-
-          <button
-            className="hud-action-icon-btn hud-user-avatar"
-            onClick={() => setAuthModal(user ? 'profile' : 'login')}
-            title={user ? `${user.name} (Signed in)` : 'Sign in / Profile'}
-          >
-            {user ? user.name[0].toUpperCase() : 'G'}
-          </button>
+          <button className="hud-action-icon-btn" onClick={() => setMapModal(true)} title="Levels"><MapPin size={16} /></button>
+          <button className="hud-action-icon-btn" onClick={() => setShopModal(true)} title="Shop"><ShoppingBag size={16} /></button>
+          <button className={`hud-action-icon-btn ${sound ? 'active' : ''}`} onClick={() => setSound(!sound)} title="Sound">{sound ? <Volume2 size={16} /> : <VolumeX size={16} />}</button>
+          <button className={`hud-action-icon-btn ${music ? 'active' : ''}`} onClick={toggleMusic} title="Music"><Music size={16} /></button>
+          <button className="hud-action-icon-btn" onClick={() => setHowToPlayModal(true)} title="Help"><CircleHelp size={16} /></button>
+          <button className="hud-action-icon-btn" onClick={toggleFullscreen} title="Fullscreen">{isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}</button>
+          <button className="hud-action-icon-btn hud-user-avatar" onClick={() => setAuthModal(user ? 'profile' : 'login')} title={user ? user.name : 'Sign in'}>{user ? user.name[0].toUpperCase() : <UserIcon size={16} />}</button>
         </div>
       </header>
 
@@ -1371,13 +1288,6 @@ function App() {
 
       {/* CENTER STAGE: 3D FLOATING GARDEN ISLAND */}
       <main className="game-play-stage">
-        <div className="camera-controls-bar" aria-label="Camera controls">
-          <button className="dock-action-btn mini" onClick={zoomOut} title="Zoom out">−</button>
-          <span className="camera-zoom-label">{Math.round(camera.zoom * 100)}%</span>
-          <button className="dock-action-btn mini" onClick={zoomIn} title="Zoom in">+</button>
-          <button className="dock-action-btn mini" onClick={resetCamera} title="Reset camera"><Maximize2 size={14} /></button>
-          <span className="camera-hint">Drag to pan</span>
-        </div>
         <div
           className="garden-board-wrapper camera-viewport"
           ref={boardViewportRef}
@@ -1575,7 +1485,7 @@ function App() {
 
             <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 22 }}>
               {game.moves <= level.parMoves
-                ? '🌟 Flawless precision! You matched the master Par moves target.'
+                ? 'ðŸŒŸ Flawless precision! You matched the master Par moves target.'
                 : 'Well played! Slither into the next garden or replay to earn 3 stars.'}
             </p>
 
@@ -1633,7 +1543,7 @@ function App() {
               </button>
               {failureType?.type === 'moves' && (
                 <button className="modal-secondary-btn" onClick={buyBoost} style={{ borderColor: '#f59e0b', color: '#fbbf24' }}>
-                  <Zap size={14} /> +5 Moves (30🪙)
+                  <Zap size={14} /> +5 Moves (30ðŸª™)
                 </button>
               )}
             </div>
@@ -1660,7 +1570,7 @@ function App() {
                 onClick={() => setSelectedWorldTab(0)}
                 style={{ '--world-tab-color': '#34d399' }}
               >
-                <span>🌐 All Realms</span>
+                <span>ðŸŒ All Realms</span>
                 <span className="world-progress-badge">50</span>
               </button>
               {WORLDS.map(w => {
@@ -1706,7 +1616,7 @@ function App() {
                       {unlocked ? String(l.id).padStart(2, '0') : <LockKeyhole size={18} />}
                     </span>
                     <span className="level-node-stars-label">
-                      {best >= 3 ? '★★★' : best === 2 ? '★★☆' : best === 1 ? '★☆☆' : unlocked ? '☆☆☆' : 'LOCKED'}
+                      {best >= 3 ? '★★★' : best === 2 ? '★★â˜†' : best === 1 ? '★â˜†â˜†' : unlocked ? 'â˜†â˜†â˜†' : 'LOCKED'}
                     </span>
                   </button>
                 );
@@ -1737,11 +1647,11 @@ function App() {
               </div>
               <div className="level-preview-stat">
                 <small>APPLES TO EAT</small>
-                <strong>{levelPreview.apples.length} 🍎</strong>
+                <strong>{levelPreview.apples.length} ðŸŽ</strong>
               </div>
               <div className="level-preview-stat">
                 <small>PAR MOVES (3★)</small>
-                <strong style={{ color: '#fbbf24' }}>≤ {levelPreview.parMoves} moves</strong>
+                <strong style={{ color: '#fbbf24' }}>â‰¤ {levelPreview.parMoves} moves</strong>
               </div>
               <div className="level-preview-stat">
                 <small>MOVE LIMIT</small>
@@ -1885,7 +1795,7 @@ function App() {
                     </button>
                   )}
                   {wormSkin === skin.id && (
-                    <div style={{ color: '#34d399', fontSize: 12, fontWeight: 700, marginTop: 4 }}>✓ Equipped</div>
+                    <div style={{ color: '#34d399', fontSize: 12, fontWeight: 700, marginTop: 4 }}>âœ“ Equipped</div>
                   )}
                 </div>
               ))}
@@ -1911,10 +1821,10 @@ function App() {
                   <div className="step-title">Move & Slither</div>
                   <div className="step-desc">Swipe or use arrow keys / WASD to move. Your worm slides one tile at a time.</div>
                   <div className="step-keys">
-                    <span className="key-badge">↑</span>
-                    <span className="key-badge">↓</span>
-                    <span className="key-badge">←</span>
-                    <span className="key-badge">→</span>
+                    <span className="key-badge">â†‘</span>
+                    <span className="key-badge">â†“</span>
+                    <span className="key-badge">â†</span>
+                    <span className="key-badge">â†’</span>
                     <span className="key-badge">WASD</span>
                   </div>
                 </div>
@@ -1923,7 +1833,7 @@ function App() {
               <div className="how-to-step">
                 <div className="step-number">2</div>
                 <div className="step-content">
-                  <div className="step-title">Eat Apples 🍎</div>
+                  <div className="step-title">Eat Apples ðŸŽ</div>
                   <div className="step-desc">Collect all apples in the garden. Each apple makes your worm grow longer!</div>
                 </div>
               </div>
@@ -1931,7 +1841,7 @@ function App() {
               <div className="how-to-step">
                 <div className="step-number">3</div>
                 <div className="step-content">
-                  <div className="step-title">Enter the Portal 🌀</div>
+                  <div className="step-title">Enter the Portal ðŸŒ€</div>
                   <div className="step-desc">After eating all apples, the cosmic portal unlocks. Slither into it to complete the level.</div>
                 </div>
               </div>
@@ -1995,7 +1905,7 @@ function App() {
             <button className="modal-close-cross-btn" onClick={() => setAchievementsModal(false)}>×</button>
             <span style={{ color: '#a78bfa', fontSize: 12, fontWeight: 800, letterSpacing: '0.12em' }}>PROGRESSION</span>
             <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 26, marginTop: 4 }}>Badges & Daily Challenge</h2>
-            <p style={{ color: '#94a3b8', fontSize: 13, marginTop: 4 }}>Track milestones, replay highlights, and take on today’s featured garden.</p>
+            <p style={{ color: '#94a3b8', fontSize: 13, marginTop: 4 }}>Track milestones, replay highlights, and take on todayâ€™s featured garden.</p>
 
             <div className="daily-challenge-card" style={{ '--challenge-color': WORLDS.find(w => dailyChallenge.levelId >= w.range[0] && dailyChallenge.levelId <= w.range[1])?.color || '#38bdf8' }}>
               <div className="daily-challenge-head"><Gift size={18} /> <span>Daily Challenge</span></div>

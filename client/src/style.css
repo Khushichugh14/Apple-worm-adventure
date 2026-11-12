@@ -306,23 +306,23 @@ button:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 24px;
-  gap: 16px;
-  background: linear-gradient(180deg, rgba(5, 7, 13, 0.95) 0%, rgba(5, 7, 13, 0.6) 60%, transparent 100%);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border-bottom: 1px solid var(--border-glass);
+  padding: 10px 18px;
+  gap: 12px;
+  background: rgba(8, 10, 18, 0.72);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .hud-cluster {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
-.hud-cluster-left { flex: 0 0 auto; }
-.hud-cluster-center { flex: 1; justify-content: center; }
-.hud-cluster-right { flex: 0 0 auto; justify-content: flex-end; }
+.hud-cluster-left { flex: 0 0 auto; min-width: 0; }
+.hud-cluster-center { flex: 1; justify-content: center; flex-wrap: wrap; gap: 8px; }
+.hud-cluster-right { flex: 0 0 auto; justify-content: flex-end; flex-wrap: wrap; gap: 6px; }
 
 /* Brand Pill */
 .hud-brand-pill {
@@ -410,21 +410,25 @@ button:focus-visible {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius-lg);
+  padding: 7px 12px;
+  background: rgba(18, 22, 44, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
   font-size: 13px;
   font-weight: 600;
-  box-shadow: var(--shadow-md);
-  backdrop-filter: blur(12px);
-  transition: all var(--transition-base);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(10px);
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
 }
 
 .hud-metric-pill:hover {
-  border-color: var(--border-glow);
-  box-shadow: var(--shadow-lg);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.32);
 }
+
+.hud-brand-pill, .hud-realm-tag, .coin-badge-pill { box-shadow: 0 6px 18px rgba(0,0,0,0.22); }
+.hud-action-icon-btn { width: 38px; height: 38px; border-radius: 10px; }
+.hud-realm-tag { padding: 6px 12px; font-size: 12px; max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .hud-metric-pill b {
   font-family: var(--font-heading);
@@ -646,7 +650,7 @@ button:focus-visible {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px 20px;
+  padding: 14px 16px 8px;
   overflow: hidden;
 }
 
@@ -657,8 +661,12 @@ button:focus-visible {
   align-items: center;
   justify-content: center;
   width: 100%;
-  max-width: min(90vmin, 640px);
+  max-width: min(92vmin, 620px, calc(100dvh - 250px));
+  margin: 0 auto;
 }
+
+.notice-banner-pill { top: 76px; }
+.solver-hint-pill { bottom: 112px; }
 
 /* Floating Points Toast */
 .floating-points-toast {
