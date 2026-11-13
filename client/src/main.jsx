@@ -53,8 +53,8 @@ function calculateStars(moves, limit, parMoves) {
    PREMIUM CUSTOM VECTOR GRAPHIC COMPONENTS
    =================================================== */
 
-// 1. Expressive Worm Head with Dynamic Expressions
-function WormHeadSVG({ facing = 'right', skinId = 'emerald', expression = 'idle', skinColor = {} }) {
+// 1. Enhanced Premium Worm Head with Detailed Anatomy, Expressions & Micro-Animations
+function WormHeadSVG({ facing = 'right', skinId = 'emerald', expression = 'idle', skinColor = {}, time = 0 }) {
   const skin = SKINS.find(s => s.id === skinId) || SKINS[0];
   const primary = skinColor.primary || skin.primary;
   const secondary = skinColor.secondary || skin.secondary;
@@ -64,75 +64,150 @@ function WormHeadSVG({ facing = 'right', skinId = 'emerald', expression = 'idle'
   const isEating = expression === 'eating';
   const isMoving = expression === 'moving';
   const isHappy = expression === 'happy';
-  const eyeRy = isEating ? 6 : isHappy ? 7 : 11;
-  const pupilR = isEating ? 3.2 : 5.2;
+  const isIdle = !isEating && !isMoving && !isHappy;
+  const eyeRy = isEating ? 5 : isHappy ? 7 : 10;
+  const pupilR = isEating ? 3 : isHappy ? 4.5 : 5;
+  const blinkProgress = isIdle ? (Math.sin(time * 0.003) * 0.5 + 0.5) : 0;
+  const shouldBlink = isIdle && blinkProgress > 0.98;
+  const eyeScale = shouldBlink ? 0.15 : 1;
+  const pupilOffsetX = isEating ? 3 : isMoving ? 2.5 : 2.2;
+  const pupilOffsetY = isEating ? 1.5 : 0;
 
   return (
-    <svg className={`worm-head-svg-container facing-${facing} ${isMoving ? 'moving' : ''} ${isEating ? 'eating' : ''} ${!isMoving && !isEating ? 'idle' : ''}`} viewBox="0 0 100 100">
+    <svg className={`worm-head-svg-container facing-${facing} ${isMoving ? 'moving' : ''} ${isEating ? 'eating' : ''} ${isHappy ? 'happy' : ''} ${isIdle ? 'idle' : ''}`} viewBox="0 0 120 120">
       <defs>
-        <radialGradient id={gradId} cx="32%" cy="28%" r="70%">
+        <radialGradient id={gradId} cx="35%" cy="30%" r="75%">
           <stop offset="0%" stopColor={highlight} />
-          <stop offset="45%" stopColor={primary} />
-          <stop offset="100%" stopColor={secondary} />
+          <stop offset="35%" stopColor={primary} />
+          <stop offset="70%" stopColor={secondary} />
+          <stop offset="100%" stopColor={secondary} stopOpacity="0.85" />
+        </radialGradient>
+        <radialGradient id={`${gradId}-belly`} cx="50%" cy="65%" r="60%">
+          <stop offset="0%" stopColor={highlight} stopOpacity="0.6" />
+          <stop offset="50%" stopColor={primary} stopOpacity="0.4" />
+          <stop offset="100%" stopColor="transparent" />
         </radialGradient>
         <linearGradient id={`${gradId}-shine`} x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.45" />
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.5" />
+          <stop offset="30%" stopColor="#ffffff" stopOpacity="0.2" />
           <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
         </linearGradient>
-        <filter id="headDropShadow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="5" stdDeviation="4" floodColor="#000000" floodOpacity="0.5" />
+        <linearGradient id={`${gradId}-rim`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.3" />
+          <stop offset="50%" stopColor="transparent" />
+          <stop offset="100%" stopColor="#000000" stopOpacity="0.2" />
+        </linearGradient>
+        <filter id="headDropShadow" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="8" stdDeviation="6" floodColor="#000000" floodOpacity="0.4" />
+          <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#000000" floodOpacity="0.3" />
+        </filter>
+        <filter id="innerGlow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
         </filter>
       </defs>
 
-      <ellipse cx="50" cy="60" rx="32" ry="14" fill="rgba(0,0,0,0.25)" />
-      <g className="head-sprout-leaf" transform="translate(46, 6)" style={{ transformOrigin: '50% 100%' }}>
-        <path d="M4 16 C2 6, 16 0, 24 8 C28 14, 18 20, 6 16 Z" fill="#4ade80" stroke="#166534" strokeWidth="1.6" />
-        <path d="M5 16 C12 10, 18 9, 22 9" stroke="#14532d" strokeWidth="1.2" fill="none" />
-        <path d="M4 16 Q1 22 3 28" stroke="#78350f" strokeWidth="3" strokeLinecap="round" fill="none" />
+      {/* Ground shadow */}
+      <ellipse cx="60" cy="85" rx="36" ry="12" fill="rgba(0,0,0,0.18)" filter="url(#headDropShadow)" />
+
+      {/* Head sprout/antenna with subtle sway */}
+      <g className="head-sprout" transform="translate(52, 8)" style={{ transformOrigin: '50% 100%' }}>
+        <path d="M6 22 C3 10, 18 4, 28 12 C33 18, 22 26, 8 22 Z" fill="#4ade80" stroke="#14532d" strokeWidth="1.8" />
+        <path d="M7 22 C15 14, 22 12, 27 13" stroke="#14532d" strokeWidth="1.4" fill="none" opacity="0.7" />
+        <path d="M7 22 Q3 30 6 36" stroke="#78350f" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+        <circle cx="14" cy="16" r="2" fill="#86efac" opacity="0.8" />
       </g>
 
-      <ellipse cx="50" cy="54" rx="41" ry="39" fill={`url(#${gradId})`} filter="url(#headDropShadow)" />
-      <ellipse cx="50" cy="48" rx="34" ry="24" fill={`url(#${gradId}-shine)`} opacity="0.35" />
-      <path d="M18 56 Q50 72 82 56" stroke="rgba(255,255,255,0.18)" strokeWidth="5" fill="none" strokeLinecap="round" />
+      {/* Main head body - layered for depth */}
+      <ellipse cx="60" cy="65" rx="48" ry="44" fill={`url(#${gradId})`} filter="url(#headDropShadow)" />
+      <ellipse cx="60" cy="58" rx="42" ry="28" fill={`url(#${gradId}-shine)`} opacity="0.4" />
+      <ellipse cx="60" cy="78" rx="38" ry="16" fill={`url(#${gradId}-belly)`} />
 
-      <ellipse cx="37" cy="31" rx="14" ry="9" fill="#ffffff" opacity="0.45" transform="rotate(-18 37 31)" />
-      <ellipse cx="24" cy="63" rx={isEating ? 8.5 : 6.5} ry={isEating ? 5.5 : 4.2} fill="#fb7185" opacity={isEating ? 0.95 : 0.75} />
-      <ellipse cx="76" cy="63" rx={isEating ? 8.5 : 6.5} ry={isEating ? 5.5 : 4.2} fill="#fb7185" opacity={isEating ? 0.95 : 0.75} />
+      {/* Subtle body ridges/segments on head */}
+      <g stroke="rgba(255,255,255,0.12)" strokeWidth="3" fill="none" strokeLinecap="round">
+        <path d="M22 58 Q60 82 98 58" />
+        <path d="M26 64 Q60 85 94 64" strokeWidth="2" opacity="0.08" />
+        <path d="M30 70 Q60 88 90 70" strokeWidth="1.5" opacity="0.06" />
+      </g>
 
-      <g transform="translate(33, 43)">
-        <ellipse cx="0" cy="0" rx="9" ry={eyeRy} fill="#ffffff" stroke="#0f172a" strokeWidth="1.6" />
-        <g className="worm-eye-pupil">
-          <circle cx="2.2" cy={isEating ? 0.5 : 0} r={pupilR} fill="#0f172a" />
-          <circle cx="0.2" cy="-2.2" r="2.6" fill="#ffffff" />
-          <circle cx="3.6" cy="1.8" r="1.1" fill="#ffffff" opacity="0.9" />
+      {/* Cheek blush marks */}
+      <ellipse cx="28" cy="72" rx={isEating ? 10 : 8} ry={isEating ? 6 : 5} fill="#fb7185" opacity={isEating ? 0.9 : isHappy ? 0.6 : 0.45} />
+      <ellipse cx="92" cy="72" rx={isEating ? 10 : 8} ry={isEating ? 6 : 5} fill="#fb7185" opacity={isEating ? 0.9 : isHappy ? 0.6 : 0.45} />
+
+      {/* Eyes - expressive with lids, pupils, highlights, reflections */}
+      <g transform="translate(42, 50)">
+        {/* Eye white with lid */}
+        <ellipse cx="0" cy="0" rx="11" ry={eyeRy * eyeScale} fill="#ffffff" stroke="#0f172a" strokeWidth="1.8" />
+        {!shouldBlink && (
+          <g className="worm-eye-pupil">
+            <circle cx={pupilOffsetX} cy={pupilOffsetY} r={pupilR * eyeScale} fill="#0f172a" />
+            <circle cx={pupilOffsetX - 2} cy={pupilOffsetY - 3} r="2.8" fill="#ffffff" />
+            <circle cx={pupilOffsetX + 2.5} cy={pupilOffsetY + 1.5} r="1.2" fill="#ffffff" opacity="0.9" />
+            {/* Subtle iris color reflection */}
+            <circle cx={pupilOffsetX - 1} cy={pupilOffsetY - 1} r={pupilR * 0.6} fill={highlight} opacity="0.3" />
+          </g>
+        )}
+        {isHappy && !shouldBlink && <path d="M-9 2 Q0 -6 9 2" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" fill="none" />}
+        {/* Eyelid for blink/expression */}
+        {shouldBlink && <path d="M-11 0 Q0 -4 11 0" stroke="#0f172a" strokeWidth="3" fill="none" />}
+      </g>
+      <g transform="translate(78, 50)">
+        <ellipse cx="0" cy="0" rx="11" ry={eyeRy * eyeScale} fill="#ffffff" stroke="#0f172a" strokeWidth="1.8" />
+        {!shouldBlink && (
+          <g className="worm-eye-pupil">
+            <circle cx={pupilOffsetX} cy={pupilOffsetY} r={pupilR * eyeScale} fill="#0f172a" />
+            <circle cx={pupilOffsetX - 2} cy={pupilOffsetY - 3} r="2.8" fill="#ffffff" />
+            <circle cx={pupilOffsetX + 2.5} cy={pupilOffsetY + 1.5} r="1.2" fill="#ffffff" opacity="0.9" />
+            <circle cx={pupilOffsetX - 1} cy={pupilOffsetY - 1} r={pupilR * 0.6} fill={highlight} opacity="0.3" />
+          </g>
+        )}
+        {isHappy && !shouldBlink && <path d="M-9 2 Q0 -6 9 2" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" fill="none" />}
+        {shouldBlink && <path d="M-11 0 Q0 -4 11 0" stroke="#0f172a" strokeWidth="3" fill="none" />}
+      </g>
+
+      {/* Eyebrows for expression */}
+      {isMoving && (
+        <g stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" fill="none">
+          <path d="M30 38 Q42 30 54 38" />
+          <path d="M66 38 Q78 30 90 38" />
         </g>
-        {isHappy && <path d="M-6 1 Q0 -4 6 1" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" fill="none" />}
-      </g>
-      <g transform="translate(67, 43)">
-        <ellipse cx="0" cy="0" rx="9" ry={eyeRy} fill="#ffffff" stroke="#0f172a" strokeWidth="1.6" />
-        <g className="worm-eye-pupil">
-          <circle cx="2.2" cy={isEating ? 0.5 : 0} r={pupilR} fill="#0f172a" />
-          <circle cx="0.2" cy="-2.2" r="2.6" fill="#ffffff" />
-          <circle cx="3.6" cy="1.8" r="1.1" fill="#ffffff" opacity="0.9" />
+      )}
+      {isEating && (
+        <g stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" fill="none">
+          <path d="M30 38 Q42 44 54 38" />
+          <path d="M66 38 Q78 44 90 38" />
         </g>
-        {isHappy && <path d="M-6 1 Q0 -4 6 1" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" fill="none" />}
-      </g>
+      )}
 
+      {/* Mouth variations */}
       {isEating ? (
-        <g transform="translate(50, 71)">
-          <ellipse cx="0" cy="0" rx="11" ry="8" fill="#450a0a" stroke="#0f172a" strokeWidth="1.5" />
-          <ellipse cx="0" cy="2" rx="6" ry="3.5" fill="#fb7185" opacity="0.85" />
+        <g transform="translate(60, 85)">
+          <ellipse cx="0" cy="0" rx="14" ry="10" fill="#3d0a0a" stroke="#0f172a" strokeWidth="1.8" />
+          <ellipse cx="0" cy="3" rx="8" ry="5" fill="#fb7185" opacity="0.9" />
+          <ellipse cx="-5" cy="1" rx="2" ry="1.5" fill="#ffffff" opacity="0.3" />
+          <ellipse cx="5" cy="1" rx="2" ry="1.5" fill="#ffffff" opacity="0.3" />
         </g>
       ) : isHappy ? (
-        <path d="M36 70 Q50 83 64 70" stroke="#0f172a" strokeWidth="4" strokeLinecap="round" fill="none" />
+        <path d="M38 82 Q60 100 82 82" stroke="#0f172a" strokeWidth="4.5" strokeLinecap="round" fill="none" filter="url(#innerGlow)" />
       ) : (
-        <path d="M41 67 Q50 75 59 67" stroke="#0f172a" strokeWidth="3.2" strokeLinecap="round" fill="none" />
+        <path d="M46 78 Q60 90 74 78" stroke="#0f172a" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+      )}
+
+      {/* Subtle nostril dots */}
+      {!isEating && !shouldBlink && (
+        <g opacity="0.4">
+          <circle cx="48" cy="62" r="1.5" fill="#0f172a" />
+          <circle cx="72" cy="62" r="1.5" fill="#0f172a" />
+        </g>
       )}
     </svg>
   );
 }
 
-// 2. Worm Body Segment
+// 2. Enhanced Worm Body Segment with Detailed Texture & Depth
 function WormSegmentSVG({ skinId = 'emerald', scale = 1, index = 0, skinColor = {} }) {
   const skin = SKINS.find(s => s.id === skinId) || SKINS[0];
   const primary = skinColor.primary || skin.primary;
@@ -140,31 +215,93 @@ function WormSegmentSVG({ skinId = 'emerald', scale = 1, index = 0, skinColor = 
   const highlight = skinColor.highlight || skin.highlight;
   const gradId = `segGrad-${skin.id}-${index}`;
   const stripe = index % 2 === 0;
+  const segmentVariant = index % 4; // 4 visual variants for variety
 
   return (
-    <svg className="worm-segment-svg-container" style={{ '--seg-scale': scale, '--seg-i': index }} viewBox="0 0 100 100">
+    <svg className="worm-segment-svg-container" style={{ '--seg-scale': scale, '--seg-i': index }} viewBox="0 0 120 120">
       <defs>
-        <radialGradient id={gradId} cx="30%" cy="26%" r="70%">
+        <radialGradient id={gradId} cx="32%" cy="28%" r="75%">
           <stop offset="0%" stopColor={highlight} />
-          <stop offset="55%" stopColor={primary} />
-          <stop offset="100%" stopColor={secondary} />
+          <stop offset="40%" stopColor={primary} />
+          <stop offset="80%" stopColor={secondary} />
+          <stop offset="100%" stopColor={secondary} stopOpacity="0.8" />
         </radialGradient>
         <linearGradient id={`${gradId}-shade`} x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.25" />
-          <stop offset="100%" stopColor="#000000" stopOpacity="0.18" />
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.3" />
+          <stop offset="40%" stopColor="#ffffff" stopOpacity="0.1" />
+          <stop offset="100%" stopColor="#000000" stopOpacity="0.2" />
         </linearGradient>
+        <linearGradient id={`${gradId}-stripe`} x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="transparent" />
+          <stop offset="45%" stopColor="transparent" />
+          <stop offset="50%" stopColor="#ffffff" stopOpacity="0.15" />
+          <stop offset="55%" stopColor="#ffffff" stopOpacity="0.15" />
+          <stop offset="100%" stopColor="transparent" />
+        </linearGradient>
+        <filter id="segShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="4" stdDeviation="3" floodColor="#000000" floodOpacity="0.35" />
+        </filter>
+        <filter id="segInnerGlow" x="-10%" y="-10%" width="120%" height="120%">
+          <feGaussianBlur stdDeviation="1.5" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
       </defs>
-      <ellipse cx="50" cy="56" rx="34" ry="16" fill="rgba(0,0,0,0.22)" />
-      <circle cx="50" cy="50" r="42" fill={`url(#${gradId})`} />
-      <circle cx="50" cy="50" r="42" fill={`url(#${gradId}-shade)`} />
-      <path d={`M18 ${stripe ? 52 : 46} Q50 ${stripe ? 62 : 38} 82 ${stripe ? 52 : 46}`} stroke="rgba(255,255,255,0.22)" strokeWidth="5" fill="none" strokeLinecap="round" />
-      <ellipse cx="37" cy="34" rx="14" ry="8" fill="#ffffff" opacity="0.38" transform="rotate(-22 37 34)" />
-      <circle cx="50" cy="50" r="37" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" />
+
+      {/* Ground shadow */}
+      <ellipse cx="60" cy="78" rx={34 * scale} ry={12 * scale} fill="rgba(0,0,0,0.15)" filter="url(#segShadow)" />
+
+      {/* Segment body - main shape */}
+      <ellipse cx="60" cy="62" rx={46 * scale} ry={34 * scale} fill={`url(#${gradId})`} filter="url(#segShadow)" />
+      <ellipse cx="60" cy="58" rx={42 * scale} ry={24 * scale} fill={`url(#${gradId}-shade)`} filter="url(#segInnerGlow)" />
+
+      {/* Belly highlight */}
+      <ellipse cx="60" cy="76" rx={34 * scale} ry={14 * scale} fill="rgba(255,255,255,0.08)" />
+
+      {/* Stripe pattern for visual variety */}
+      {stripe && (
+        <ellipse cx="60" cy="62" rx={40 * scale} ry={28 * scale} fill={`url(#${gradId}-stripe)`} />
+      )}
+
+      {/* Segment ring ridges for 3D feel */}
+      <g stroke="rgba(255,255,255,0.1)" strokeWidth="2.5" fill="none" strokeLinecap="round" opacity="0.6">
+        <path d={`M20 ${stripe ? 60 : 54} Q60 ${stripe ? 78 : 50} 100 ${stripe ? 60 : 54}`} />
+        <path d={`M26 ${stripe ? 64 : 58} Q60 ${stripe ? 80 : 54} 94 ${stripe ? 64 : 58}`} strokeWidth="1.5" opacity="0.4" />
+      </g>
+
+      {/* Subtle highlight spots */}
+      <ellipse cx="44" cy="44" rx={10 * scale} ry={6 * scale} fill="#ffffff" opacity="0.25" transform={`rotate(-20 44 44)`} />
+      <circle cx="72" cy="68" r={3 * scale} fill={highlight} opacity="0.35" />
+
+      {/* Variant-specific decorative details */}
+      {segmentVariant === 0 && (
+        <g opacity="0.3">
+          <circle cx="38" cy="70" r={2.5 * scale} fill="#ffffff" />
+          <circle cx="82" cy="70" r={2.5 * scale} fill="#ffffff" />
+        </g>
+      )}
+      {segmentVariant === 1 && (
+        <ellipse cx="60" cy="48" rx={18 * scale} ry={4 * scale} fill="#ffffff" opacity="0.12" />
+      )}
+      {segmentVariant === 2 && (
+        <g stroke="rgba(255,255,255,0.08)" strokeWidth="1.5" fill="none">
+          <path d="M40 48 Q60 40 80 48" />
+          <path d="M42 56 Q60 48 78 56" strokeWidth="1" opacity="0.5" />
+        </g>
+      )}
+      {segmentVariant === 3 && (
+        <circle cx="60" cy="62" r={8 * scale} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" />
+      )}
+
+      {/* Segment edge rim */}
+      <ellipse cx="60" cy="62" rx={46 * scale} ry={34 * scale} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
     </svg>
   );
 }
 
-// 3. Worm Tail Segment
+// 3. Enhanced Worm Tail with Tapered Design & Subtle Animation
 function WormTailSVG({ skinId = 'emerald', skinColor = {} }) {
   const skin = SKINS.find(s => s.id === skinId) || SKINS[0];
   const primary = skinColor.primary || skin.primary;
@@ -173,108 +310,234 @@ function WormTailSVG({ skinId = 'emerald', skinColor = {} }) {
   const gradId = `tailGrad-${skin.id}`;
 
   return (
-    <svg className="worm-tail-svg-container" viewBox="0 0 100 100">
+    <svg className="worm-tail-svg-container" viewBox="0 0 120 120">
       <defs>
-        <radialGradient id={gradId} cx="35%" cy="30%" r="70%">
+        <radialGradient id={gradId} cx="38%" cy="32%" r="75%">
           <stop offset="0%" stopColor={highlight} />
-          <stop offset="55%" stopColor={primary} />
-          <stop offset="100%" stopColor={secondary} />
+          <stop offset="40%" stopColor={primary} />
+          <stop offset="75%" stopColor={secondary} />
+          <stop offset="100%" stopColor={secondary} stopOpacity="0.7" />
         </radialGradient>
+        <linearGradient id={`${gradId}-tip`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={secondary} />
+          <stop offset="100%" stopColor={primary} stopOpacity="0.5" />
+        </linearGradient>
+        <filter id="tailShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="4" stdDeviation="3" floodColor="#000000" floodOpacity="0.3" />
+        </filter>
       </defs>
-      <ellipse cx="46" cy="58" rx="24" ry="10" fill="rgba(0,0,0,0.2)" />
-      <path d="M16 50 C18 26, 46 18, 74 34 C90 44, 90 58, 72 66 C46 80, 16 74, 16 50 Z" fill={`url(#${gradId})`} />
-      <path d="M28 50 Q48 42 68 50" stroke="rgba(255,255,255,0.2)" strokeWidth="4" fill="none" strokeLinecap="round" />
-      <circle cx="36" cy="43" r="7" fill="#ffffff" opacity="0.32" />
-      <circle cx="72" cy="50" r="4" fill={highlight} opacity="0.5" />
+
+      {/* Ground shadow */}
+      <ellipse cx="55" cy="80" rx="20" ry="8" fill="rgba(0,0,0,0.12)" filter="url(#tailShadow)" />
+
+      {/* Tail main body - tapered */}
+      <path d="M20 55 C22 28, 52 18, 84 38 C102 50, 102 68, 80 78 C48 95, 16 88, 20 55 Z" fill={`url(#${gradId})`} filter="url(#tailShadow)" />
+
+      {/* Belly highlight on tail */}
+      <path d="M32 52 Q55 42 78 54" stroke="rgba(255,255,255,0.15)" strokeWidth="6" fill="none" strokeLinecap="round" opacity="0.5" />
+      <path d="M36 58 Q55 52 74 58" stroke="rgba(255,255,255,0.1)" strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.4" />
+
+      {/* Tail tip accent */}
+      <ellipse cx="88" cy="56" rx="6" ry="4" fill={`url(#${gradId}-tip)`} />
+      <circle cx="90" cy="54" r="1.5" fill="#ffffff" opacity="0.6" />
+
+      {/* Subtle scale pattern */}
+      <g stroke="rgba(255,255,255,0.08)" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.5">
+        <path d="M32 50 Q55 40 78 50" />
+        <path d="M34 56 Q55 46 76 56" strokeWidth="1" opacity="0.3" />
+        <path d="M36 62 Q55 52 74 62" strokeWidth="1" opacity="0.2" />
+      </g>
+
+      {/* Highlight spots */}
+      <circle cx="42" cy="46" r="4" fill="#ffffff" opacity="0.22" />
+      <circle cx="76" cy="52" r="2.5" fill={highlight} opacity="0.4" />
     </svg>
   );
 }
 
-// 4. Luscious 3D Candy Apple with Sparkle
-function JuicyAppleSVG({ collected = false }) {
+// 4. Premium Juicy Candy Apple with Detailed 3D Look, Sparkles & Physics
+function JuicyAppleSVG({ collected = false, bobPhase = 0 }) {
+  const bobY = Math.sin(bobPhase) * 3;
+  const bobRotate = Math.sin(bobPhase * 0.7) * 1.5;
+
   return (
-    <svg className="apple-svg-container" viewBox="0 0 100 100" style={{ animation: collected ? 'none' : 'appleBreathingBob 2.5s ease-in-out infinite alternate' }}>
+    <svg className="apple-svg-container" viewBox="0 0 120 120" style={{ 
+      animation: collected ? 'none' : 'appleBreathingBob 3s ease-in-out infinite alternate',
+      transform: `translateY(${bobY}px) rotate(${bobRotate}deg)`
+    }}>
       <defs>
-        <radialGradient id="appleBodyGrad" cx="32%" cy="28%" r="72%">
-          <stop offset="0%" stopColor="#ffd1d1" />
-          <stop offset="25%" stopColor="#ff6b6b" />
+        <radialGradient id="appleBodyGrad" cx="30%" cy="25%" r="78%">
+          <stop offset="0%" stopColor="#fff5f5" />
+          <stop offset="10%" stopColor="#ffcccc" />
+          <stop offset="30%" stopColor="#ff6b6b" />
           <stop offset="55%" stopColor="#ef4444" />
-          <stop offset="85%" stopColor="#b91c1c" />
+          <stop offset="75%" stopColor="#dc2626" />
+          <stop offset="90%" stopColor="#b91c1c" />
           <stop offset="100%" stopColor="#6b1010" />
+        </radialGradient>
+        <radialGradient id="appleSpecular" cx="28%" cy="22%" r="35%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.7" />
+          <stop offset="50%" stopColor="#ffffff" stopOpacity="0.1" />
+          <stop offset="100%" stopColor="transparent" />
+        </radialGradient>
+        <radialGradient id="appleRimLight" cx="70%" cy="70%" r="50%">
+          <stop offset="0%" stopColor="transparent" />
+          <stop offset="60%" stopColor="transparent" />
+          <stop offset="100%" stopColor="#ff8787" stopOpacity="0.4" />
         </radialGradient>
         <linearGradient id="appleLeafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#86efac" />
-          <stop offset="50%" stopColor="#22c55e" />
+          <stop offset="30%" stopColor="#4ade80" />
+          <stop offset="60%" stopColor="#22c55e" />
           <stop offset="100%" stopColor="#166534" />
         </linearGradient>
-        <radialGradient id="appleGlowAura" cx="50%" cy="60%" r="50%">
-          <stop offset="0%" stopColor="rgba(239,68,68,0.35)" />
+        <linearGradient id="appleStemGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#78350f" />
+          <stop offset="50%" stopColor="#92400e" />
+          <stop offset="100%" stopColor="#78350f" />
+        </linearGradient>
+        <radialGradient id="appleGlowAura" cx="50%" cy="65%" r="55%">
+          <stop offset="0%" stopColor="rgba(239,68,68,0.25)" />
           <stop offset="100%" stopColor="rgba(239,68,68,0)" />
         </radialGradient>
-        <filter id="appleGlow">
-          <feDropShadow dx="0" dy="6" stdDeviation="5" floodColor="#ef4444" floodOpacity="0.6" />
+        <radialGradient id="appleSubsurface" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#ffaaaa" stopOpacity="0.15" />
+          <stop offset="100%" stopColor="transparent" />
+        </radialGradient>
+        <filter id="appleGlow" x="-40%" y="-40%" width="180%" height="180%">
+          <feDropShadow dx="0" dy="8" stdDeviation="6" floodColor="#ef4444" floodOpacity="0.5" />
+          <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#ef4444" floodOpacity="0.3" />
         </filter>
-        <filter id="appleSparkle">
-          <feGaussianBlur stdDeviation="0.6" result="blur" />
+        <filter id="appleSparkle" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="0.8" result="blur" />
           <feMerge>
             <feMergeNode in="blur" />
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
+        <filter id="appleInnerShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feOffset dx="0" dy="3" />
+          <feGaussianBlur stdDeviation="2" />
+          <feComposite operator="in" in2="SourceGraphic" />
+        </filter>
       </defs>
 
-      <ellipse cx="50" cy="78" rx="26" ry="10" fill="url(#appleGlowAura)" />
-      <path d="M50 28 Q55 15 63 10" stroke="#78350f" strokeWidth="5" strokeLinecap="round" fill="none" />
-      <path d="M50 28 Q47 18 44 14" stroke="#92400e" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.7" />
+      {/* Ground glow/aura */}
+      <ellipse cx="60" cy="95" rx="30" ry="10" fill="url(#appleGlowAura)" />
 
-      <g transform="translate(52, 12) rotate(8)">
-        <path d="M2 12 C10 2, 28 2, 34 10 C36 18, 22 24, 4 16 Z" fill="url(#appleLeafGrad)" stroke="#14532d" strokeWidth="1.5" />
-        <path d="M2 12 Q16 8 30 10" stroke="#14532d" strokeWidth="1.2" fill="none" opacity="0.8" />
-        <path d="M10 11 Q14 14 18 16" stroke="#bbf7d0" strokeWidth="1" fill="none" opacity="0.6" />
-      </g>
-
+      {/* Main apple body with layered depth */}
       <path
-        d="M50 34 C28 34, 12 50, 12 69 C12 88, 30 96, 50 91 C70 96, 88 88, 88 69 C88 50, 72 34, 50 34 Z"
+        d="M60 40 C35 40, 16 58, 16 78 C16 98, 38 106, 60 100 C82 106, 104 98, 104 78 C104 58, 85 40, 60 40 Z"
         fill="url(#appleBodyGrad)"
         filter="url(#appleGlow)"
       />
-      <path d="M50 36 C40 36, 34 42, 34 50 C34 54, 38 56, 42 54 C46 50, 46 44, 50 44 C54 44, 54 50, 58 54 C62 56, 66 54, 66 50 C66 42, 60 36, 50 36 Z" fill="#7f1d1d" opacity="0.18" />
 
-      <ellipse cx="32" cy="46" rx="10" ry="14" fill="#ffffff" opacity="0.28" transform="rotate(-18 32 46)" />
-      <ellipse cx="30" cy="42" rx="4" ry="5" fill="#ffffff" opacity="0.55" />
-      <circle cx="26" cy="52" r="2" fill="#ffffff" opacity="0.45" />
+      {/* Subsurface scattering glow */}
+      <path
+        d="M60 40 C35 40, 16 58, 16 78 C16 98, 38 106, 60 100 C82 106, 104 98, 104 78 C104 58, 85 40, 60 40 Z"
+        fill="url(#appleSubsurface)"
+      />
 
-      <g className="apple-sparkle-star s1" transform="translate(16, 26)" style={{ animation: 'sparkleOrbit 3s ease-in-out infinite' }}>
-        <polygon points="6,0 7.5,4 12,6 7.5,8 6,12 4.5,8 0,6 4.5,4" fill="#fef08a" filter="url(#appleSparkle)" />
+      {/* Primary specular highlight */}
+      <ellipse cx="38" cy="52" rx="18" ry="22" fill="url(#appleSpecular)" transform="rotate(-20 38 52)" />
+
+      {/* Secondary specular highlight */}
+      <ellipse cx="34" cy="48" rx="7" ry="9" fill="#ffffff" opacity="0.5" transform="rotate(-25 34 48)" />
+      <circle cx="28" cy="58" r="2.5" fill="#ffffff" opacity="0.35" />
+
+      {/* Rim light on opposite side */}
+      <path
+        d="M60 40 C85 40, 104 58, 104 78 C104 98, 82 106, 60 100"
+        fill="none" stroke="url(#appleRimLight)" strokeWidth="4" strokeLinecap="round" opacity="0.6"
+      />
+
+      {/* Inner shadow for depth */}
+      <path
+        d="M60 40 C35 40, 16 58, 16 78 C16 98, 38 106, 60 100 C82 106, 104 98, 104 78 C104 58, 85 40, 60 40 Z"
+        fill="url(#appleBodyGrad)"
+        filter="url(#appleInnerShadow)"
+        opacity="0.15"
+      />
+
+      {/* Stem */}
+      <path d="M60 38 Q64 22 70 14" stroke="url(#appleStemGrad)" strokeWidth="5.5" strokeLinecap="round" fill="none" filter="url(#appleGlow)" />
+      <path d="M60 38 Q57 26 55 18" stroke="#92400e" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.6" />
+
+      {/* Leaf with detailed veins */}
+      <g transform="translate(72, 14) rotate(12)">
+        <path d="M0 14 C6 2, 22 2, 28 12 C32 20, 18 26, 0 18 Z" fill="url(#appleLeafGrad)" stroke="#14532d" strokeWidth="1.8" />
+        <path d="M0 14 Q12 8 24 10" stroke="#14532d" strokeWidth="1.4" fill="none" opacity="0.7" />
+        <path d="M6 13 Q12 14 18 16" stroke="#bbf7d0" strokeWidth="1" fill="none" opacity="0.6" />
+        <path d="M8 16 Q13 18 19 19" stroke="#bbf7d0" strokeWidth="0.8" fill="none" opacity="0.4" />
       </g>
-      <g className="apple-sparkle-star s2" transform="translate(76, 72)" style={{ animation: 'sparkleOrbit 3.4s ease-in-out infinite reverse' }}>
-        <polygon points="5,0 6.5,3 10,5 6.5,7 5,10 3.5,7 0,5 3.5,3" fill="#fde68a" filter="url(#appleSparkle)" />
+
+      {/* Orbiting sparkle particles */}
+      <g className="apple-sparkle-star s1" transform="translate(20, 30)" style={{ animation: 'sparkleOrbit 3.2s ease-in-out infinite' }}>
+        <polygon points="7,0 9,5 15,7 9,9 7,14 5,9 0,7 5,5" fill="#fef08a" filter="url(#appleSparkle)" />
       </g>
-      <g className="apple-sparkle-star s3" transform="translate(80, 28)" style={{ animation: 'sparkleOrbit 4.2s ease-in-out infinite' }}>
-        <polygon points="4,0 5,2 8,4 5,6 4,8 3,6 0,4 3,2" fill="#fff7ed" filter="url(#appleSparkle)" opacity="0.9" />
+      <g className="apple-sparkle-star s2" transform="translate(88, 80)" style={{ animation: 'sparkleOrbit 3.8s ease-in-out infinite reverse' }}>
+        <polygon points="6,0 8,3 12,5 8,7 6,10 4,7 0,5 4,3" fill="#fde68a" filter="url(#appleSparkle)" />
+      </g>
+      <g className="apple-sparkle-star s3" transform="translate(92, 32)" style={{ animation: 'sparkleOrbit 4.5s ease-in-out infinite' }}>
+        <polygon points="5,0 6,2 9,4 6,6 5,8 4,6 0,4 4,2" fill="#fff7ed" filter="url(#appleSparkle)" opacity="0.9" />
+      </g>
+      <g className="apple-sparkle-star s4" transform="translate(18, 78)" style={{ animation: 'sparkleOrbit 2.9s ease-in-out infinite reverse' }}>
+        <polygon points="4,0 5,2 8,3 5,4 4,6 3,4 0,3 3,2" fill="#fef3c7" filter="url(#appleSparkle)" opacity="0.7" />
       </g>
     </svg>
   );
 }
 
-// 5. Cosmic Galaxy Stargate Portal
-function CosmicPortalSVG({ unlocked = false }) {
+// 5. Premium Cosmic Galaxy Stargate Portal with Multi-Layer Effects
+function CosmicPortalSVG({ unlocked = false, pulsePhase = 0 }) {
+  const pulseScale = 1 + Math.sin(pulsePhase) * 0.08;
+  const ringRotate = pulsePhase * 0.3;
+
   return (
-    <svg className={`portal-svg-container ${unlocked ? 'unlocked' : 'locked'}`} viewBox="0 0 100 100">
+    <svg className={`portal-svg-container ${unlocked ? 'unlocked' : 'locked'}`} viewBox="0 0 140 140" style={{ transform: unlocked ? `scale(${pulseScale})` : 'scale(1)' }}>
       <defs>
         <radialGradient id="portalVoidGrad" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor={unlocked ? '#ffffff' : '#4c1d95'} />
-          <stop offset="30%" stopColor={unlocked ? '#67e8f9' : '#312e81'} />
-          <stop offset="60%" stopColor={unlocked ? '#8b5cf6' : '#0f172a'} />
+          <stop offset="0%" stopColor={unlocked ? '#ffffff' : '#3d1a6b'} />
+          <stop offset="15%" stopColor={unlocked ? '#67e8f9' : '#2e1065'} />
+          <stop offset="35%" stopColor={unlocked ? '#a78bfa' : '#1e0a3d'} />
+          <stop offset="60%" stopColor={unlocked ? '#8b5cf6' : '#0f051a'} />
           <stop offset="100%" stopColor="rgba(2,6,23,0.1)" />
+        </radialGradient>
+        <radialGradient id="portalCoreGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor={unlocked ? '#ffffff' : '#4c1d95'} stopOpacity="0.9" />
+          <stop offset="40%" stopColor={unlocked ? '#22d3ee' : '#312e81'} stopOpacity="0.6" />
+          <stop offset="70%" stopColor={unlocked ? '#c084fc' : '#1e1e3f'} stopOpacity="0.3" />
+          <stop offset="100%" stopColor="transparent" />
         </radialGradient>
         <linearGradient id="portalRuneGrad" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#22d3ee" />
-          <stop offset="45%" stopColor="#a78bfa" />
-          <stop offset="100%" stopColor="#fb7185" />
+          <stop offset="25%" stopColor="#a78bfa" />
+          <stop offset="50%" stopColor="#fbbf24" />
+          <stop offset="75%" stopColor="#fb7185" />
+          <stop offset="100%" stopColor="#22d3ee" />
         </linearGradient>
-        <filter id="portalGlow" x="-60%" y="-60%" width="220%" height="220%">
-          <feGaussianBlur stdDeviation="7" result="blur" />
+        <linearGradient id="portalRimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.6" />
+          <stop offset="50%" stopColor="#a78bfa" stopOpacity="0.4" />
+          <stop offset="100%" stopColor="#020617" stopOpacity="0.1" />
+        </linearGradient>
+        <filter id="portalGlow" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur stdDeviation="10" result="blur" />
+          <feColorMatrix type="matrix" values="1 0 0 0 0  0 1.2 0 0 0  0 0 1.5 0 0  0 0 0 2 0" result="brightened" />
+          <feMerge>
+            <feMergeNode in="brightened" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <filter id="portalRingGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="4" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <filter id="particleGlow" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="2" result="blur" />
           <feMerge>
             <feMergeNode in="blur" />
             <feMergeNode in="SourceGraphic" />
@@ -282,64 +545,325 @@ function CosmicPortalSVG({ unlocked = false }) {
         </filter>
       </defs>
 
-      <circle cx="50" cy="50" r="46" fill="none" stroke={unlocked ? 'url(#portalRuneGrad)' : '#334155'} strokeWidth="4" strokeDasharray={unlocked ? '12 5 4 5' : '7 7'} opacity={unlocked ? 1 : 0.7} filter={unlocked ? 'url(#portalGlow)' : 'none'} />
-      <circle cx="50" cy="50" r="41" fill="none" stroke={unlocked ? '#e0f2fe' : '#475569'} strokeWidth="1.5" opacity="0.5" />
-      <circle className="portal-pulse-ring" cx="50" cy="50" r="36" fill="url(#portalVoidGrad)" />
+      {/* Outer ambient glow rings */}
+      {unlocked && (
+        <g filter="url(#portalGlow)" opacity="0.6">
+          <circle cx="70" cy="70" r="62" fill="none" stroke="#22d3ee" strokeWidth="2" strokeDasharray="16 8" opacity="0.4" style={{ animation: 'portalRingSpin 20s linear infinite' }} />
+          <circle cx="70" cy="70" r="56" fill="none" stroke="#a78bfa" strokeWidth="1.5" strokeDasharray="10 10" opacity="0.35" style={{ animation: 'portalRingSpin 15s linear infinite reverse' }} />
+          <circle cx="70" cy="70" r="50" fill="none" stroke="#fbbf24" strokeWidth="1" strokeDasharray="6 6" opacity="0.3" style={{ animation: 'portalRingSpin 12s linear infinite' }} />
+        </g>
+      )}
+
+      {/* Main portal ring - outer frame */}
+      <circle 
+        cx="70" cy="70" r="60" 
+        fill="none" 
+        stroke={unlocked ? 'url(#portalRuneGrad)' : '#334155'} 
+        strokeWidth={unlocked ? 5 : 4} 
+        strokeDasharray={unlocked ? '14 6 4 6' : '8 8'} 
+        opacity={unlocked ? 1 : 0.7} 
+        filter={unlocked ? 'url(#portalGlow)' : 'none'}
+        style={{ animation: unlocked ? 'portalRingSpin 8s linear infinite' : 'none' }}
+      />
+
+      {/* Inner ring */}
+      <circle cx="70" cy="70" r="54" fill="none" stroke={unlocked ? '#e0f2fe' : '#475569'} strokeWidth="2" opacity={unlocked ? 0.6 : 0.4} />
+
+      {/* Pulsing inner ring */}
+      <circle 
+        className="portal-pulse-ring" 
+        cx="70" cy="70" r="48" 
+        fill="url(#portalCoreGrad)" 
+        filter={unlocked ? 'url(#portalRingGlow)' : 'none'}
+        opacity={unlocked ? 0.8 : 0.3}
+      />
+
+      {/* Mystical runes around the ring */}
+      <g stroke="#a78bfa" strokeWidth="1.5" fill="none" opacity={unlocked ? 0.7 : 0.3}>
+        <circle cx="70" cy="70" r="66" strokeDasharray="4 12" style={{ animation: 'portalRingSpin 30s linear infinite reverse' }} />
+      </g>
 
       {unlocked ? (
         <g className="portal-galaxy-spin" filter="url(#portalGlow)">
-          <path d="M50 50 Q66 28 86 44" stroke="#22d3ee" strokeWidth="3.2" strokeLinecap="round" fill="none" opacity="0.95" />
-          <path d="M50 50 Q34 72 14 56" stroke="#a78bfa" strokeWidth="3.2" strokeLinecap="round" fill="none" opacity="0.95" />
-          <path d="M50 50 Q72 66 56 86" stroke="#fbbf24" strokeWidth="2.6" strokeLinecap="round" fill="none" opacity="0.85" />
-          <path d="M50 50 Q28 34 44 14" stroke="#fb7185" strokeWidth="2.6" strokeLinecap="round" fill="none" opacity="0.85" />
-          <circle cx="50" cy="50" r="10" fill="#ffffff" opacity="0.95" />
-          <circle cx="50" cy="50" r="6" fill="#22d3ee" />
-          <circle cx="66" cy="38" r="2" fill="#fff" />
-          <circle cx="36" cy="62" r="1.8" fill="#fff" opacity="0.9" />
+          {/* Spiral arms */}
+          <path d="M70 70 Q95 35 120 55" stroke="#22d3ee" strokeWidth="4" strokeLinecap="round" fill="none" opacity="0.9" />
+          <path d="M70 70 Q45 105 20 85" stroke="#a78bfa" strokeWidth="4" strokeLinecap="round" fill="none" opacity="0.9" />
+          <path d="M70 70 Q105 95 85 120" stroke="#fbbf24" strokeWidth="3.2" strokeLinecap="round" fill="none" opacity="0.8" />
+          <path d="M70 70 Q35 45 55 20" stroke="#fb7185" strokeWidth="3.2" strokeLinecap="round" fill="none" opacity="0.8" />
+          
+          {/* Central core */}
+          <circle cx="70" cy="70" r="14" fill="#ffffff" opacity="0.95" filter="url(#portalGlow)" />
+          <circle cx="70" cy="70" r="9" fill="#22d3ee" filter="url(#portalGlow)" />
+          <circle cx="70" cy="70" r="5" fill="#ffffff" opacity="0.9" />
+          
+          {/* Orbiting particles */}
+          <g style={{ animation: 'galaxySpinOrbit 6s linear infinite' }}>
+            <circle cx="100" cy="45" r="2.5" fill="#fff" filter="url(#particleGlow)" />
+            <circle cx="40" cy="95" r="2" fill="#fff" opacity="0.9" filter="url(#particleGlow)" />
+            <circle cx="105" cy="90" r="1.5" fill="#fff" opacity="0.8" filter="url(#particleGlow)" />
+            <circle cx="35" cy="45" r="1.8" fill="#fff" opacity="0.85" filter="url(#particleGlow)" />
+            <circle cx="112" cy="70" r="1.2" fill="#fbbf24" filter="url(#particleGlow)" />
+            <circle cx="28" cy="70" r="1.2" fill="#fb7185" filter="url(#particleGlow)" />
+          </g>
+          
+          {/* Inner particle ring */}
+          <g style={{ animation: 'galaxySpinOrbit 4s linear infinite reverse' }}>
+            <circle cx="85" cy="50" r="1.5" fill="#22d3ee" filter="url(#particleGlow)" />
+            <circle cx="55" cy="90" r="1.2" fill="#a78bfa" filter="url(#particleGlow)" />
+            <circle cx="90" cy="90" r="1" fill="#fbbf24" filter="url(#particleGlow)" />
+            <circle cx="50" cy="50" r="1" fill="#fb7185" filter="url(#particleGlow)" />
+          </g>
         </g>
       ) : (
-        <g transform="translate(35, 33)" opacity="0.9">
-          <rect x="4" y="12" width="22" height="17" rx="4" fill="#334155" stroke="#94a3b8" strokeWidth="1.5" />
-          <path d="M8 12 V8 C8 3.5, 22 3.5, 22 8 V12" stroke="#cbd5e1" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-          <circle cx="15" cy="19" r="2.2" fill="#020617" />
-          <rect x="14" y="20" width="2" height="4" rx="1" fill="#020617" />
+        <g transform="translate(48, 45)" opacity="0.85" filter="url(#portalGlow)">
+          {/* Lock body */}
+          <rect x="4" y="16" width="28" height="22" rx="5" fill="#1e1e3f" stroke="#475569" strokeWidth="2" />
+          <rect x="8" y="20" width="20" height="14" rx="3" fill="none" stroke="#64748b" strokeWidth="1" opacity="0.5" />
+          
+          {/* Shackle */}
+          <path d="M12 16 V8 C12 3, 26 3, 26 8 V16" stroke="#94a3b8" strokeWidth="3" fill="none" strokeLinecap="round" />
+          <path d="M12 16 V8 C12 3, 26 3, 26 8 V16" stroke="#cbd5e1" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.5" />
+          
+          {/* Keyhole */}
+          <circle cx="18" cy="27" r="3" fill="#020617" />
+          <rect x="17" y="29" width="2" height="6" rx="1" fill="#020617" />
+          
+          {/* Lock particles */}
+          <circle cx="18" cy="12" r="1.5" fill="#64748b" opacity="0.6" style={{ animation: 'lockParticleFloat 2s ease-in-out infinite' }} />
+          <circle cx="28" cy="18" r="1" fill="#475569" opacity="0.5" style={{ animation: 'lockParticleFloat 2.5s ease-in-out infinite reverse' }} />
         </g>
       )}
     </svg>
   );
 }
 
-// 6. 3D Carved Stone Wall
-function StoneWallSVG() {
+// 6. Premium 3D Carved Stone Wall with World-Specific Variants, Moss, Cracks & Runes
+function StoneWallSVG({ worldId = 1, variant = 0, seed = 0 }) {
+  const themes = {
+    1: { // Mossy Meadow - Organic, overgrown stone
+      base: ['#2d4a35', '#1e3a26', '#142d1b'],
+      moss: ['#4ade80', '#22c55e', '#166534'],
+      accent: '#86efac',
+      edge: '#bbf7d0',
+      rune: '#4ade80',
+      glyph: 'leaf',
+      decor: 'moss'
+    },
+    2: { // Stone Ruins - Ancient, weathered sandstone
+      base: ['#785c3a', '#5c4528', '#3d2e15'],
+      moss: ['#fcd34d', '#d97706', '#92400e'],
+      accent: '#fde68a',
+      edge: '#fef08a',
+      rune: '#f59e0b',
+      glyph: 'sun',
+      decor: 'cracks'
+    },
+    3: { // Crystal Caverns - Crystalline, icy stone
+      base: ['#1e3a5f', '#0f2440', '#081830'],
+      moss: ['#67e8f9', '#0ea5e9', '#0369a1'],
+      accent: '#bae6fd',
+      edge: '#e0f2fe',
+      rune: '#38bdf8',
+      glyph: 'crystal',
+      decor: 'crystals'
+    },
+    4: { // Mystic Orchard - Arcane, purple-tinged stone
+      base: ['#3d1a5c', '#2a1045', '#1a0830'],
+      moss: ['#c084fc', '#a855f7', '#7e22ce'],
+      accent: '#e9d5ff',
+      edge: '#f5f0ff',
+      rune: '#a855f7',
+      glyph: 'arcane',
+      decor: 'runes'
+    },
+    5: { // Celestial Sanctuary - Ethereal, star-touched stone
+      base: ['#4a1a3d', '#351028', '#22081a'],
+      moss: ['#f9a8d4', '#f43f5e', '#be185d'],
+      accent: '#fce7f3',
+      edge: '#fff0f5',
+      rune: '#f472b6',
+      glyph: 'star',
+      decor: 'stars'
+    },
+  };
+  const t = themes[worldId] || themes[1];
+  const rx = [10, 12, 8, 14, 10, 12][variant % 6];
+  const gid = `wall-${worldId}-${variant}-${seed % 4}`;
+  const decorSeed = (seed * 9301 + 49297) % 233280;
+  const decorRand = decorSeed / 233280;
+  const crackSeed = ((seed + 1) * 9301 + 49297) % 233280;
+  const crackRand = crackSeed / 233280;
+  const runeSeed = ((seed + 2) * 9301 + 49297) % 233280;
+  const runeRand = runeSeed / 233280;
+
   return (
-    <svg className="wall-svg-container" viewBox="0 0 100 100">
+    <svg className="wall-svg-container" viewBox="0 0 120 120">
       <defs>
-        <linearGradient id="wallTopGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#94a3b8" />
-          <stop offset="45%" stopColor="#475569" />
-          <stop offset="100%" stopColor="#1e293b" />
+        <linearGradient id={`${gid}-top`} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor={t.base[0]} stopOpacity="0.95" />
+          <stop offset="35%" stopColor={t.base[1]} stopOpacity="0.98" />
+          <stop offset="70%" stopColor={t.base[2]} />
+          <stop offset="100%" stopColor={t.base[2]} stopOpacity="0.9" />
         </linearGradient>
-        <linearGradient id="wallEdgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#cbd5e1" stopOpacity="0.45" />
-          <stop offset="100%" stopColor="#020617" stopOpacity="0.4" />
+        <linearGradient id={`${gid}-edge`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={t.edge} stopOpacity="0.4" />
+          <stop offset="50%" stopColor="transparent" />
+          <stop offset="100%" stopColor="#020617" stopOpacity="0.3" />
         </linearGradient>
-        <filter id="wallShadow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="5" stdDeviation="4" floodColor="#000000" floodOpacity="0.65" />
+        <linearGradient id={`${gid}-moss`} x1="0%" y1="100%" x2="0%" y2="0%">
+          <stop offset="0%" stopColor={t.moss[0]} stopOpacity="0" />
+          <stop offset="30%" stopColor={t.moss[1]} stopOpacity="0.3" />
+          <stop offset="60%" stopColor={t.moss[2]} stopOpacity="0.6" />
+          <stop offset="100%" stopColor={t.moss[2]} stopOpacity="0.8" />
+        </linearGradient>
+        <radialGradient id={`${gid}-crystal`} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor={t.accent} stopOpacity="0.4" />
+          <stop offset="50%" stopColor={t.moss[1]} stopOpacity="0.2" />
+          <stop offset="100%" stopColor="transparent" />
+        </radialGradient>
+        <filter id={`${gid}-shadow`} x="-25%" y="-25%" width="150%" height="150%">
+          <feDropShadow dx="0" dy="6" stdDeviation="5" floodColor="#000000" floodOpacity="0.7" />
+          <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#000000" floodOpacity="0.4" />
+        </filter>
+        <filter id={`${gid}-innerGlow`} x="-10%" y="-10%" width="120%" height="120%">
+          <feGaussianBlur stdDeviation="2" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
         </filter>
       </defs>
 
-      <rect x="4" y="4" width="92" height="92" rx="12" fill="url(#wallTopGrad)" stroke="#0f172a" strokeWidth="3" filter="url(#wallShadow)" />
-      <rect x="8" y="8" width="84" height="84" rx="9" fill="none" stroke="#e2e8f0" strokeWidth="1.2" opacity="0.22" />
-      <path d="M10 28 H90 M10 52 H90 M10 76 H90" stroke="#0f172a" strokeWidth="1.2" opacity="0.28" />
-      <path d="M32 10 V28 M68 28 V52 M45 52 V76 M58 76 V90 M24 52 V76" stroke="#0f172a" strokeWidth="1.2" opacity="0.22" />
-      <rect x="12" y="12" width="76" height="76" rx="8" fill="url(#wallEdgeGrad)" opacity="0.35" />
+      {/* Main block with depth shadow */}
+      <rect x="6" y="6" width="108" height="108" rx={rx} fill={`url(#${gid}-top)`} stroke="#050810" strokeWidth="3.5" filter={`url(#${gid}-shadow)`} />
+      
+      {/* Inner bevel highlight */}
+      <rect x="12" y="12" width="96" height="96" rx={Math.max(6, rx - 4)} fill="none" stroke={t.edge} strokeWidth="1.5" opacity="0.25" />
+      
+      {/* Inner shadow bevel */}
+      <rect x="10" y="10" width="100" height="100" rx={Math.max(5, rx - 3)} fill="none" stroke="#020617" strokeWidth="1.5" opacity="0.2" />
 
-      <g opacity="0.85">
-        <path d="M50 22 L76 50 L50 78 L24 50 Z" stroke="#cbd5e1" strokeWidth="2.2" fill="rgba(56,189,248,0.08)" />
-        <circle cx="50" cy="50" r="6.5" fill="#38bdf8" opacity="0.8" />
-        <circle cx="50" cy="50" r="3" fill="#e0f2fe" opacity="0.9" />
-        <line x1="50" y1="22" x2="50" y2="78" stroke="#cbd5e1" strokeWidth="1.4" opacity="0.55" />
-        <line x1="24" y1="50" x2="76" y2="50" stroke="#cbd5e1" strokeWidth="1.4" opacity="0.55" />
+      {/* Horizontal stratification lines */}
+      <g stroke="#020617" strokeWidth="1.2" opacity="0.18">
+        <path d={`M14 ${26 + (variant % 3) * 2} H106`} />
+        <path d={`M14 ${48 + (variant % 4) * 3} H106`} />
+        <path d={`M14 ${72 + (variant % 3) * 2} H106`} />
+        <path d={`M14 ${90 + (variant % 2) * 3} H106`} />
+      </g>
+
+      {/* Vertical stratification lines */}
+      <g stroke="#020617" strokeWidth="1" opacity="0.12">
+        <path d={`M${32 + (variant % 4) * 3} 14 V${92 + (variant % 3) * 2}`} />
+        <path d={`M${58 + (variant % 5) * 2} 14 V${92 + (variant % 4) * 2}`} />
+        <path d={`M${84 + (variant % 3) * 2} 14 V${92 + (variant % 2) * 3}`} />
+      </g>
+
+      {/* Inner highlight overlay */}
+      <rect x="14" y="14" width="92" height="92" rx={Math.max(4, rx - 5)} fill={`url(#${gid}-edge)`} opacity="0.25" />
+
+      {/* World-specific decorative elements */}
+      <g opacity="0.9" filter="url(#${gid}-innerGlow)">
+        {/* Glyph/Symbol */}
+        {t.glyph === 'leaf' && (
+          <path d="M60 28 C78 38, 80 65, 60 92 C40 65, 42 38, 60 28 Z" stroke={t.rune} strokeWidth="2.5" fill="rgba(255,255,255,0.06)" />
+        )}
+        {t.glyph === 'sun' && (
+          <g stroke={t.rune} strokeWidth="2" fill="rgba(255,255,255,0.06)">
+            <circle cx="60" cy="60" r="14" />
+            <path d="M60 32 V40 M60 80 V88 M32 60 H40 M80 60 H88 M40 40 L47 47 M73 73 L80 80 M73 47 L80 40 M47 73 L40 80" />
+          </g>
+        )}
+        {t.glyph === 'crystal' && (
+          <g>
+            <path d="M60 24 L92 60 L60 96 L28 60 Z" stroke={t.rune} strokeWidth="2.5" fill="rgba(255,255,255,0.06)" />
+            <line x1="60" y1="24" x2="60" y2="96" stroke={t.rune} strokeWidth="1.6" opacity="0.5" />
+            <line x1="28" y1="60" x2="92" y2="60" stroke={t.rune} strokeWidth="1.6" opacity="0.5" />
+            <line x1="40" y1="42" x2="80" y2="78" stroke={t.rune} strokeWidth="1" opacity="0.3" />
+            <line x1="80" y1="42" x2="40" y2="78" stroke={t.rune} strokeWidth="1" opacity="0.3" />
+          </g>
+        )}
+        {t.glyph === 'arcane' && (
+          <g stroke={t.rune} strokeWidth="2" fill="rgba(255,255,255,0.05)">
+            <circle cx="60" cy="60" r="18" />
+            <path d="M60 34 L85 78 H35 Z" />
+            <circle cx="60" cy="60" r="5" fill={t.rune} />
+            <circle cx="60" cy="60" r="10" strokeDasharray="3 3" fill="none" />
+          </g>
+        )}
+        {t.glyph === 'star' && (
+          <g>
+            <path d="M60 24 L68 48 L94 52 L75 70 L79 96 L60 82 L41 96 L45 70 L26 52 L52 48 Z" stroke={t.rune} strokeWidth="2.2" fill="rgba(255,255,255,0.08)" />
+            <circle cx="60" cy="60" r="5" fill={t.edge} opacity="0.9" />
+            <circle cx="60" cy="60" r="12" stroke={t.rune} strokeWidth="1" strokeDasharray="2 4" fill="none" opacity="0.4" />
+          </g>
+        )}
+
+        {/* Central core */}
+        <circle cx="60" cy="60" r="6.5" fill={t.rune} opacity="0.6" />
+
+        {/* Decor based on world type */}
+        {t.decor === 'moss' && (
+          <g fill={t.moss[1]} opacity="0.7">
+            {decorRand > 0.3 && <circle cx="20" cy="20" r="4" />}
+            {decorRand > 0.5 && <ellipse cx="100" cy="22" rx="5" ry="3" />}
+            {decorRand > 0.65 && <circle cx="18" cy="98" r="3.5" />}
+            {decorRand > 0.8 && <ellipse cx="102" cy="95" rx="4" ry="5" />}
+            {decorRand > 0.45 && <circle cx="42" cy="32" r="2.5" />}
+            {decorRand > 0.75 && <circle cx="78" cy="88" r="3" />}
+            {/* Moss patches along edges */}
+            <ellipse cx="60" cy="16" rx="12" ry="4" fill="url(#${gid}-moss)" opacity="0.5" />
+            <ellipse cx="60" cy="104" rx="10" ry="3" fill="url(#${gid}-moss)" opacity="0.4" />
+          </g>
+        )}
+
+        {t.decor === 'cracks' && (
+          <g stroke="#1a1508" strokeWidth="1.3" fill="none" strokeLinecap="round" opacity="0.5">
+            {crackRand > 0.4 && <path d="M20 20 Q40 30 50 20 Q60 15 80 25" />}
+            {crackRand > 0.6 && <path d="M25 95 Q45 80 65 90" />}
+            {crackRand > 0.3 && <path d="M20 30 V60 Q50 65 80 60" />}
+            {crackRand > 0.7 && <path d="M10 50 Q30 55 50 50 Q70 45 110 55" />}
+            {crackRand > 0.55 && <path d="M50 10 Q55 35 50 60" />}
+          </g>
+        )}
+
+        {t.decor === 'crystals' && (
+          <g fill={t.moss[1]} opacity="0.6">
+            {decorRand > 0.35 && <path d="M60 20 L68 35 L52 35 Z" />}
+            {decorRand > 0.55 && <path d="M25 60 L38 52 L38 68 Z" />}
+            {decorRand > 0.7 && <path d="M95 60 L82 52 L82 68 Z" />}
+            {decorRand > 0.45 && <path d="M60 100 L68 85 L52 85 Z" />}
+            {decorRand > 0.6 && <circle cx="35" cy="35" r="2" />}
+            {decorRand > 0.8 && <circle cx="85" cy="85" r="2.5" />}
+            {/* Crystal shimmer line */}
+            <line x1="60" y1="10" x2="60" y2="30" stroke={t.accent} strokeWidth="1.5" opacity="0.5" />
+            <line x1="60" y1="90" x2="60" y2="110" stroke={t.accent} strokeWidth="1.5" opacity="0.5" />
+          </g>
+        )}
+
+        {t.decor === 'runes' && (
+          <g stroke={t.rune} strokeWidth="1.5" fill="none" opacity="0.5">
+            {runeRand > 0.4 && <circle cx="25" cy="25" r="8" />}
+            {runeRand > 0.6 && <path d="M25 17 V33 M17 25 H33" />}
+            {runeRand > 0.5 && <path d="M95 95 L80 80 M95 80 L80 95" />}
+            {runeRand > 0.7 && <path d="M35 85 L45 75 L55 85 M40 80 L50 80" />}
+            {runeRand > 0.3 && <circle cx="60" cy="60" r="15" strokeDasharray="4 4" />}
+          </g>
+        )}
+
+        {t.decor === 'stars' && (
+          <g fill={t.accent} opacity="0.7">
+            {decorRand > 0.25 && <circle cx="18" cy="18" r="1.8" />}
+            {decorRand > 0.4 && <circle cx="102" cy="22" r="1.2" />}
+            {decorRand > 0.55 && <circle cx="22" cy="102" r="1.5" />}
+            {decorRand > 0.7 && <circle cx="98" cy="98" r="1" />}
+            {decorRand > 0.35 && <circle cx="40" cy="35" r="1.3" />}
+            {decorRand > 0.65 && <circle cx="80" cy="85" r="1.6" />}
+            {decorRand > 0.45 && <circle cx="60" cy="25" r="2" />}
+            {decorRand > 0.75 && <circle cx="60" cy="95" r="1.8" />}
+            {/* Ethereal shimmer */}
+            <ellipse cx="60" cy="60" rx="25" ry="15" fill="none" stroke={t.rune} strokeWidth="0.8" strokeDasharray="3 6" opacity="0.3" />
+          </g>
+        )}
       </g>
     </svg>
   );
@@ -467,10 +991,22 @@ function App() {
   const [game, setGame] = useState(() => initialState(LEVELS[levelId - 1] || LEVELS[0]));
   const [renderWorm, setRenderWorm] = useState(() => (LEVELS[levelId - 1] || LEVELS[0]).worm.map(p => [...p]));
   const [moveTick, setMoveTick] = useState(0);
+  const [animTime, setAnimTime] = useState(0);
 
   // Current World
   const currentWorld = WORLDS.find(w => levelId >= w.range[0] && levelId <= w.range[1]) || WORLDS[0];
   const currentSkin = SKINS.find(s => s.id === wormSkin) || SKINS[0];
+
+  // Animation time for worm idle effects
+  useEffect(() => {
+    if (reducedMotion) return;
+    let start = performance.now();
+    const tick = () => {
+      setAnimTime(performance.now() - start);
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [reducedMotion]);
 
   // Persist guest progress to localStorage
   useEffect(() => {
@@ -791,6 +1327,19 @@ function App() {
         setBoardFx(fx => ({ ...fx, warp: true }));
         setTimeout(() => setBoardFx(fx => ({ ...fx, warp: false })), 900);
 
+        // Portal entry particle burst
+        const portalPos = level.portal;
+        triggerParticleBurst(
+          (portalPos[0] / level.size) * 100 + (100 / (level.size * 2)),
+          (portalPos[1] / level.size) * 100,
+          '#a855f7'
+        );
+        triggerParticleBurst(
+          (portalPos[0] / level.size) * 100 + (100 / (level.size * 2)),
+          (portalPos[1] / level.size) * 100,
+          '#06b6d4'
+        );
+
         // Stagger star pops
         setStarPopStage(0);
         setTimeout(() => { setStarPopStage(1); playSound('star', sound); }, 220);
@@ -839,6 +1388,17 @@ function App() {
         setWormExpression('idle');
         setBoardFx(fx => ({ ...fx, impact: true }));
         setTimeout(() => setBoardFx(fx => ({ ...fx, impact: false })), 520);
+
+        // Particle burst on wall/body collision
+        const isWallHit = next.reason && (next.reason.includes('wall') || next.reason.includes('gate') || next.reason.includes('block') || next.reason.includes('hazard') || next.reason.includes('tangled') || next.reason.includes('edges'));
+        if (isWallHit) {
+          const headPos = old.worm[0];
+          triggerParticleBurst(
+            (headPos[0] / level.size) * 100 + (100 / (level.size * 2)),
+            (headPos[1] / level.size) * 100,
+            next.reason.includes('hazard') ? '#f87171' : '#94a3b8'
+          );
+        }
       } else if (!didEat) {
         playSound('move', sound);
         // Reset expression after move
@@ -1127,23 +1687,53 @@ function App() {
     return LEVELS.filter(l => l.worldId === selectedWorldTab);
   }, [selectedWorldTab]);
 
-  // Ambient particles for background
-  const ambientMotes = useMemo(() => {
+  // Ambient particles for background - enhanced multi-layer system
+  const ambientFarMotes = useMemo(() => {
+    return Array.from({ length: 30 }).map((_, i) => ({
+      left: `${(i * 37) % 100}%`,
+      top: `${(i * 73) % 100}%`,
+      color: currentWorld.color,
+      size: 2 + (i % 4) * 1.5,
+      duration: 15 + (i % 10) * 3,
+      delay: (i % 8) * 2,
+      maxOpacity: 0.15 + (i % 5) * 0.05,
+      startX: ((i * 13) % 100) - 50,
+      startY: 50 + ((i * 17) % 100),
+      endX: ((i * 23) % 100) - 50,
+      endY: -10 - ((i * 11) % 50),
+    }));
+  }, [currentWorld.color]);
+
+  const ambientMidMotes = useMemo(() => {
     return Array.from({ length: 20 }).map((_, i) => ({
       left: `${(i * 17) % 100}%`,
       color: currentWorld.color,
       size: 4 + (i % 6) * 3,
-      duration: 8 + (i % 8) * 2,
-      delay: (i % 6) * 1.3,
+      duration: 10 + (i % 8) * 3,
+      delay: (i % 6) * 1.5,
+      maxOpacity: 0.25 + (i % 4) * 0.1,
+      driftX: (i % 2 === 0 ? 1 : -1) * (30 + (i % 5) * 10),
+      driftEnd: (i % 3 === 0 ? 1 : -1) * (40 + (i % 7) * 10),
     }));
   }, [currentWorld.color]);
 
-  // Ambient orbs
-  const ambientOrbs = useMemo(() => [
-    { color: currentWorld.color, top: '-100px', left: '-100px', size: 400 },
-    { color: currentWorld.color === '#10b981' ? '#38bdf8' : currentWorld.color === '#f59e0b' ? '#a855f7' : '#ec4899', bottom: '-50px', right: '-50px', size: 300 },
-    { color: currentWorld.color === '#38bdf8' ? '#fbbf24' : currentWorld.color === '#a855f7' ? '#10b981' : '#38bdf8', top: '30%', left: '50%', size: 250 },
+  const ambientNearOrbs = useMemo(() => [
+    { color: currentWorld.color, top: '-150px', left: '-150px', size: 500 },
+    { color: currentWorld.color === '#10b981' ? '#38bdf8' : currentWorld.color === '#f59e0b' ? '#a855f7' : '#ec4899', bottom: '-100px', right: '-100px', size: 400 },
+    { color: currentWorld.color === '#38bdf8' ? '#fbbf24' : currentWorld.color === '#a855f7' ? '#10b981' : '#38bdf8', top: '35%', left: '50%', size: 300 },
   ], [currentWorld.color]);
+
+  // World-specific particles
+  const worldParticles = useMemo(() => {
+    const count = 15;
+    return Array.from({ length: count }).map((_, i) => ({
+      left: `${(i * 100) / count + Math.random() * 20}%`,
+      top: `${Math.random() * 100}%`,
+      size: 4 + Math.random() * 8,
+      duration: 4 + Math.random() * 6,
+      delay: Math.random() * 4,
+    }));
+  }, [currentWorld.id]);
 
   const moveBudgetState = moveProgress.pct >= 100 ? 'danger' : moveProgress.pct >= 85 ? 'warn' : moveProgress.pct >= moveProgress.parPct ? 'caution' : 'safe';
   const boardScale = level.size >= 11 ? 0.9 : level.size >= 9 ? 0.96 : 1;
@@ -1158,11 +1748,78 @@ function App() {
     >
 
 
-      {/* AMBIENT LAYERS */}
+      {/* AMBIENT LAYERS - Enhanced Multi-Layer Parallax System */}
       <div className="ambient-layers" aria-hidden="true">
-        <div className="ambient-layer ambient-orbs-layer" style={{ '--orb-color-1': ambientOrbs[0].color, '--orb-color-2': ambientOrbs[1].color, '--orb-color-3': ambientOrbs[2].color }}>
-          {ambientOrbs.slice(0, 2).map((orb, i) => (
-            <div key={i} className="ambient-orb" style={{ ...orb }} />
+        {/* Far Layer - Distant Stars/Motes */}
+        <div className="ambient-layer ambient-far-layer">
+          {ambientFarMotes.map((mote, i) => (
+            <div
+              key={i}
+              className="ambient-far-mote"
+              style={{
+                left: mote.left,
+                top: mote.top,
+                width: `${mote.size}px`,
+                height: `${mote.size}px`,
+                background: mote.color,
+                animationDuration: `${mote.duration}s`,
+                animationDelay: `${mote.delay}s`,
+                '--max-opacity': mote.maxOpacity,
+                '--start-x': `${mote.startX}px`,
+                '--start-y': `${mote.startY}px`,
+                '--end-x': `${mote.endX}px`,
+                '--end-y': `${mote.endY}px`,
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Mid Layer - Floating Organic Particles */}
+        <div className="ambient-layer ambient-mid-layer">
+          {ambientMidMotes.map((mote, i) => (
+            <div
+              key={i}
+              className="ambient-mid-mote"
+              style={{
+                left: mote.left,
+                width: `${mote.size}px`,
+                height: `${mote.size}px`,
+                background: mote.color,
+                animationDuration: `${mote.duration}s`,
+                animationDelay: `${mote.delay}s`,
+                '--max-opacity': mote.maxOpacity,
+                '--drift-x': `${mote.driftX}px`,
+                '--drift-end': `${mote.driftEnd}px`,
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Near Layer - Large Soft Glow Orbs */}
+        <div className="ambient-layer ambient-near-layer" style={{ '--orb-color-1': ambientNearOrbs[0].color, '--orb-color-2': ambientNearOrbs[1].color, '--orb-color-3': ambientNearOrbs[2].color }}>
+          {ambientNearOrbs.slice(0, 3).map((orb, i) => (
+            <div key={i} className="ambient-near-orb" style={{ ...orb }} />
+          ))}
+        </div>
+
+        {/* Grid Pattern Overlay */}
+        <div className="ambient-layer ambient-grid-overlay" />
+
+        {/* World-Specific Atmospheric Effects */}
+        <div className="ambient-layer ambient-world-fx" data-world={currentWorld.id}>
+          {worldParticles.map((p, i) => (
+            <div
+              key={i}
+              className="world-particle"
+              style={{
+                left: p.left,
+                top: p.top,
+                width: `${p.size}px`,
+                height: `${p.size}px`,
+                animationDuration: `${p.duration}s`,
+                animationDelay: `${p.delay}s`,
+              }}
+            />
           ))}
         </div>
       </div>
@@ -1244,7 +1901,8 @@ function App() {
             pointerEvents: 'none',
             zIndex: 55,
             animation: `particleBurstAnim ${p.duration}s ease-out forwards`,
-            transform: `rotate(${p.angle}deg) translateX(${p.distance}px)`,
+            '--particle-angle': `${p.angle}deg`,
+            '--particle-distance': `${p.distance}px`,
           }}
         >
         </div>
@@ -1272,6 +1930,8 @@ function App() {
               {board.map((p, i) => {
                 const decorSeed = (i * 9301 + 49297) % 233280;
                 const decor = decorSeed / 233280;
+                const r = Math.floor(i / level.size);
+                const c2 = i % level.size;
                 const isWallCell = level.walls.some(w => same(w, p));
                 const isPortalCell = same(level.portal, p);
                 const isAppleCell = isApple(p);
@@ -1293,15 +1953,16 @@ function App() {
                 if (hint && game.apples.length && same(game.apples[0], p)) c += ' hinted';
                 if (showHintPath && solverHint && solverHint.path && solverHint.path.some(pt => same(pt, p))) c += ' hint-path hint-path-anim';
                 if (boardFx?.trail?.some(t => same(t, p))) c += ' worm-trail';
+                const levelVariant = ` level-variant-${((level.id + r + c2) % 6)}`;
 
                 return (
-                  <div key={i} className={c + (showDecor ? ' has-decor' : '')}>
+                  <div key={i} className={c + levelVariant + (showDecor ? ' has-decor' : '')}>
                     {showDecor && <span className={`tile-decor decor-${currentWorld.id} d-${Math.floor(decor * 4)}`} aria-hidden="true" />}
                     {boardFx?.trail?.some(t => same(t, p)) && <span className="tile-trail-fx" aria-hidden="true" />}
                     {isAppleCell ? (
-                      <JuicyAppleSVG collected={justCollected} />
+                      <JuicyAppleSVG collected={justCollected} bobPhase={(animTime * 0.001 + seg[0] * 0.5 + seg[1] * 0.3) % (Math.PI * 2)} />
                     ) : isPortalCell ? (
-                      <CosmicPortalSVG unlocked={game.apples.length === 0} />
+                      <CosmicPortalSVG unlocked={game.apples.length === 0} pulsePhase={animTime * 0.001} />
                     ) : isKeyCell ? (
                       <span className="mechanic-icon key-icon" title="Key"><KeyRound size={18} /></span>
                     ) : isDoorCell ? (
@@ -1311,7 +1972,7 @@ function App() {
                     ) : isBlockCell ? (
                       <span className="mechanic-icon block-icon" title="Block"><ShieldCheck size={18} /></span>
                     ) : isWallCell ? (
-                      <StoneWallSVG />
+                      <StoneWallSVG worldId={currentWorld.id} variant={(level.id + r * 3 + c2) % 4} seed={level.id + r * 7 + c2 * 3} />
                     ) : null}
                   </div>
                 );
@@ -1325,7 +1986,7 @@ function App() {
                   return (
                     <div key={`w-${idx}`} className={`worm-overlay-seg ${isHeadSeg ? 'head' : ''} ${isTailSeg ? 'tail' : ''}`} style={{ left: `${x}%`, top: `${y}%`, width: `${100 / level.size}%`, height: `${100 / level.size}%`, zIndex: 30 - idx }}>
                       {isHeadSeg ? (
-                        <WormHeadSVG facing={facing} skinId={wormSkin} expression={wormExpression} skinColor={currentSkin} />
+                        <WormHeadSVG facing={facing} skinId={wormSkin} expression={wormExpression} skinColor={currentSkin} time={animTime} />
                       ) : isTailSeg ? (
                         <WormTailSVG skinId={wormSkin} skinColor={currentSkin} />
                       ) : (
@@ -1541,6 +2202,44 @@ function App() {
               })}
             </div>
 
+            {/* World Preview Thumbnail */}
+            {selectedWorldTab > 0 && (() => {
+              const previewWorld = WORLDS.find(w => w.id === selectedWorldTab);
+              if (!previewWorld) return null;
+              const worldLevels = LEVELS.filter(l => l.worldId === selectedWorldTab);
+              const completedInWorld = completed.filter(id => id >= previewWorld.range[0] && id <= previewWorld.range[1]).length;
+              return (
+                <div className="world-preview-thumbnail" style={{ '--world-preview-color': previewWorld.color }}>
+                  <div className="world-preview-header">
+                    <span className="world-preview-icon">{previewWorld.icon}</span>
+                    <div className="world-preview-info">
+                      <h3>{previewWorld.name}</h3>
+                      <p>{worldLevels[0]?.objective || previewWorld.objective}</p>
+                    </div>
+                  </div>
+                  <div className="world-preview-scene">
+                    <div className="world-preview-tile" style={{ background: `linear-gradient(135deg, ${previewWorld.color}22, ${previewWorld.color}44)` }}>
+                      <div className="world-preview-worm" style={{ background: `linear-gradient(135deg, ${previewWorld.color}, ${previewWorld.color}aa)` }} />
+                    </div>
+                  </div>
+                  <div className="world-preview-stats">
+                    <div className="world-preview-stat">
+                      <span className="world-preview-stat-value">{completedInWorld}/10</span>
+                      <span className="world-preview-stat-label">Levels Cleared</span>
+                    </div>
+                    <div className="world-preview-stat">
+                      <span className="world-preview-stat-value">{worldLevels.length}</span>
+                      <span className="world-preview-stat-label">Total Gardens</span>
+                    </div>
+                    <div className="world-preview-stat">
+                      <span className="world-preview-stat-value">★{completedInWorld * 3}</span>
+                      <span className="world-preview-stat-label">Max Stars</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Level Grid */}
             <div className="level-pathway-grid">
               {displayedLevels.map(l => {
@@ -1561,7 +2260,7 @@ function App() {
                   >
                     {isCurrent && (
                       <div className="level-node-mascot-head">
-                        <WormHeadSVG facing="right" skinId={wormSkin} skinColor={currentSkin} />
+                        <WormHeadSVG facing="right" skinId={wormSkin} skinColor={currentSkin} time={animTime} />
                       </div>
                     )}
                     <span className="level-node-number">
