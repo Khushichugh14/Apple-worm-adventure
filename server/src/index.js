@@ -73,14 +73,39 @@ app.use('/api/economy', economyRoutes);
 app.get('/api/health', (_req, res) => res.json({ ok: true, gameName: GAME_NAME, service: 'apple-worm-adventure-api' }));
 
 // Serve React frontend static files in production
-const clientDist = path.resolve(__dirname, '../../client/dist');
-if (existsSync(clientDist)) {
-  app.use(express.static(clientDist));
+// Try multiple possible locations for the client build
+const possibleClientDistPaths = [
+  path.resolve(__dirname, '../../client/dist'),  // Local dev structure
+  path.resolve(process.cwd(), 'client/dist'),    // Render build from root
+  path.resolve(process.cwd(), '../client/dist'), // Alternative Render path
+];
+
+let clientDist = null;
+for (const p of possibleClientDistPaths) {
+  if (existsSync(p)) {
+    clientDist = p;
+    console.log(`[Static] Serving frontend from: ${p}`);
+    break;
+  }
+}
+
+if (clientDist) {
+  app.use(express.static(clientDist, {
+    maxAge: '1y',
+    etag: true,
+    lastModified: true,
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      }
+    }
+  }));
   // All non-API routes → serve React index.html (SPA routing)
   app.get('*', (_req, res) => {
     res.sendFile(path.join(clientDist, 'index.html'));
   });
 } else {
+  console.warn('[Static] Client dist folder not found! Checked:', possibleClientDistPaths);
   // Fallback if frontend not built
   app.get('/', (_req, res) => res.json({ status: 'online', game: GAME_NAME, health: '/api/health' }));
 }
