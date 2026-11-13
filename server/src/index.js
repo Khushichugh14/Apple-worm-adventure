@@ -90,7 +90,23 @@ for (const p of possibleClientDistPaths) {
 }
 
 if (clientDist) {
-  app.use(express.static(clientDist, {
+  console.log('[Static] clientDist resolved to:', clientDist);
+  console.log('[Static] clientDist exists:', existsSync(clientDist));
+  console.log('[Static] assets folder exists:', existsSync(path.join(clientDist, 'assets')));
+  console.log('[Static] index.html exists:', existsSync(path.join(clientDist, 'index.html')));
+  
+  // List assets folder contents
+  try {
+    const assetsPath = path.join(clientDist, 'assets');
+    if (existsSync(assetsPath)) {
+      const files = require('fs').readdirSync(assetsPath);
+      console.log('[Static] assets folder contents:', files);
+    }
+  } catch (e) {
+    console.error('[Static] Error reading assets:', e.message);
+  }
+
+  const staticMiddleware = express.static(clientDist, {
     maxAge: '1y',
     etag: true,
     lastModified: true,
@@ -99,11 +115,22 @@ if (clientDist) {
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       }
     }
-  }));
+  });
+  
+  // Wrap static middleware to catch errors
+  app.use((req, res, next) => {
+    staticMiddleware(req, res, (err) => {
+      if (err) {
+        console.error('[Static] express.static error:', err.message, 'for', req.path);
+        return next(err);
+      }
+      next();
+    });
+  });
   
   // Debug: log static file requests
   app.use((req, res, next) => {
-    if (req.path.startsWith('/assets/') || req.path.startsWith('/icons/')) {
+    if (req.path.startsWith('/assets/') || req.path.startsWith('/icons/') || req.path.startsWith('/manifest')) {
       console.log(`[Static Request] ${req.method} ${req.path}`);
     }
     next();
@@ -115,9 +142,10 @@ if (clientDist) {
     if (req.path.startsWith('/api/')) {
       return res.status(404).json({ error: 'API endpoint not found' });
     }
+    console.log('[SPA] Serving index.html for:', req.path);
     res.sendFile(path.join(clientDist, 'index.html'), (err) => {
       if (err) {
-        console.error('[Static] sendFile error:', err);
+        console.error('[Static] sendFile error:', err.message, 'for', req.path);
         res.status(500).send('Internal Server Error');
       }
     });
