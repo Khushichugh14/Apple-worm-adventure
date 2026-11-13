@@ -44,7 +44,8 @@ const corsOptions = {
       configuredOrigins.includes(origin) ||
       /^http:\/\/localhost(:\d+)?$/.test(origin) ||
       /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin) ||
-      /^https:\/\/.*\.vercel\.app$/.test(origin);
+      /^https:\/\/.*\.vercel\.app$/.test(origin) ||
+      /^https:\/\/.*\.onrender\.com$/.test(origin);
 
     if (isAllowed) {
       callback(null, true);
