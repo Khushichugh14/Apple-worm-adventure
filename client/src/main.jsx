@@ -1960,7 +1960,7 @@ function App() {
                     {showDecor && <span className={`tile-decor decor-${currentWorld.id} d-${Math.floor(decor * 4)}`} aria-hidden="true" />}
                     {boardFx?.trail?.some(t => same(t, p)) && <span className="tile-trail-fx" aria-hidden="true" />}
                     {isAppleCell ? (
-                      <JuicyAppleSVG collected={justCollected} bobPhase={(animTime * 0.001 + seg[0] * 0.5 + seg[1] * 0.3) % (Math.PI * 2)} />
+                      <JuicyAppleSVG collected={justCollected} bobPhase={(animTime * 0.001 + p[0] * 0.5 + p[1] * 0.3) % (Math.PI * 2)} />
                     ) : isPortalCell ? (
                       <CosmicPortalSVG unlocked={game.apples.length === 0} pulsePhase={animTime * 0.001} />
                     ) : isKeyCell ? (
