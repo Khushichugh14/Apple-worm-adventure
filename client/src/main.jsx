@@ -69,56 +69,52 @@ const WorldIcon = ({ name, size = 20, className = '' }) => {
    PREMIUM CUSTOM VECTOR GRAPHIC COMPONENTS
    =================================================== */
 
-// 1. Enhanced Premium Worm Head with Detailed Anatomy, Expressions & Micro-Animations
+// 1. Realistic Worm Head with Earthworm Anatomy, Segmented Rings & Expressive Face
 function WormHeadSVG({ facing = 'right', skinId = 'emerald', expression = 'idle', skinColor = {}, time = 0 }) {
   const skin = SKINS.find(s => s.id === skinId) || SKINS[0];
   const primary = skinColor.primary || skin.primary;
   const secondary = skinColor.secondary || skin.secondary;
   const highlight = skinColor.highlight || skin.highlight;
-  const gradId = `wormGrad-${skin.id}-${expression}`;
+  const gradId = `wormHeadGrad-${skin.id}-${expression}`;
 
   const isEating = expression === 'eating';
   const isMoving = expression === 'moving';
   const isHappy = expression === 'happy';
   const isIdle = !isEating && !isMoving && !isHappy;
-  const eyeRy = isEating ? 5 : isHappy ? 7 : 10;
-  const pupilR = isEating ? 3 : isHappy ? 4.5 : 5;
+  const pupilR = isEating ? 2.5 : isHappy ? 4 : 5;
   const blinkProgress = isIdle ? (Math.sin(time * 0.003) * 0.5 + 0.5) : 0;
   const shouldBlink = isIdle && blinkProgress > 0.98;
-  const eyeScale = shouldBlink ? 0.15 : 1;
-  const pupilOffsetX = isEating ? 3 : isMoving ? 2.5 : 2.2;
-  const pupilOffsetY = isEating ? 1.5 : 0;
+  const eyeScale = shouldBlink ? 0.12 : 1;
+  const pupilOffsetX = isEating ? 2 : isMoving ? 2 : 1.5;
+  const mouthOpen = isEating ? 1 : 0;
+  const headTilt = isMoving ? 3 : isEating ? 5 : 0;
 
   return (
     <svg className={`worm-head-svg-container facing-${facing} ${isMoving ? 'moving' : ''} ${isEating ? 'eating' : ''} ${isHappy ? 'happy' : ''} ${isIdle ? 'idle' : ''}`} viewBox="0 0 120 120">
       <defs>
-        <radialGradient id={gradId} cx="35%" cy="30%" r="75%">
+        <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor={highlight} />
-          <stop offset="35%" stopColor={primary} />
+          <stop offset="30%" stopColor={primary} />
           <stop offset="70%" stopColor={secondary} />
           <stop offset="100%" stopColor={secondary} stopOpacity="0.85" />
-        </radialGradient>
-        <radialGradient id={`${gradId}-belly`} cx="50%" cy="65%" r="60%">
-          <stop offset="0%" stopColor={highlight} stopOpacity="0.6" />
-          <stop offset="50%" stopColor={primary} stopOpacity="0.4" />
-          <stop offset="100%" stopColor="transparent" />
-        </radialGradient>
-        <linearGradient id={`${gradId}-shine`} x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.5" />
-          <stop offset="30%" stopColor="#ffffff" stopOpacity="0.2" />
-          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
         </linearGradient>
-        <linearGradient id={`${gradId}-rim`} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.3" />
-          <stop offset="50%" stopColor="transparent" />
+        <linearGradient id={`${gradId}-belly`} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor={highlight} stopOpacity="0.5" />
+          <stop offset="40%" stopColor={primary} stopOpacity="0.3" />
           <stop offset="100%" stopColor="#000000" stopOpacity="0.2" />
         </linearGradient>
-        <filter id="headDropShadow" x="-30%" y="-30%" width="160%" height="160%">
-          <feDropShadow dx="0" dy="8" stdDeviation="6" floodColor="#000000" floodOpacity="0.4" />
-          <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#000000" floodOpacity="0.3" />
+        <linearGradient id={`${gradId}-segment`} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.15" />
+          <stop offset="45%" stopColor="#ffffff" stopOpacity="0.05" />
+          <stop offset="55%" stopColor="#ffffff" stopOpacity="0.05" />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0.15" />
+        </linearGradient>
+        <filter id="headDropShadow" x="-40%" y="-40%" width="180%" height="180%">
+          <feDropShadow dx="0" dy="10" stdDeviation="8" floodColor="#000000" floodOpacity="0.5" />
+          <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#000000" floodOpacity="0.35" />
         </filter>
-        <filter id="innerGlow" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="3" result="blur" />
+        <filter id="slimyGlow" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="2" result="blur" />
           <feMerge>
             <feMergeNode in="blur" />
             <feMergeNode in="SourceGraphic" />
@@ -126,138 +122,134 @@ function WormHeadSVG({ facing = 'right', skinId = 'emerald', expression = 'idle'
         </filter>
       </defs>
 
-      {/* Ground shadow */}
-      <ellipse cx="60" cy="85" rx="36" ry="12" fill="rgba(0,0,0,0.18)" filter="url(#headDropShadow)" />
+      {/* Ground shadow under head */}
+      <ellipse cx="60" cy="92" rx="38" ry="14" fill="rgba(0,0,0,0.25)" filter="url(#headDropShadow)" />
 
-      {/* Head sprout/antenna with subtle sway */}
-      <g className="head-sprout" transform="translate(52, 8)" style={{ transformOrigin: '50% 100%' }}>
-        <path d="M6 22 C3 10, 18 4, 28 12 C33 18, 22 26, 8 22 Z" fill="#4ade80" stroke="#14532d" strokeWidth="1.8" />
-        <path d="M7 22 C15 14, 22 12, 27 13" stroke="#14532d" strokeWidth="1.4" fill="none" opacity="0.7" />
-        <path d="M7 22 Q3 30 6 36" stroke="#78350f" strokeWidth="3.5" strokeLinecap="round" fill="none" />
-        <circle cx="14" cy="16" r="2" fill="#86efac" opacity="0.8" />
+      {/* Clitellum band (thick segment near head - mature worm feature) */}
+      <ellipse cx="60" cy="52" rx="44" ry="22" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="2" />
+      <ellipse cx="60" cy="48" rx="40" ry="18" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="1.5" />
+
+      {/* Main head body - tapered worm shape */}
+      <path
+        d="M20 40 Q60 20 100 40 Q100 80 60 92 Q20 80 20 40 Z"
+        fill={`url(#${gradId})`}
+        filter="url(#headDropShadow)"
+      />
+      <path
+        d="M25 45 Q60 28 95 45 Q95 75 60 85 Q25 75 25 45 Z"
+        fill={`url(#${gradId}-belly})`}
+        opacity="0.85"
+      />
+
+      {/* Body segmentation rings on head */}
+      <g stroke="rgba(255,255,255,0.12)" strokeWidth="2" fill="none" strokeLinecap="round">
+        <path d="M28 50 Q60 62 92 50" />
+        <path d="M34 56 Q60 66 86 56" strokeWidth="1.5" opacity="0.6" />
+        <path d="M40 60 Q60 68 80 60" strokeWidth="1" opacity="0.4" />
       </g>
 
-      {/* Main head body - layered for depth */}
-      <ellipse cx="60" cy="65" rx="48" ry="44" fill={`url(#${gradId})`} filter="url(#headDropShadow)" />
-      <ellipse cx="60" cy="58" rx="42" ry="28" fill={`url(#${gradId}-shine)`} opacity="0.4" />
-      <ellipse cx="60" cy="78" rx="38" ry="16" fill={`url(#${gradId}-belly)`} />
+      {/* Slimy highlight sheen */}
+      <path
+        d="M35 40 Q55 30 75 40 Q85 60 75 80 Q55 90 35 60 Q25 50 35 40 Z"
+        fill="#ffffff"
+        opacity="0.12"
+        filter="url(#slimyGlow)"
+      />
 
-      {/* Subtle body ridges/segments on head */}
-      <g stroke="rgba(255,255,255,0.12)" strokeWidth="3" fill="none" strokeLinecap="round">
-        <path d="M22 58 Q60 82 98 58" />
-        <path d="M26 64 Q60 85 94 64" strokeWidth="2" opacity="0.08" />
-        <path d="M30 70 Q60 88 90 70" strokeWidth="1.5" opacity="0.06" />
-      </g>
-
-      {/* Cheek blush marks */}
-      <ellipse cx="28" cy="72" rx={isEating ? 10 : 8} ry={isEating ? 6 : 5} fill="#fb7185" opacity={isEating ? 0.9 : isHappy ? 0.6 : 0.45} />
-      <ellipse cx="92" cy="72" rx={isEating ? 10 : 8} ry={isEating ? 6 : 5} fill="#fb7185" opacity={isEating ? 0.9 : isHappy ? 0.6 : 0.45} />
-
-      {/* Eyes - expressive with lids, pupils, highlights, reflections */}
-      <g transform="translate(42, 50)">
-        {/* Eye white with lid */}
-        <ellipse cx="0" cy="0" rx="11" ry={eyeRy * eyeScale} fill="#ffffff" stroke="#0f172a" strokeWidth="1.8" />
+      {/* Eyes on top of head (earthworm style - eyespots) */}
+      <g transform="translate(44, 48)">
+        <ellipse cx="0" cy="0" rx="10" ry={isEating ? 4 : 10} fill="#ffffff" stroke="#0f172a" strokeWidth="2" />
         {!shouldBlink && (
           <g className="worm-eye-pupil">
-            <circle cx={pupilOffsetX} cy={pupilOffsetY} r={pupilR * eyeScale} fill="#0f172a" />
-            <circle cx={pupilOffsetX - 2} cy={pupilOffsetY - 3} r="2.8" fill="#ffffff" />
-            <circle cx={pupilOffsetX + 2.5} cy={pupilOffsetY + 1.5} r="1.2" fill="#ffffff" opacity="0.9" />
-            {/* Subtle iris color reflection */}
-            <circle cx={pupilOffsetX - 1} cy={pupilOffsetY - 1} r={pupilR * 0.6} fill={highlight} opacity="0.3" />
+            <circle cx={pupilOffsetX} cy={-2} r={pupilR * eyeScale} fill="#0f172a" />
+            <circle cx={pupilOffsetX - 1} cy={-3} r="2.5" fill="#ffffff" />
+            <circle cx={pupilOffsetX + 2} cy={1} r="1" fill="#ffffff" opacity="0.9" />
           </g>
         )}
-        {isHappy && !shouldBlink && <path d="M-9 2 Q0 -6 9 2" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" fill="none" />}
-        {/* Eyelid for blink/expression */}
-        {shouldBlink && <path d="M-11 0 Q0 -4 11 0" stroke="#0f172a" strokeWidth="3" fill="none" />}
+        {shouldBlink && <path d="M-10 0 Q0 -3 10 0" stroke="#0f172a" strokeWidth="3" fill="none" />}
       </g>
-      <g transform="translate(78, 50)">
-        <ellipse cx="0" cy="0" rx="11" ry={eyeRy * eyeScale} fill="#ffffff" stroke="#0f172a" strokeWidth="1.8" />
+      <g transform="translate(76, 48)">
+        <ellipse cx="0" cy="0" rx="10" ry={isEating ? 4 : 10} fill="#ffffff" stroke="#0f172a" strokeWidth="2" />
         {!shouldBlink && (
           <g className="worm-eye-pupil">
-            <circle cx={pupilOffsetX} cy={pupilOffsetY} r={pupilR * eyeScale} fill="#0f172a" />
-            <circle cx={pupilOffsetX - 2} cy={pupilOffsetY - 3} r="2.8" fill="#ffffff" />
-            <circle cx={pupilOffsetX + 2.5} cy={pupilOffsetY + 1.5} r="1.2" fill="#ffffff" opacity="0.9" />
-            <circle cx={pupilOffsetX - 1} cy={pupilOffsetY - 1} r={pupilR * 0.6} fill={highlight} opacity="0.3" />
+            <circle cx={pupilOffsetX} cy={-2} r={pupilR * eyeScale} fill="#0f172a" />
+            <circle cx={pupilOffsetX - 1} cy={-3} r="2.5" fill="#ffffff" />
+            <circle cx={pupilOffsetX + 2} cy={1} r="1" fill="#ffffff" opacity="0.9" />
           </g>
         )}
-        {isHappy && !shouldBlink && <path d="M-9 2 Q0 -6 9 2" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" fill="none" />}
-        {shouldBlink && <path d="M-11 0 Q0 -4 11 0" stroke="#0f172a" strokeWidth="3" fill="none" />}
+        {shouldBlink && <path d="M-10 0 Q0 -3 10 0" stroke="#0f172a" strokeWidth="3" fill="none" />}
       </g>
 
-      {/* Eyebrows for expression */}
-      {isMoving && (
-        <g stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" fill="none">
-          <path d="M30 38 Q42 30 54 38" />
-          <path d="M66 38 Q78 30 90 38" />
-        </g>
-      )}
-      {isEating && (
-        <g stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" fill="none">
-          <path d="M30 38 Q42 44 54 38" />
-          <path d="M66 38 Q78 44 90 38" />
-        </g>
-      )}
+      {/* Mouth at front of head */}
+      <g transform={`translate(60, ${82 + mouthOpen * 8}) rotate(${headTilt})`}>
+        {isEating ? (
+          <>
+            <ellipse cx="0" cy="0" rx="12" ry="10" fill="#1a0a0a" stroke="#0f172a" strokeWidth="2" />
+            <ellipse cx="0" cy="4" rx="7" ry="6" fill="#fb7185" opacity="0.95" />
+            <path d="M-4 0 Q0 3 4 0" stroke="#ffffff" strokeWidth="1" opacity="0.4" fill="none" />
+          </>
+        ) : isHappy ? (
+          <path d="M-6 2 Q0 6 6 2" stroke="#0f172a" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+        ) : (
+          <path d="M-4 1 Q0 3 4 1" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        )}
+      </g>
 
-      {/* Mouth variations */}
-      {isEating ? (
-        <g transform="translate(60, 85)">
-          <ellipse cx="0" cy="0" rx="14" ry="10" fill="#3d0a0a" stroke="#0f172a" strokeWidth="1.8" />
-          <ellipse cx="0" cy="3" rx="8" ry="5" fill="#fb7185" opacity="0.9" />
-          <ellipse cx="-5" cy="1" rx="2" ry="1.5" fill="#ffffff" opacity="0.3" />
-          <ellipse cx="5" cy="1" rx="2" ry="1.5" fill="#ffffff" opacity="0.3" />
-        </g>
-      ) : isHappy ? (
-        <path d="M38 82 Q60 100 82 82" stroke="#0f172a" strokeWidth="4.5" strokeLinecap="round" fill="none" filter="url(#innerGlow)" />
-      ) : (
-        <path d="M46 78 Q60 90 74 78" stroke="#0f172a" strokeWidth="3.5" strokeLinecap="round" fill="none" />
-      )}
+      {/* Antennae/sensors */}
+      <g stroke="rgba(0,0,0,0.4)" strokeWidth="1.5" strokeLinecap="round">
+        <path d="M42 30 Q52 18 62 28" opacity="0.6" />
+        <path d="M78 30 Q68 18 58 28" opacity="0.6" />
+        <circle cx="52" cy="16" r="1.5" fill="#0f172a" opacity="0.7" />
+        <circle cx="68" cy="16" r="1.5" fill="#0f172a" opacity="0.7" />
+      </g>
 
-      {/* Subtle nostril dots */}
-      {!isEating && !shouldBlink && (
-        <g opacity="0.4">
-          <circle cx="48" cy="62" r="1.5" fill="#0f172a" />
-          <circle cx="72" cy="62" r="1.5" fill="#0f172a" />
-        </g>
-      )}
+      {/* Subtle body pulsing (breathing) */}
+      <ellipse cx="60" cy="60" rx={38 + Math.sin(time * 0.002) * 2} ry={30 + Math.sin(time * 0.002) * 2} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
     </svg>
   );
 }
 
-// 2. Enhanced Worm Body Segment with Detailed Texture & Depth
-function WormSegmentSVG({ skinId = 'emerald', scale = 1, index = 0, skinColor = {} }) {
+// 2. Realistic Worm Body Segment with Peristaltic Rings & Segmentation
+function WormSegmentSVG({ skinId = 'emerald', scale = 1, index = 0, skinColor = {}, wavePhase = 0 }) {
   const skin = SKINS.find(s => s.id === skinId) || SKINS[0];
   const primary = skinColor.primary || skin.primary;
   const secondary = skinColor.secondary || skin.secondary;
   const highlight = skinColor.highlight || skin.highlight;
-  const gradId = `segGrad-${skin.id}-${index}`;
+  const gradId = `wormSegGrad-${skin.id}-${index}`;
+
+  // Peristaltic wave - segments contract and expand in sequence
+  const wave = Math.sin(wavePhase + index * 0.8);
+  const segmentHeight = 28 + wave * 4;
+  const segmentWidth = 42 + wave * 2;
+  const compress = wave > 0 ? 1 + wave * 0.15 : 1;
+
   const stripe = index % 2 === 0;
-  const segmentVariant = index % 4; // 4 visual variants for variety
+  const segmentVariant = index % 3;
 
   return (
-    <svg className="worm-segment-svg-container" style={{ '--seg-scale': scale, '--seg-i': index }} viewBox="0 0 120 120">
+    <svg className="worm-segment-svg-container" style={{ '--seg-scale': scale, '--seg-i': index, '--wave': wave }} viewBox="0 0 120 120">
       <defs>
-        <radialGradient id={gradId} cx="32%" cy="28%" r="75%">
+        <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor={highlight} />
-          <stop offset="40%" stopColor={primary} />
-          <stop offset="80%" stopColor={secondary} />
+          <stop offset="30%" stopColor={primary} />
+          <stop offset="70%" stopColor={secondary} />
           <stop offset="100%" stopColor={secondary} stopOpacity="0.8" />
-        </radialGradient>
+        </linearGradient>
         <linearGradient id={`${gradId}-shade`} x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.3" />
-          <stop offset="40%" stopColor="#ffffff" stopOpacity="0.1" />
-          <stop offset="100%" stopColor="#000000" stopOpacity="0.2" />
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.2" />
+          <stop offset="40%" stopColor="#ffffff" stopOpacity="0.05" />
+          <stop offset="60%" stopColor="#000000" stopOpacity="0.15" />
+          <stop offset="100%" stopColor="#000000" stopOpacity="0.25" />
         </linearGradient>
-        <linearGradient id={`${gradId}-stripe`} x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="transparent" />
-          <stop offset="45%" stopColor="transparent" />
-          <stop offset="50%" stopColor="#ffffff" stopOpacity="0.15" />
-          <stop offset="55%" stopColor="#ffffff" stopOpacity="0.15" />
-          <stop offset="100%" stopColor="transparent" />
+        <linearGradient id={`${gradId}-belly`} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor={highlight} stopOpacity="0.4" />
+          <stop offset="50%" stopColor={primary} stopOpacity="0.2" />
+          <stop offset="100%" stopColor="#000000" stopOpacity="0.3" />
         </linearGradient>
-        <filter id="segShadow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="4" stdDeviation="3" floodColor="#000000" floodOpacity="0.35" />
+        <filter id="segDropShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="5" stdDeviation="4" floodColor="#000000" floodOpacity="0.4" />
         </filter>
-        <filter id="segInnerGlow" x="-10%" y="-10%" width="120%" height="120%">
+        <filter id="slimySheen" x="-20%" y="-20%" width="140%" height="140%">
           <feGaussianBlur stdDeviation="1.5" result="blur" />
           <feMerge>
             <feMergeNode in="blur" />
@@ -267,106 +259,115 @@ function WormSegmentSVG({ skinId = 'emerald', scale = 1, index = 0, skinColor = 
       </defs>
 
       {/* Ground shadow */}
-      <ellipse cx="60" cy="78" rx={34 * scale} ry={12 * scale} fill="rgba(0,0,0,0.15)" filter="url(#segShadow)" />
+      <ellipse cx="60" cy="82" rx={30 * scale} ry={10 * scale} fill="rgba(0,0,0,0.2)" filter="url(#segDropShadow)" />
 
-      {/* Segment body - main shape */}
-      <ellipse cx="60" cy="62" rx={46 * scale} ry={34 * scale} fill={`url(#${gradId})`} filter="url(#segShadow)" />
-      <ellipse cx="60" cy="58" rx={42 * scale} ry={24 * scale} fill={`url(#${gradId}-shade)`} filter="url(#segInnerGlow)" />
+      {/* Main segment body - cylindrical with segmentation rings */}
+      <path
+        d="M18 42 Q60 28 102 42 Q102 78 60 86 Q18 78 18 42 Z"
+        fill={`url(#${gradId})`}
+        filter="url(#segDropShadow)"
+        transform={`scale(${compress}, 1) translate(${(1-compress)*60}, 0)`}
+      />
+      <path
+        d="M24 46 Q60 34 96 46 Q96 74 60 82 Q24 74 24 46 Z"
+        fill={`url(#${gradId}-belly})`}
+        opacity="0.85"
+      />
 
-      {/* Belly highlight */}
-      <ellipse cx="60" cy="76" rx={34 * scale} ry={14 * scale} fill="rgba(255,255,255,0.08)" />
-
-      {/* Stripe pattern for visual variety */}
-      {stripe && (
-        <ellipse cx="60" cy="62" rx={40 * scale} ry={28 * scale} fill={`url(#${gradId}-stripe)`} />
-      )}
-
-      {/* Segment ring ridges for 3D feel */}
-      <g stroke="rgba(255,255,255,0.1)" strokeWidth="2.5" fill="none" strokeLinecap="round" opacity="0.6">
-        <path d={`M20 ${stripe ? 60 : 54} Q60 ${stripe ? 78 : 50} 100 ${stripe ? 60 : 54}`} />
-        <path d={`M26 ${stripe ? 64 : 58} Q60 ${stripe ? 80 : 54} 94 ${stripe ? 64 : 58}`} strokeWidth="1.5" opacity="0.4" />
+      {/* Segmentation rings - the defining worm feature */}
+      <g stroke="rgba(255,255,255,0.1)" strokeWidth="2.5" fill="none" strokeLinecap="round" opacity="0.7">
+        <path d={`M25 ${stripe ? 54 : 48} Q60 ${stripe ? 66 : 60} 95 ${stripe ? 54 : 48}`} />
+        <path d={`M32 ${stripe ? 58 : 52} Q60 ${stripe ? 68 : 56} 88 ${stripe ? 58 : 52}`} strokeWidth="1.5" opacity="0.5" />
       </g>
 
-      {/* Subtle highlight spots */}
-      <ellipse cx="44" cy="44" rx={10 * scale} ry={6 * scale} fill="#ffffff" opacity="0.25" transform={`rotate(-20 44 44)`} />
-      <circle cx="72" cy="68" r={3 * scale} fill={highlight} opacity="0.35" />
-
-      {/* Variant-specific decorative details */}
+      {/* Clitellum-style thicker band on certain segments */}
       {segmentVariant === 0 && (
-        <g opacity="0.3">
-          <circle cx="38" cy="70" r={2.5 * scale} fill="#ffffff" />
-          <circle cx="82" cy="70" r={2.5 * scale} fill="#ffffff" />
-        </g>
-      )}
-      {segmentVariant === 1 && (
-        <ellipse cx="60" cy="48" rx={18 * scale} ry={4 * scale} fill="#ffffff" opacity="0.12" />
-      )}
-      {segmentVariant === 2 && (
-        <g stroke="rgba(255,255,255,0.08)" strokeWidth="1.5" fill="none">
-          <path d="M40 48 Q60 40 80 48" />
-          <path d="M42 56 Q60 48 78 56" strokeWidth="1" opacity="0.5" />
-        </g>
-      )}
-      {segmentVariant === 3 && (
-        <circle cx="60" cy="62" r={8 * scale} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" />
+        <ellipse cx="60" cy="62" rx={36 * scale} ry={20 * scale} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="3" />
       )}
 
-      {/* Segment edge rim */}
-      <ellipse cx="60" cy="62" rx={46 * scale} ry={34 * scale} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
+      {/* Slimy sheen highlight */}
+      <path
+        d="M30 44 Q55 36 80 44 Q85 60 80 76 Q55 84 30 60 Q15 52 30 44 Z"
+        fill="#ffffff"
+        opacity="0.1"
+        filter="url(#slimySheen)"
+      />
+
+      {/* Peristaltic contraction indicator */}
+      {wave > 0.3 && (
+        <ellipse cx="60" cy="62" rx={30} ry={16} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1" strokeDasharray="4 4" />
+      )}
+
+      {/* Subtle highlight spots */}
+      <ellipse cx="40" cy="44" rx={8 * scale} ry={5 * scale} fill="#ffffff" opacity="0.2" transform={`rotate(-15 40 44)`} />
+      <circle cx="78" cy="68" r={2.5 * scale} fill={highlight} opacity="0.4" />
     </svg>
   );
 }
 
-// 3. Enhanced Worm Tail with Tapered Design & Subtle Animation
-function WormTailSVG({ skinId = 'emerald', skinColor = {} }) {
+// 3. Realistic Worm Tail with Tapered Point & Wiggle Animation
+function WormTailSVG({ skinId = 'emerald', skinColor = {}, time = 0 }) {
   const skin = SKINS.find(s => s.id === skinId) || SKINS[0];
   const primary = skinColor.primary || skin.primary;
   const secondary = skinColor.secondary || skin.secondary;
   const highlight = skinColor.highlight || skin.highlight;
-  const gradId = `tailGrad-${skin.id}`;
+  const gradId = `wormTailGrad-${skin.id}`;
+
+  const wiggle = Math.sin(time * 0.004) * 3;
 
   return (
-    <svg className="worm-tail-svg-container" viewBox="0 0 120 120">
+    <svg className="worm-tail-svg-container" viewBox="0 0 120 120" style={{ transform: `rotate(${wiggle}deg)` }}>
       <defs>
-        <radialGradient id={gradId} cx="38%" cy="32%" r="75%">
+        <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor={highlight} />
-          <stop offset="40%" stopColor={primary} />
-          <stop offset="75%" stopColor={secondary} />
+          <stop offset="30%" stopColor={primary} />
+          <stop offset="70%" stopColor={secondary} />
           <stop offset="100%" stopColor={secondary} stopOpacity="0.7" />
-        </radialGradient>
-        <linearGradient id={`${gradId}-tip`} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor={secondary} />
-          <stop offset="100%" stopColor={primary} stopOpacity="0.5" />
         </linearGradient>
-        <filter id="tailShadow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="4" stdDeviation="3" floodColor="#000000" floodOpacity="0.3" />
+        <linearGradient id={`${gradId}-belly`} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor={highlight} stopOpacity="0.4" />
+          <stop offset="50%" stopColor={primary} stopOpacity="0.2" />
+          <stop offset="100%" stopColor="#000000" stopOpacity="0.3" />
+        </linearGradient>
+        <filter id="tailDropShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="5" stdDeviation="4" floodColor="#000000" floodOpacity="0.35" />
         </filter>
       </defs>
 
       {/* Ground shadow */}
-      <ellipse cx="55" cy="80" rx="20" ry="8" fill="rgba(0,0,0,0.12)" filter="url(#tailShadow)" />
+      <ellipse cx="55" cy="85" rx="18" ry="8" fill="rgba(0,0,0,0.18)" filter="url(#tailDropShadow)" />
 
-      {/* Tail main body - tapered */}
-      <path d="M20 55 C22 28, 52 18, 84 38 C102 50, 102 68, 80 78 C48 95, 16 88, 20 55 Z" fill={`url(#${gradId})`} filter="url(#tailShadow)" />
+      {/* Tapered tail body - pointed at the end */}
+      <path
+        d="M20 50 Q50 35 95 55 Q105 65 80 78 Q45 90 20 60 Z"
+        fill={`url(#${gradId})`}
+        filter="url(#tailDropShadow)"
+      />
+      <path
+        d="M28 54 Q55 44 88 58 Q95 66 72 74 Q40 82 28 64 Z"
+        fill={`url(#${gradId}-belly})`}
+        opacity="0.85"
+      />
 
-      {/* Belly highlight on tail */}
-      <path d="M32 52 Q55 42 78 54" stroke="rgba(255,255,255,0.15)" strokeWidth="6" fill="none" strokeLinecap="round" opacity="0.5" />
-      <path d="M36 58 Q55 52 74 58" stroke="rgba(255,255,255,0.1)" strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.4" />
-
-      {/* Tail tip accent */}
-      <ellipse cx="88" cy="56" rx="6" ry="4" fill={`url(#${gradId}-tip)`} />
-      <circle cx="90" cy="54" r="1.5" fill="#ffffff" opacity="0.6" />
-
-      {/* Subtle scale pattern */}
-      <g stroke="rgba(255,255,255,0.08)" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.5">
-        <path d="M32 50 Q55 40 78 50" />
-        <path d="M34 56 Q55 46 76 56" strokeWidth="1" opacity="0.3" />
-        <path d="M36 62 Q55 52 74 62" strokeWidth="1" opacity="0.2" />
+      {/* Tail segmentation rings */}
+      <g stroke="rgba(255,255,255,0.08)" strokeWidth="1.5" fill="none" strokeLinecap="round" opacity="0.6">
+        <path d="M30 52 Q55 48 80 54" />
+        <path d="M36 58 Q55 56 74 60" strokeWidth="1" opacity="0.4" />
+        <path d="M42 64 Q55 64 68 66" strokeWidth="0.8" opacity="0.3" />
       </g>
 
-      {/* Highlight spots */}
-      <circle cx="42" cy="46" r="4" fill="#ffffff" opacity="0.22" />
-      <circle cx="76" cy="52" r="2.5" fill={highlight} opacity="0.4" />
+      {/* Tail tip - slightly darker */}
+      <path d="M78 60 Q95 55 105 62 Q98 72 82 70 Q68 64 78 60 Z" fill={secondary} opacity="0.6" />
+      <ellipse cx="95" cy="62" rx="3" ry="4" fill={secondary} />
+
+      {/* Slimy sheen */}
+      <path d="M32 50 Q55 44 78 52 Q85 64 78 74 Q55 78 32 62 Q25 56 32 50 Z" fill="#ffffff" opacity="0.08" filter="url(#slimySheen)" />
+
+      {/* Segment rings on tail */}
+      <g stroke="rgba(255,255,255,0.06)" strokeWidth="1" fill="none">
+        <path d="M38 54 Q55 52 72 56" />
+        <path d="M44 62 Q55 62 66 64" strokeWidth="0.8" opacity="0.4" />
+      </g>
     </svg>
   );
 }
@@ -1559,19 +1560,20 @@ function App() {
       setMoveTick(t => t + 1);
       setBoardFx(fx => ({ ...fx, trail: [old.worm[0], ...(fx.trail || [])].slice(0, 6) }));
 
-      // Create worm trail particles
+      // Create worm trail particles - soil/dirt effect
       const oldHead = old.worm[0];
       const newHead = next.worm[0];
-      const trailParticles = Array.from({ length: 3 }).map((_, i) => ({
+      const soilColors = ['#8b5a2b', '#a67c52', '#784212', '#5d4037'];
+      const trailParticles = Array.from({ length: 5 }).map((_, i) => ({
         id: Date.now() + i + Math.random(),
-        x: (oldHead[0] / level.size) * 100 + (100 / (level.size * 2)) + (Math.random() - 0.5) * 8,
-        y: (oldHead[1] / level.size) * 100 + (Math.random() - 0.5) * 8,
-        size: 3 + Math.random() * 4,
-        color: currentSkin.primary || '#34d399',
-        opacity: 0.6,
+        x: (oldHead[0] / level.size) * 100 + (100 / (level.size * 2)) + (Math.random() - 0.5) * 12,
+        y: (oldHead[1] / level.size) * 100 + (Math.random() - 0.5) * 12,
+        size: 4 + Math.random() * 6,
+        color: soilColors[Math.floor(Math.random() * soilColors.length)],
+        opacity: 0.8,
         life: 1.0,
       }));
-      setWormTrailParticles(prev => [...prev, ...trailParticles].slice(-30));
+      setWormTrailParticles(prev => [...prev, ...trailParticles].slice(-40));
 
       // Fade out trail particles
       setTimeout(() => {
@@ -2380,14 +2382,15 @@ function App() {
                   const y = (seg[1] / level.size) * 100;
                   const isHeadSeg = idx === 0;
                   const isTailSeg = idx === renderWorm.length - 1 && idx > 0;
+                  const wavePhase = (animTime * 0.002) + (idx * 0.6);
                   return (
                     <div key={`w-${idx}`} className={`worm-overlay-seg ${isHeadSeg ? 'head' : ''} ${isTailSeg ? 'tail' : ''}`} style={{ left: `${x}%`, top: `${y}%`, width: `${100 / level.size}%`, height: `${100 / level.size}%`, zIndex: 30 - idx }}>
                       {isHeadSeg ? (
                         <WormHeadSVG facing={facing} skinId={wormSkin} expression={wormExpression} skinColor={currentSkin} time={animTime} />
                       ) : isTailSeg ? (
-                        <WormTailSVG skinId={wormSkin} skinColor={currentSkin} />
+                        <WormTailSVG skinId={wormSkin} skinColor={currentSkin} time={animTime} />
                       ) : (
-                        <WormSegmentSVG skinId={wormSkin} scale={Math.max(0.7, 1 - (idx * 0.035))} index={idx} skinColor={currentSkin} />
+                        <WormSegmentSVG skinId={wormSkin} scale={Math.max(0.7, 1 - (idx * 0.035))} index={idx} skinColor={currentSkin} wavePhase={wavePhase} />
                       )}
                     </div>
                   );

@@ -3559,6 +3559,207 @@ button:focus-visible {
 .camera-surface { transition: filter .4s ease; }
 .game-master-container[data-world] .camera-surface { filter: saturate(1.02); }
 
+/* ===================================================
+   PREMIUM WORM ANIMATIONS & ENVIRONMENT
+   =================================================== */
+
+/* Peristaltic wave animation along worm body */
+.worm-segment-svg-container {
+  animation: segmentPulse 2.4s ease-in-out infinite;
+  animation-delay: calc(var(--seg-i, 0) * 60ms);
+  transform-origin: center;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+@keyframes segmentPulse {
+  0%, 100% { transform: scale(1, 1); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
+  50% { transform: scale(1, 0.88); filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); }
+}
+
+/* Segment contraction wave (peristaltic movement) */
+.worm-segment-svg-container[style*="--wave"] {
+  animation: peristalticWave 3s ease-in-out infinite;
+}
+
+@keyframes peristalticWave {
+  0%, 100% { transform: scale(1, 1); }
+  33% { transform: scale(1, 0.92); }
+  66% { transform: scale(1, 1.05); }
+}
+
+/* Tail wiggle animation */
+.worm-tail-svg-container {
+  animation: tailWiggle 2.5s ease-in-out infinite;
+  transform-origin: 20% 50%;
+}
+
+@keyframes tailWiggle {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(3deg); }
+}
+
+/* Head bob while moving */
+.worm-head-svg-container.moving {
+  animation: headBob 0.3s ease-in-out infinite alternate;
+}
+
+@keyframes headBob {
+  0% { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(-2px) rotate(1deg); }
+}
+
+/* Head eating animation */
+.worm-head-svg-container.eating {
+  animation: headEat 0.4s ease-in-out infinite alternate;
+}
+
+@keyframes headEat {
+  0% { transform: scale(1, 1); }
+  100% { transform: scale(1.05, 0.95); }
+}
+
+/* Smooth head turning toward movement direction */
+.worm-head-svg-container {
+  transition: transform 120ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.worm-head-svg-container.facing-up { transform: rotate(-90deg); }
+.worm-head-svg-container.facing-down { transform: rotate(90deg); }
+.worm-head-svg-container.facing-left { transform: scaleX(-1); }
+.worm-head-svg-container.facing-right { transform: scaleX(1); }
+
+/* Segment smooth positioning */
+.worm-segment-svg-container, .worm-tail-svg-container {
+  transition: transform 140ms cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 140ms ease;
+}
+
+/* Soil/earth background for the game board */
+.game-master-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.game-master-container::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 100%, rgba(168, 85, 247, 0.04) 0%, transparent 50%),
+    linear-gradient(180deg, #0a0d1a 0%, #05070d 100%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Underground soil texture on board */
+.garden-matrix-grid {
+  background:
+    radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.7) 100%),
+    var(--grid-bg, #0a0d1a),
+    repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.01) 10px, rgba(255,255,255,0.01) 20px);
+}
+
+/* Grass surface at top of board - worm comes from underground */
+.garden-floating-island::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(0deg, rgba(16, 185, 129, 0.03) 0%, transparent 20%),
+    repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(34, 197, 94, 0.02) 3px, rgba(34, 197, 94, 0.02) 6px);
+  pointer-events: none;
+  z-index: 50;
+}
+
+/* Root system hints in corners */
+.garden-floating-island::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: calc(var(--radius-2xl) + 2px);
+  background:
+    linear-gradient(135deg, var(--world-color, var(--green-primary)), var(--world-color-alt, var(--purple-primary))),
+    radial-gradient(circle at 10% 10%, rgba(255,255,255,0.03), transparent 40%);
+  opacity: 0;
+  filter: blur(20px);
+  z-index: -1;
+  transition: opacity var(--transition-slow);
+}
+
+/* Soil particle effect when worm moves */
+.soil-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #8b5a2b;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 60;
+  animation: soilBurst 0.6s ease-out forwards;
+}
+
+@keyframes soilBurst {
+  0% { transform: scale(1); opacity: 0.9; }
+  100% { transform: scale(2.5) translateY(-12px); opacity: 0; }
+}
+
+/* Enhanced tile cell with soil depth */
+.garden-tile-cell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: all var(--transition-fast);
+  background: var(--tile-bg, #0a0d1a);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.6),
+    inset 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.garden-tile-cell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 40%, rgba(0,0,0,0.15) 100%);
+  opacity: 1;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Worm occupying a tile - subtle highlight */
+.garden-tile-cell.worm {
+  background: rgba(16, 185, 129, 0.08);
+  box-shadow:
+    inset 0 0 0 1px rgba(16, 185, 129, 0.2),
+    inset 0 0 20px rgba(16, 185, 129, 0.1);
+}
+
+/* Head tile - brighter */
+.garden-tile-cell.head {
+  background: rgba(16, 185, 129, 0.15);
+  box-shadow:
+    inset 0 0 0 1px rgba(34, 197, 94, 0.3),
+    inset 0 0 25px rgba(34, 197, 94, 0.15);
+}
+
+/* Worm overlay layer */
+.worm-overlay-layer { position:absolute; inset:0; pointer-events:none; z-index:20; }
+.worm-overlay-seg { position:absolute; display:flex; align-items:center; justify-content:center; will-change: left, top, transform; transition: filter 120ms ease; }
+.worm-overlay-seg.head { z-index: 40; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.5)); }
+.worm-overlay-seg .worm-head-svg-container, .worm-overlay-seg .worm-segment-svg-container, .worm-overlay-seg .worm-tail-svg-container { width: 92%; height: 92%; }
+
+/* SVG containers will-change for smooth animation */
+.worm-head-svg-container, .worm-segment-svg-container, .worm-tail-svg-container, .apple-svg-container, .portal-svg-container { will-change: transform; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient-mote, .ambient-orb, .worm-segment-svg-container, .worm-tail-svg-container, .worm-head-svg-container, .apple-svg-container, .portal-galaxy-spin, .portal-pulse-ring, .head-sprout-leaf, .worm-eye-pupil { animation: none !important; }
+}
+
 .settings-slider {
   width: 140px;
   height: 6px;
@@ -3581,4 +3782,80 @@ button:focus-visible {
   height: 18px;
   accent-color: #a78bfa;
   cursor: pointer;
+}
+
+/* ===================================================
+   PREMIUM VIGNETTE & AMBIENT LIGHTING
+   =================================================== */
+
+/* Vignette overlay for premium underground feel */
+.game-master-container::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 40%, transparent 0%, transparent 35%, rgba(0, 0, 0, 0.35) 70%, rgba(0, 0, 0, 0.6) 100%);
+  z-index: 100;
+  pointer-events: none;
+}
+
+/* Ambient light rays filtering down from surface */
+.game-master-container .ambient-rays {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.15;
+  background:
+    linear-gradient(0deg, transparent 0%, transparent 60%, rgba(16, 185, 129, 0.04) 100%),
+    linear-gradient(180deg, rgba(168, 85, 247, 0.02) 0%, transparent 60%);
+}
+
+/* HUD glassmorphism refinements */
+.game-arcade-hud {
+  backdrop-filter: blur(24px);
+  background: rgba(8, 10, 20, 0.7);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* Modal glass polish */
+.game-modal-panel {
+  backdrop-filter: blur(28px);
+  background: rgba(12, 16, 32, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* Board glass border enhancement */
+.garden-floating-island {
+  backdrop-filter: blur(20px);
+}
+
+/* Responsive polish - mobile */
+@media (max-width: 480px) {
+  .game-play-stage { padding: 6px 4px 2px; }
+  .garden-board-wrapper { max-width: min(95vw, 500px); max-height: min(85vh, 500px); }
+  .garden-matrix-grid { gap: 2px; padding: 3px; }
+  .dock-controls-left { gap: 6px; }
+  .dock-action-btn { padding: 6px 10px; font-size: 12px; }
+  .worm-overlay-seg .worm-head-svg-container,
+  .worm-overlay-seg .worm-segment-svg-container,
+  .worm-overlay-seg .worm-tail-svg-container { width: 88%; height: 88%; }
+}
+
+/* Responsive polish - tablet */
+@media (min-width: 481px) and (max-width: 1024px) {
+  .garden-board-wrapper { max-width: min(90vw, 700px); max-height: min(80vh, 700px); }
+}
+
+/* Landscape mobile - prevent board from being too tall */
+@media (max-height: 600px) and (orientation: landscape) {
+  .game-play-stage { padding: 4px 8px 2px; }
+  .garden-board-wrapper { max-height: min(65vh, 500px); }
+  .game-bottom-dock { padding: 6px 12px; gap: 8px; }
 }
