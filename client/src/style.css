@@ -3278,8 +3278,17 @@ button:focus-visible {
 .level-intro-card p { margin-top: 6px; color: #e2e8f0; font-size: 14px; }
 .game-master-container.level-intro .garden-floating-island { animation: boardIntro 0.7s cubic-bezier(.2,.8,.2,1); }
 @keyframes boardIntro { from { transform: translateY(10px) scale(.97); opacity:.7; filter: blur(1px);} to { transform: translateY(0) scale(1); opacity:1; filter: blur(0);} }
+@keyframes levelTransitionOut { from { transform: scale(1) translateY(0); opacity: 1; filter: blur(0); } to { transform: scale(0.92) translateY(-20px); opacity: 0; filter: blur(8px); } }
+@keyframes levelTransitionIn { from { transform: scale(1.08) translateY(20px); opacity: 0; filter: blur(8px); } to { transform: scale(1) translateY(0); opacity: 1; filter: blur(0); } }
 @keyframes introPop { from { transform: translateY(8px) scale(.94); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
 @keyframes introFade { 0%{opacity:0} 15%{opacity:1} 80%{opacity:1} 100%{opacity:0} }
+
+.game-master-container.level-transition-out .garden-floating-island {
+  animation: levelTransitionOut 300ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+.game-master-container.level-transition-in .garden-floating-island {
+  animation: levelTransitionIn 300ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
 
 .achievements-modal { max-width: 860px !important; }
 .daily-challenge-card { margin: 16px 0 18px; padding: 16px 18px; border-radius: 18px; border: 1px solid color-mix(in srgb, var(--challenge-color) 50%, rgba(255,255,255,0.2)); background: linear-gradient(135deg, color-mix(in srgb, var(--challenge-color) 22%, rgba(15,23,42,.9)), rgba(15,23,42,.88)); box-shadow: 0 12px 30px rgba(0,0,0,.25), 0 0 30px color-mix(in srgb, var(--challenge-color) 18%, transparent); }

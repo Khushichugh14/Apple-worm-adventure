@@ -904,6 +904,7 @@ function App() {
     const saved = localStorage.getItem('currentLevel');
     return saved ? Math.min(50, Math.max(1, Number(saved))) : 1;
   });
+  const [levelTransition, setLevelTransition] = useState(null); // { from, to, phase: 'out'|'in' }
   const [completed, setCompleted] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('completedLevels'));
@@ -967,6 +968,7 @@ function App() {
   const [dailyRewardClaimed, setDailyRewardClaimed] = useState(() => localStorage.getItem('dailyRewardClaimedDate') === new Date().toISOString().slice(0,10));
   const [showHintPath, setShowHintPath] = useState(true);
   const [boardFx, setBoardFx] = useState({ trail: [], warp: false, impact: false, eat: false });
+  const [wormTrailParticles, setWormTrailParticles] = useState([]);
 
   // Leaderboard state
   const [leaderboard, setLeaderboard] = useState([]);
@@ -1225,27 +1227,55 @@ function App() {
 
   const startLevel = useCallback(id => {
     const targetLvl = LEVELS[id - 1] || LEVELS[0];
-    setLevelId(id);
-    const init = initialState(targetLvl);
-    setGame(init);
-    setRenderWorm(init.worm.map(p => [...p]));
-    prevWormRef.current = null;
-    setBonusMoves(0);
-    setHistory([]);
-    setHint(false);
-    setSolverHint(null);
-    setNotice('');
-    setFacing('right');
-    setWormExpression('idle');
-    setStarPopStage(0);
-    setConfettiParticles([]);
-    setBoardFx({ trail: [], warp: false, impact: false, eat: false });
-    setLevelPreview(null);
-    setMapModal(false);
-    setLevelIntro(true);
-    setTimeout(() => setLevelIntro(false), reducedMotion ? 0 : 900);
+    
+    // Level transition animation
+    if (id !== levelId) {
+      setLevelTransition({ from: levelId, to: id, phase: 'out' });
+      setTimeout(() => {
+        setLevelTransition({ from: levelId, to: id, phase: 'in' });
+        const init = initialState(targetLvl);
+        setLevelId(id);
+        setGame(init);
+        setRenderWorm(init.worm.map(p => [...p]));
+        prevWormRef.current = null;
+        setBonusMoves(0);
+        setHistory([]);
+        setHint(false);
+        setSolverHint(null);
+        setNotice('');
+        setFacing('right');
+        setWormExpression('idle');
+        setStarPopStage(0);
+        setConfettiParticles([]);
+        setBoardFx({ trail: [], warp: false, impact: false, eat: false });
+        setLevelPreview(null);
+        setMapModal(false);
+        setLevelIntro(true);
+        setTimeout(() => setLevelIntro(false), reducedMotion ? 0 : 900);
+        setTimeout(() => setLevelTransition(null), 600);
+      }, 300);
+    } else {
+      const init = initialState(targetLvl);
+      setGame(init);
+      setRenderWorm(init.worm.map(p => [...p]));
+      prevWormRef.current = null;
+      setBonusMoves(0);
+      setHistory([]);
+      setHint(false);
+      setSolverHint(null);
+      setNotice('');
+      setFacing('right');
+      setWormExpression('idle');
+      setStarPopStage(0);
+      setConfettiParticles([]);
+      setBoardFx({ trail: [], warp: false, impact: false, eat: false });
+      setLevelPreview(null);
+      setMapModal(false);
+      setLevelIntro(true);
+      setTimeout(() => setLevelIntro(false), reducedMotion ? 0 : 900);
+    }
     playSound('click', sound);
-  }, [sound, reducedMotion]);
+  }, [levelId, sound, reducedMotion]);
 
   // Spawn celebratory confetti
   const triggerConfetti = useCallback(() => {
@@ -1287,6 +1317,28 @@ function App() {
       setMoveTick(t => t + 1);
       setBoardFx(fx => ({ ...fx, trail: [old.worm[0], ...(fx.trail || [])].slice(0, 6) }));
 
+      // Create worm trail particles
+      const oldHead = old.worm[0];
+      const newHead = next.worm[0];
+      const trailParticles = Array.from({ length: 3 }).map((_, i) => ({
+        id: Date.now() + i + Math.random(),
+        x: (oldHead[0] / level.size) * 100 + (100 / (level.size * 2)) + (Math.random() - 0.5) * 8,
+        y: (oldHead[1] / level.size) * 100 + (Math.random() - 0.5) * 8,
+        size: 3 + Math.random() * 4,
+        color: currentSkin.primary || '#34d399',
+        opacity: 0.6,
+        life: 1.0,
+      }));
+      setWormTrailParticles(prev => [...prev, ...trailParticles].slice(-30));
+
+      // Fade out trail particles
+      setTimeout(() => {
+        setWormTrailParticles(prev => prev.map(p => ({ ...p, life: 0 })));
+      }, 50);
+      setTimeout(() => {
+        setWormTrailParticles(prev => prev.filter(p => p.life > 0));
+      }, 600);
+
       // Apple collection audio & popup
       const didEat = next.apples.length < old.apples.length;
       if (didEat) {
@@ -1294,6 +1346,8 @@ function App() {
         setWormExpression('eating');
         setBoardFx(fx => ({ ...fx, eat: true }));
         setTimeout(() => setBoardFx(fx => ({ ...fx, eat: false })), 420);
+        // Subtle screen shake on eat
+        triggerScreenShake();
         const eatenApple = old.apples.find(a => same(a, next.worm[0]));
         if (eatenApple) {
           const scoreId = Date.now() + Math.random();
@@ -1740,7 +1794,7 @@ function App() {
 
   return (
     <div
-      className={`game-master-container ${screenShake ? 'screen-shake' : ''} ${reducedMotion ? 'reduced-motion' : ''} ${highContrast ? 'high-contrast' : ''} ${colorblindMode ? 'colorblind' : ''} ${levelIntro ? 'level-intro' : ''} ${boardFx.warp ? 'fx-warp' : ''} ${boardFx.impact ? 'fx-impact' : ''} ${boardFx.eat ? 'fx-eat' : ''}`}
+      className={`game-master-container ${screenShake ? 'screen-shake' : ''} ${reducedMotion ? 'reduced-motion' : ''} ${highContrast ? 'high-contrast' : ''} ${colorblindMode ? 'colorblind' : ''} ${levelIntro ? 'level-intro' : ''} ${boardFx.warp ? 'fx-warp' : ''} ${boardFx.impact ? 'fx-impact' : ''} ${boardFx.eat ? 'fx-eat' : ''} ${levelTransition?.phase === 'out' ? 'level-transition-out' : ''} ${levelTransition?.phase === 'in' ? 'level-transition-in' : ''}`}
       data-world={currentWorld.id}
       data-budget={moveBudgetState}
       onTouchStart={handleTouchStart}
@@ -1903,6 +1957,28 @@ function App() {
             animation: `particleBurstAnim ${p.duration}s ease-out forwards`,
             '--particle-angle': `${p.angle}deg`,
             '--particle-distance': `${p.distance}px`,
+          }}
+        >
+        </div>
+      ))}
+
+      {/* WORM TRAIL PARTICLES */}
+      {wormTrailParticles.map(p => (
+        <div
+          key={p.id}
+          style={{
+            position: 'fixed',
+            left: `${p.x}%`,
+            top: `${p.y}%`,
+            width: `${p.size}px`,
+            height: `${p.size}px`,
+            borderRadius: '50%',
+            background: p.color,
+            pointerEvents: 'none',
+            zIndex: 54,
+            opacity: p.life * p.opacity,
+            transform: `scale(${p.life})`,
+            transition: 'opacity 500ms ease-out, transform 500ms ease-out',
           }}
         >
         </div>
