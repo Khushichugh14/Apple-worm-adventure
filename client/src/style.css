@@ -870,8 +870,44 @@ button:focus-visible {
   align-items: center;
   justify-content: center;
   width: 100%;
-  max-width: min(68vmin, 420px, calc(100dvh - 220px));
+  height: 100%;
+  max-width: min(85vw, 760px);
+  max-height: min(78vh, 760px);
   margin: 0 auto;
+  aspect-ratio: 1;
+}
+
+/* Tile hover & selection effects */
+.garden-tile-cell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.015);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.garden-tile-cell:hover::before,
+.garden-tile-cell.selectable:hover::before {
+  opacity: 0.5;
+}
+
+.garden-tile-cell.selected {
+  box-shadow:
+    0 0 0 2px var(--gold-bright),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  z-index: 12;
+}
+
+.garden-tile-cell.selected::before {
+  opacity: 1;
+}
+
+/* Tile press / tap active state */
+.garden-tile-cell:active {
+  transform: scale(0.96);
 }
 
 .notice-banner-pill { top: 76px; }
@@ -1569,6 +1605,23 @@ button:focus-visible {
   box-shadow:
     var(--shadow-lg),
     0 0 32px var(--cyan-glow);
+}
+
+.dock-action-btn.powerup-btn {
+  min-width: 44px;
+  padding: 10px 8px;
+  font-size: 11px;
+}
+.dock-action-btn.powerup-btn.active {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.35) 0%, rgba(5, 150, 105, 0.2) 100%);
+  border-color: var(--green-bright);
+  color: var(--green-bright);
+  box-shadow:
+    var(--shadow-md),
+    0 0 24px var(--green-glow);
+}
+.dock-action-btn.powerup-btn:disabled {
+  opacity: 0.45;
 }
 
 /* Virtual Ergonomic D-Pad */
@@ -3410,12 +3463,32 @@ button:focus-visible {
 @media (max-width: 700px){ .onboarding-grid{ grid-template-columns: 1fr; } .hud-moves-pill{ min-width: 160px; } }
 
 /* Mechanics tiles, camera/pan polish */
-.garden-board-wrapper { overflow: auto; max-width: 100%; max-height: 100%; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 4px; }
+.garden-board-wrapper { overflow: auto; max-width: min(85vw, 760px); max-height: min(78vh, 760px); overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 4px; margin: 0 auto; }
 .garden-floating-island { transform-origin: center center; transition: transform 220ms ease; }
 .garden-tile-cell.key-tile { box-shadow: inset 0 0 0 1px rgba(251,191,36,.35), 0 0 14px rgba(251,191,36,.18); }
 .garden-tile-cell.door-tile { background: linear-gradient(135deg, rgba(120,53,15,.6), rgba(30,41,59,.8)); box-shadow: inset 0 0 0 2px rgba(251,191,36,.25); }
 .garden-tile-cell.hazard-tile { background: radial-gradient(circle at 50% 45%, rgba(251,146,60,.35), rgba(127,29,29,.35) 60%, transparent 75%); }
 .garden-tile-cell.block-tile { box-shadow: inset 0 0 0 1px rgba(148,163,184,.35); }
+.garden-tile-cell.grass-tile {
+  background: radial-gradient(circle at 50% 50%, rgba(34,197,94,0.15), rgba(6,78,59,0.35) 60%, transparent 75%);
+  box-shadow: inset 0 0 0 1px rgba(34,197,94,0.3), 0 0 12px rgba(34,197,94,0.15);
+}
+.garden-tile-cell.stone-block-tile {
+  background: linear-gradient(135deg, rgba(55,65,81,0.7), rgba(31,41,55,0.9));
+  box-shadow: inset 0 0 0 1px rgba(75,85,99,0.4), inset 0 0 14px rgba(15,23,42,0.4);
+}
+.garden-tile-cell.crate-tile {
+  background: linear-gradient(135deg, rgba(120,53,15,0.5), rgba(69,26,3,0.8));
+  box-shadow: inset 0 0 0 1px rgba(251,191,36,0.25), inset 0 0 14px rgba(0,0,0,0.4);
+}
+.garden-tile-cell.ice-tile {
+  background: radial-gradient(circle at 50% 45%, rgba(56,189,248,0.15), rgba(14,165,233,0.25) 60%, transparent 75%);
+  box-shadow: inset 0 0 0 1px rgba(56,189,248,0.35), 0 0 14px rgba(56,189,248,0.15);
+}
+.garden-tile-cell.treasure-tile {
+  background: radial-gradient(circle at 50% 45%, rgba(251,191,36,0.15), rgba(180,83,9,0.25) 60%, transparent 75%);
+  box-shadow: inset 0 0 0 1px rgba(251,191,36,0.35), 0 0 16px rgba(251,191,36,0.15);
+}
 .mechanic-icon { display:inline-flex; align-items:center; justify-content:center; width:72%; height:72%; border-radius:12px; backdrop-filter: blur(2px); }
 .key-icon { color:#fde68a; background: rgba(251,191,36,.12); filter: drop-shadow(0 0 8px rgba(251,191,36,.35)); animation: keyFloat 1.8s ease-in-out infinite alternate; }
 .door-icon { color:#fbbf24; background: rgba(120,53,15,.35); }
@@ -3485,3 +3558,27 @@ button:focus-visible {
 .game-master-container[data-world="5"] .garden-tile-cell.level-variant-5 { background-image: radial-gradient(circle at 50% 50%, rgba(244,114,182,0.07), transparent 45%); }
 .camera-surface { transition: filter .4s ease; }
 .game-master-container[data-world] .camera-surface { filter: saturate(1.02); }
+
+.settings-slider {
+  width: 140px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.1);
+  outline: none;
+  accent-color: #a78bfa;
+  cursor: pointer;
+}
+.settings-slider::-webkit-slider-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #a78bfa;
+  border: none;
+  cursor: pointer;
+}
+.settings-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: #a78bfa;
+  cursor: pointer;
+}

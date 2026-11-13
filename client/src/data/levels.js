@@ -506,6 +506,8 @@ const LEVEL_DESIGNS = [
     apples: [[6, 1], [3, 5], [6, 6]],
     portal: [4, 4],
     walls: [[2, 2], [3, 3], [5, 3], [5, 5], [1, 4], [2, 5]],
+    grass: [[0, 2], [7, 0]],
+    treasure: [[4, 0]],
     moveLimit: 36,
     parMoves: 23
   },
@@ -660,6 +662,8 @@ const LEVEL_DESIGNS = [
     apples: [[6, 1], [3, 5], [6, 6], [2, 3]],
     portal: [4, 4],
     walls: [[2, 2], [3, 3], [5, 3], [5, 5], [2, 4], [1, 4], [3, 4], [6, 4]],
+    grass: [[0, 0], [7, 7]],
+    treasure: [[5, 0]],
     moveLimit: 42,
     parMoves: 29
   },
@@ -813,12 +817,20 @@ const LEVEL_DESIGNS = [
     apples: [[6, 1], [3, 5], [6, 6], [2, 3], [4, 2]],
     portal: [4, 4],
     walls: [[2, 2], [3, 3], [5, 3], [5, 5], [2, 4], [1, 4], [3, 4], [6, 4], [1, 5]],
+    grass: [[0, 7], [7, 0]],
+    treasure: [[0, 0], [7, 7]],
     moveLimit: 48,
     parMoves: 35
   }
 ];
 
-export const LEVELS = LEVEL_DESIGNS.map(l => ({
-  ...l,
-  objective: `Collect ${l.apples.length} apple${l.apples.length > 1 ? 's' : ''} and enter the portal.`
-}));
+export const LEVELS = LEVEL_DESIGNS.map(l => {
+  const parts = [`Collect ${l.apples.length} apple${l.apples.length > 1 ? 's' : ''}`];
+  if (l.grass && l.grass.length) parts.push(`clear ${l.grass.length} grass tile${l.grass.length > 1 ? 's' : ''}`);
+  if (l.treasure && l.treasure.length) parts.push(`find ${l.treasure.length} treasure tile${l.treasure.length > 1 ? 's' : ''}`);
+  parts.push('and enter the portal.');
+  return {
+    ...l,
+    objective: parts.join(', ')
+  };
+});

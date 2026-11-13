@@ -11,9 +11,13 @@ function blocked(pos, level, state) {
   const doors = state.doors ?? level.doors ?? [];
   const movingBlocks = state.movingBlocks ?? level.movingBlocks ?? [];
   const hazards = level.hazards ?? [];
+  const crates = state.crates ?? level.crates ?? [];
+  const stoneBlocks = state.stoneBlocks ?? level.stoneBlocks ?? [];
   if (level.walls.some(w => same(w, pos))) return true;
   if (doors.some(d => same(d, pos))) return true;
   if (movingBlocks.some(b => same(b, pos))) return true;
+  if (crates.some(c => same(c, pos))) return true;
+  if (stoneBlocks.some(s => same(s.pos, pos))) return true;
   if (hazards.some(h => same(h, pos))) return true;
   return false;
 }

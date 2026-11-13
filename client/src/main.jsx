@@ -4,16 +4,16 @@ import {
   Apple, ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Award,
   ChevronRight, CircleHelp, Coins, Gamepad2, Gem, Lightbulb,
   LockKeyhole, RotateCcw, Settings, ShieldCheck, Sparkles, Star,
-  Trophy, Volume2, VolumeX, Zap, User as UserIcon, LogOut, Check, X,
+  Trophy, Volume2, VolumeX, Zap, User as UserIcon, LogOut, Check, X, Edit2,
   Compass, Play, RefreshCw, Flame, Crown, Flag, AlertCircle,
   Maximize2, Minimize2, Music, Undo2, HelpCircle, MapPin, ShoppingBag,
   Heart, Gift, Palette, Crown as CrownIcon, KeyRound,
-  Leaf, Mountain, TreePine, Trophy as TrophyIcon, Target, Medal, Gem as GemIcon
+  Leaf, Mountain, TreePine, Trophy as TrophyIcon, Target, Medal, Gem as GemIcon, Plus
 } from 'lucide-react';
 import { GAME_NAME, API_URL } from './config/gameConfig';
 import { LEVELS, WORLDS } from './data/levels';
-import { initialState, step, same } from './game/engine';
-import { playSound, startBgm, stopBgm } from './game/audio';
+import { initialState, step, same, applyBomb, applyLightning, applyHammer, applyMagicKey, applyRainbow } from './game/engine';
+import { playSound, startBgm, stopBgm, setSfxVolume, setMusicVolume } from './game/audio';
 import { findNextHint } from './game/solver';
 import './style.css';
 
@@ -33,6 +33,7 @@ const hideSplash = () => {
     setTimeout(() => splash.remove(), 450);
   }
 };
+
 
 const SKINS = [
   { id: 'emerald', name: 'Emerald', primary: '#10b981', secondary: '#059669', highlight: '#86efac', glow: 'rgba(52, 211, 153, 0.6)', label: 'Classic Garden', price: 0, owned: true },
@@ -652,6 +653,188 @@ function CosmicPortalSVG({ unlocked = false, pulsePhase = 0 }) {
   );
 }
 
+// 5b. Premium Grass Tile - Must be cleared to complete grass levels
+function GrassTileSVG({ pulsePhase = 0 }) {
+  const sway = Math.sin(pulsePhase * 0.5) * 3;
+  return (
+    <svg className="grass-tile-svg-container" viewBox="0 0 120 120" style={{ transform: `translateY(${sway}px)` }}>
+      <defs>
+        <linearGradient id="grassGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+          <stop offset="0%" stopColor="#166534" />
+          <stop offset="40%" stopColor="#22c55e" />
+          <stop offset="100%" stopColor="#86efac" />
+        </linearGradient>
+        <filter id="grassGlow" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="4" stdDeviation="3" floodColor="#22c55e" floodOpacity="0.4" />
+        </filter>
+      </defs>
+      <ellipse cx="60" cy="85" rx="30" ry="14" fill="#0f172a" opacity="0.3" />
+      <path d="M30 90 Q45 55 60 85 Q75 55 90 90" fill="none" stroke="url(#grassGrad)" strokeWidth="14" strokeLinecap="round" filter="url(#grassGlow)" />
+      <path d="M40 88 Q50 52 60 86 Q70 52 80 88" fill="none" stroke="#16a34a" strokeWidth="9" strokeLinecap="round" opacity="0.7" />
+      <path d="M50 92 Q60 60 70 92" fill="none" stroke="#4ade80" strokeWidth="5" strokeLinecap="round" opacity="0.6" />
+      <g stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" fill="none" strokeLinecap="round">
+        <path d="M45 85 Q55 65 65 85" />
+        <path d="M55 88 Q62 62 69 88" strokeWidth="1" opacity="0.5" />
+      </g>
+    </svg>
+  );
+}
+
+// 5c. Premium Stone Block - Multi-hit obstacle with cracks
+function StoneBlockSVG({ hits = 2, pulsePhase = 0 }) {
+  const crack = hits <= 1;
+  const glow = hits <= 1 ? 'rgba(251,191,36,0.4)' : 'transparent';
+  return (
+    <svg className="stone-block-svg-container" viewBox="0 0 120 120">
+      <defs>
+        <linearGradient id="stoneGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#374151" />
+          <stop offset="50%" stopColor="#1f2937" />
+          <stop offset="100%" stopColor="#111827" />
+        </linearGradient>
+        <linearGradient id="stoneEdge" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#6b7280" stopOpacity="0.4" />
+          <stop offset="100%" stopColor="#1f2937" stopOpacity="0" />
+        </linearGradient>
+        <filter id="stoneShadow" x="-25%" y="-25%" width="150%" height="150%">
+          <feDropShadow dx="0" dy="6" stdDeviation="5" floodColor="#000000" floodOpacity="0.7" />
+        </filter>
+      </defs>
+      <rect x="10" y="10" width="100" height="100" rx="14" fill="url(#stoneGrad)" stroke="#4b5563" strokeWidth="3" filter="url(#stoneShadow)" />
+      <rect x="14" y="14" width="92" height="92" rx="10" fill="none" stroke={glow} strokeWidth="2" opacity={hits <= 1 ? 0.8 : 0} />
+      <rect x="16" y="16" width="88" height="88" rx="8" fill="url(#stoneEdge)" opacity="0.3" />
+      {/* Cracks that deepen as hits decrease */}
+      {hits <= 1 && (
+        <g stroke="#ef4444" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.9">
+          <path d="M20 20 Q60 30 100 20 Q80 60 60 40" />
+          <path d="M25 100 Q55 90 85 100 Q70 60 50 80" />
+          <path d="M20 60 Q50 55 100 60" />
+        </g>
+      )}
+      {hits === 2 && (
+        <g stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.5">
+          <path d="M25 25 Q60 35 95 25" />
+          <path d="M25 95 Q60 85 95 95" />
+        </g>
+      )}
+      <text x="60" y="65" text-anchor="middle" fill="#9ca3af" font-family="var(--font-ui)" font-size="13" font-weight="800" opacity={hits === 2 ? 0.6 : 0}>{hits}</text>
+    </svg>
+  );
+}
+
+// 5d. Premium Wooden Crate - Blocks movement, breakable
+function CrateTileSVG({ pulsePhase = 0 }) {
+  const shake = Math.sin(pulsePhase * 2) * 1;
+  return (
+    <svg className="crate-tile-svg-container" viewBox="0 0 120 120" style={{ transform: `rotate(${shake}deg)` }}>
+      <defs>
+        <linearGradient id="crateGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#a16207" />
+          <stop offset="40%" stopColor="#78350f" />
+          <stop offset="100%" stopColor="#451a03" />
+        </linearGradient>
+        <linearGradient id="crateEdge" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#d97706" stopOpacity="0.5" />
+          <stop offset="100%" stopColor="#451a03" stopOpacity="0" />
+        </linearGradient>
+        <filter id="crateShadow" x="-25%" y="-25%" width="150%" height="150%">
+          <feDropShadow dx="0" dy="5" stdDeviation="4" floodColor="#000000" floodOpacity="0.6" />
+        </filter>
+      </defs>
+      <rect x="8" y="8" width="104" height="104" rx="6" fill="url(#crateGrad)" stroke="#78350f" strokeWidth="3" filter="url(#crateShadow)" />
+      <rect x="12" y="12" width="96" height="96" rx="4" fill="none" stroke="url(#crateEdge)" strokeWidth="1.5" opacity="0.5" />
+      {/* Crate slats */}
+      <g stroke="#451a03" strokeWidth="3" strokeLinecap="round" opacity="0.7">
+        <line x1="20" y1="30" x2="100" y2="30" />
+        <line x1="20" y1="60" x2="100" y2="60" />
+        <line x1="20" y1="90" x2="100" y2="90" />
+        <line x1="30" y1="20" x2="30" y2="100" />
+        <line x1="60" y1="20" x2="60" y2="100" />
+        <line x1="90" y1="20" x2="90" y2="100" />
+      </g>
+      {/* Cross brace */}
+      <path d="M35 35 Q60 60 85 35 M35 85 Q60 60 85 85" stroke="#78350f" strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.6" />
+      {/* Nails */}
+      <g fill="#78350f">
+        <circle cx="22" y="32" r="1.5" />
+        <circle cx="98" y="32" r="1.5" />
+        <circle cx="22" y="88" r="1.5" />
+        <circle cx="98" y="88" r="1.5" />
+      </g>
+    </svg>
+  );
+}
+
+// 5e. Premium Ice Tile - Slippery surface that causes sliding
+function IceTileSVG({ pulsePhase = 0 }) {
+  const shimmer = Math.sin(pulsePhase) * 0.3 + 0.7;
+  return (
+    <svg className="ice-tile-svg-container" viewBox="0 0 120 120">
+      <defs>
+        <linearGradient id="iceGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#e0f2fe" stopOpacity="0.6" />
+          <stop offset="50%" stopColor="#bae6fd" stopOpacity="0.4" />
+          <stop offset="100%" stopColor="#60a5fa" stopOpacity="0.2" />
+        </linearGradient>
+        <radialGradient id="iceGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.8" />
+          <stop offset="70%" stopColor="#38bdf8" stopOpacity="0.3" />
+          <stop offset="100%" stopColor="transparent" />
+        </radialGradient>
+        <filter id="iceGlowFilter" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#38bdf8" floodOpacity="0.5" />
+        </filter>
+      </defs>
+      <rect x="6" y="6" width="108" height="108" rx="16" fill="url(#iceGrad)" stroke="#bfdbfe" strokeWidth="2" />
+      <circle cx="60" cy="60" r="34" fill="url(#iceGlow)" filter="url(#iceGlowFilter)" opacity={shimmer} />
+      <path d="M30 30 Q60 20 90 30 Q100 60 90 90 Q60 100 30 90 Q20 60 30 30 Z" fill="none" stroke="#bfdbfe" strokeWidth="2" strokeDasharray="8 8" opacity="0.6" />
+      <g stroke="#ffffff" strokeWidth="1" strokeLinecap="round" opacity="0.4">
+        <line x1="35" y1="35" x2="45" y2="45" />
+        <line x1="85" y1="35" x2="75" y2="45" />
+        <line x1="35" y1="85" x2="45" y2="75" />
+        <line x1="85" y1="85" x2="75" y2="75" />
+      </g>
+    </svg>
+  );
+}
+
+// 5f. Premium Treasure Tile - Hidden reward with sparkling gem
+function TreasureTileSVG({ pulsePhase = 0 }) {
+  const sparkle = Math.sin(pulsePhase * 2) > 0;
+  return (
+    <svg className="treasure-tile-svg-container" viewBox="0 0 120 120">
+      <defs>
+        <linearGradient id="chestGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#d97706" />
+          <stop offset="60%" stopColor="#b45309" />
+          <stop offset="100%" stopColor="#78350f" />
+        </linearGradient>
+        <linearGradient id="gemGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#fbbf24" />
+          <stop offset="50%" stopColor="#f59e0b" />
+          <stop offset="100%" stopColor="#d97706" />
+        </linearGradient>
+        <filter id="treasureGlow" x="-40%" y="-40%" width="180%" height="180%">
+          <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#fbbf24" floodOpacity="0.6" />
+        </filter>
+      </defs>
+      <ellipse cx="60" cy="92" rx="34" ry="10" fill="#111827" opacity="0.5" />
+      <rect x="28" y="56" width="64" height="28" rx="6" fill="url(#chestGrad)" stroke="#92400e" strokeWidth="2" filter="url(#treasureGlow)" />
+      <rect x="32" y="60" width="56" height="20" rx="4" fill="none" stroke="#fcd34d" strokeWidth="1.5" opacity="0.6" />
+      <rect x="48" y="44" width="24" height="16" rx="2" fill="#fbbf24" stroke="#b45309" strokeWidth="1" />
+      {/* Gem on top */}
+      <path d="M60 36 L72 44 L60 52 L48 44 Z" fill="url(#gemGrad)" stroke="#fcd34d" strokeWidth="2" filter="url(#treasureGlow)" />
+      <path d="M60 36 L60 44 M72 44 L60 44 M48 44 L60 44 M60 44 L60 52" stroke="#fcd34d" strokeWidth="1" opacity="0.6" />
+      {sparkle && (
+        <g filter="url(#treasureGlow)" opacity="0.9">
+          <polygon points="60,28 63,32 68,32 64,35 66,39 63,36 60,38 57,36 54,39 56,35 52,32 57,32" fill="#ffffff" />
+          <circle cx="60" cy="24" r="1.5" fill="#ffffff" opacity="0.8" />
+        </g>
+      )}
+    </svg>
+  );
+}
+
 // 6. Premium 3D Carved Stone Wall with World-Specific Variants, Moss, Cracks & Runes
 function StoneWallSVG({ worldId = 1, variant = 0, seed = 0 }) {
   const themes = {
@@ -985,6 +1168,46 @@ function App() {
   const [boardFx, setBoardFx] = useState({ trail: [], warp: false, impact: false, eat: false });
   const [wormTrailParticles, setWormTrailParticles] = useState([]);
 
+  // Power-up inventory & selection
+  const [powerUps, setPowerUps] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('powerUps') || '{}');
+      return { bomb: 0, lightning: 0, rainbow: 0, hammer: 0, extraMoves: 0, magicKey: 0, ...saved };
+    } catch { return { bomb: 0, lightning: 0, rainbow: 0, hammer: 0, extraMoves: 0, magicKey: 0 }; }
+  });
+  const [selectedPowerUp, setSelectedPowerUp] = useState(null);
+
+  // Claimed achievements (coin rewards claimed once)
+  const [claimedAchievements, setClaimedAchievements] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('claimedAchievements') || '[]'); } catch { return []; }
+  });
+
+  // Level objective modal
+  const [objectiveModal, setObjectiveModal] = useState(false);
+
+  // Player profile
+  const [playerName, setPlayerName] = useState(() => localStorage.getItem('playerName') || 'Gardener');
+  const [playerAvatar, setPlayerAvatar] = useState(() => localStorage.getItem('playerAvatar') || 'A');
+  const [profileEditing, setProfileEditing] = useState(false);
+
+  // Daily rewards calendar & streak
+  const [dailyStreak, setDailyStreak] = useState(() => Number(localStorage.getItem('dailyStreak') || '0'));
+  const [dailyCalendar, setDailyCalendar] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('dailyCalendar') || '[]'); } catch { return []; }
+  });
+
+  // Settings
+  const [settings, setSettings] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('settings') || '{}'); } catch { return {}; }
+  });
+  const musicVolume = settings.musicVolume !== undefined ? settings.musicVolume : 0.5;
+  const sfxVolume = settings.sfxVolume !== undefined ? settings.sfxVolume : 0.7;
+  const [settingsModal, setSettingsModal] = useState(false);
+
+  // Total playing time
+  const [gameTime, setGameTime] = useState(() => Number(localStorage.getItem('gameTime') || '0'));
+
+
   // Leaderboard state
   const [leaderboard, setLeaderboard] = useState([]);
   const [myRank, setMyRank] = useState(null);
@@ -1025,6 +1248,21 @@ function App() {
     requestAnimationFrame(tick);
   }, [reducedMotion]);
 
+  // Track total playing time
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (game.status === 'playing') setGameTime(t => t + 1);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [game.status]);
+
+  // Apply audio volume preferences to the Web Audio context
+  useEffect(() => {
+    setSfxVolume(sfxVolume);
+    setMusicVolume(musicVolume);
+    if (music) startBgm(true);
+  }, [musicVolume, sfxVolume, music]);
+
   // Persist guest progress to localStorage
   useEffect(() => {
     localStorage.setItem('coins', coins);
@@ -1038,7 +1276,15 @@ function App() {
     localStorage.setItem('colorblindMode', String(colorblindMode));
     localStorage.setItem('wormSkin', wormSkin);
     localStorage.setItem('ownedSkins', JSON.stringify(ownedSkins));
-  }, [coins, completed, levelProgress, levelId, sound, music, reducedMotion, highContrast, colorblindMode, wormSkin, ownedSkins]);
+    localStorage.setItem('powerUps', JSON.stringify(powerUps));
+    localStorage.setItem('settings', JSON.stringify(settings));
+    localStorage.setItem('playerName', playerName);
+    localStorage.setItem('playerAvatar', playerAvatar);
+    localStorage.setItem('dailyStreak', String(dailyStreak));
+    localStorage.setItem('dailyCalendar', JSON.stringify(dailyCalendar));
+    localStorage.setItem('claimedAchievements', JSON.stringify(claimedAchievements));
+    localStorage.setItem('gameTime', String(gameTime));
+  }, [coins, completed, levelProgress, levelId, sound, music, reducedMotion, highContrast, colorblindMode, wormSkin, ownedSkins, powerUps, settings, playerName, playerAvatar, dailyStreak, dailyCalendar, gameTime, claimedAchievements]);
 
   useEffect(() => { hideSplash(); }, []);
 
@@ -1243,52 +1489,33 @@ function App() {
   const startLevel = useCallback(id => {
     const targetLvl = LEVELS[id - 1] || LEVELS[0];
     
-    // Level transition animation
+    // Show objective preview for new levels, go straight for replays
     if (id !== levelId) {
-      setLevelTransition({ from: levelId, to: id, phase: 'out' });
-      setTimeout(() => {
-        setLevelTransition({ from: levelId, to: id, phase: 'in' });
-        const init = initialState(targetLvl);
-        setLevelId(id);
-        setGame(init);
-        setRenderWorm(init.worm.map(p => [...p]));
-        prevWormRef.current = null;
-        setBonusMoves(0);
-        setHistory([]);
-        setHint(false);
-        setSolverHint(null);
-        setNotice('');
-        setFacing('right');
-        setWormExpression('idle');
-        setStarPopStage(0);
-        setConfettiParticles([]);
-        setBoardFx({ trail: [], warp: false, impact: false, eat: false });
-        setLevelPreview(null);
-        setMapModal(false);
-        setLevelIntro(true);
-        setTimeout(() => setLevelIntro(false), reducedMotion ? 0 : 900);
-        setTimeout(() => setLevelTransition(null), 600);
-      }, 300);
-    } else {
-      const init = initialState(targetLvl);
-      setGame(init);
-      setRenderWorm(init.worm.map(p => [...p]));
-      prevWormRef.current = null;
-      setBonusMoves(0);
-      setHistory([]);
-      setHint(false);
-      setSolverHint(null);
-      setNotice('');
-      setFacing('right');
-      setWormExpression('idle');
-      setStarPopStage(0);
-      setConfettiParticles([]);
-      setBoardFx({ trail: [], warp: false, impact: false, eat: false });
-      setLevelPreview(null);
-      setMapModal(false);
-      setLevelIntro(true);
-      setTimeout(() => setLevelIntro(false), reducedMotion ? 0 : 900);
+      setLevelId(id);
+      setLevelPreview(targetLvl);
+      playSound('click', sound);
+      return;
     }
+
+    // Replay / restart current level
+    const init = initialState(targetLvl);
+    setGame(init);
+    setRenderWorm(init.worm.map(p => [...p]));
+    prevWormRef.current = null;
+    setBonusMoves(0);
+    setHistory([]);
+    setHint(false);
+    setSolverHint(null);
+    setNotice('');
+    setFacing('right');
+    setWormExpression('idle');
+    setStarPopStage(0);
+    setConfettiParticles([]);
+    setBoardFx({ trail: [], warp: false, impact: false, eat: false });
+    setLevelPreview(null);
+    setMapModal(false);
+    setLevelIntro(true);
+    setTimeout(() => setLevelIntro(false), reducedMotion ? 0 : 900);
     playSound('click', sound);
   }, [levelId, sound, reducedMotion]);
 
@@ -1573,6 +1800,55 @@ function App() {
     }
   };
 
+  // Apply a selected power-up to a board position
+  const applyPowerUp = useCallback((type, pos) => {
+    const count = powerUps[type] || 0;
+    if (count <= 0 && selectedPowerUp !== type) return;
+    if (!pos && type !== 'magicKey' && type !== 'extraMoves') return;
+
+    let next = game;
+    let soundName = 'click';
+
+    if (type === 'bomb' && pos) {
+      next = applyBomb(game, level, pos);
+      soundName = 'boost';
+    } else if (type === 'lightning' && pos) {
+      next = applyLightning(game, level, 'row', pos[1]);
+      soundName = 'boost';
+    } else if (type === 'hammer' && pos) {
+      next = applyHammer(game, level, pos);
+      soundName = 'boost';
+    } else if (type === 'magicKey') {
+      next = applyMagicKey(game, level);
+      soundName = 'boost';
+    } else if (type === 'rainbow' && pos) {
+      next = applyRainbow(game, level, 'grass');
+      soundName = 'boost';
+    } else if (type === 'extraMoves') {
+      setBonusMoves(b => b + 5);
+      setSelectedPowerUp(null);
+      setNotice('Extra Moves: +5 bonus moves added!');
+      playSound('boost', sound);
+      return;
+    }
+
+    if (next === game) {
+      setNotice(`No effect at this tile.`);
+      return;
+    }
+
+    setGame(next);
+    setPowerUps(prev => {
+      const updated = { ...prev };
+      if (updated[type] !== undefined) updated[type] = Math.max(0, updated[type] - 1);
+      return updated;
+    });
+    setSelectedPowerUp(null);
+    playSound(soundName, sound);
+    setNotice(`${type.charAt(0).toUpperCase() + type.slice(1)} used!`);
+    setMoveTick(t => t + 1);
+  }, [game, level, powerUps, selectedPowerUp, token, sound, bonusMoves, setBonusMoves, setNotice, setMoveTick, playSound]);
+
   const triggerSmartHint = () => {
     setHint(true);
     const effectiveLevel = { ...level, moveLimit: level.moveLimit + bonusMoves };
@@ -1685,6 +1961,11 @@ function App() {
     if ((game.doors || level.doors || []).some(d => same(d, p))) c += ' door-tile';
     if ((level.hazards || []).some(h => same(h, p))) c += ' hazard-tile';
     if ((game.movingBlocks || level.movingBlocks || []).some(b => same(b, p))) c += ' block-tile';
+    if ((game.grass || []).some(g => same(g, p))) c += ' grass-tile';
+    if ((game.stoneBlocks || []).some(s => same(s.pos, p))) c += ' stone-block-tile';
+    if ((game.crates || []).some(c => same(c, p))) c += ' crate-tile';
+    if ((game.ice || []).some(i => same(i, p))) c += ' ice-tile';
+    if ((game.treasure || []).some(t => same(t, p))) c += ' treasure-tile';
     if (game.worm.some(w => same(w, p))) c += ' worm';
     if (game.worm.length && same(game.worm[0], p)) c += ' head';
     if (game.apples.some(a => same(a, p))) c += ' apple';
@@ -1718,16 +1999,16 @@ function App() {
     const perfectLevels = Object.values(levelProgress).filter(p => p.bestStars === 3).length;
     const worldClears = WORLDS.filter(w => LEVELS.slice(w.range[0] - 1, w.range[1]).every(l => (levelProgress[l.id]?.bestStars || 0) > 0)).length;
     return [
-      { id: 'first-step', title: 'First Bite', desc: 'Complete any level', icon: Apple, unlocked: completedCount >= 1 },
-      { id: 'garden-10', title: 'Garden Explorer', desc: 'Complete 10 levels', icon: Compass, unlocked: completedCount >= 10 },
-      { id: 'garden-25', title: 'Trailblazer', desc: 'Complete 25 levels', icon: MapPin, unlocked: completedCount >= 25 },
-      { id: 'garden-50', title: 'Realm Master', desc: 'Complete all 50 levels', icon: CrownIcon, unlocked: completedCount >= 50 },
-      { id: 'perfect-5', title: 'Precision', desc: 'Earn 3 stars on 5 levels', icon: Target, unlocked: perfectLevels >= 5 },
-      { id: 'perfect-20', title: 'Perfectionist', desc: 'Earn 3 stars on 20 levels', icon: GemIcon, unlocked: perfectLevels >= 20 },
-      { id: 'world-clear', title: 'World Conqueror', desc: 'Clear every level in any realm', icon: TrophyIcon, unlocked: worldClears >= 1 },
-      { id: 'collector', title: 'Skin Collector', desc: 'Own 3 or more worm skins', icon: Palette, unlocked: ownedSkins.length >= 3 },
-      { id: 'wealthy', title: 'Coin Hoarder', desc: 'Hold 300+ coins', icon: Coins, unlocked: coins >= 300 },
-      { id: 'star-50', title: 'Stargazer', desc: 'Earn 50 total stars', icon: Star, unlocked: totalStarsEarned >= 50 },
+      { id: 'first-step', title: 'First Bite', desc: 'Complete any level', icon: Apple, coinReward: 10, unlocked: completedCount >= 1 },
+      { id: 'garden-10', title: 'Garden Explorer', desc: 'Complete 10 levels', icon: Compass, coinReward: 25, unlocked: completedCount >= 10 },
+      { id: 'garden-25', title: 'Trailblazer', desc: 'Complete 25 levels', icon: MapPin, coinReward: 50, unlocked: completedCount >= 25 },
+      { id: 'garden-50', title: 'Realm Master', desc: 'Complete all 50 levels', icon: CrownIcon, coinReward: 100, unlocked: completedCount >= 50 },
+      { id: 'perfect-5', title: 'Precision', desc: 'Earn 3 stars on 5 levels', icon: Target, coinReward: 30, unlocked: perfectLevels >= 5 },
+      { id: 'perfect-20', title: 'Perfectionist', desc: 'Earn 3 stars on 20 levels', icon: GemIcon, coinReward: 75, unlocked: perfectLevels >= 20 },
+      { id: 'world-clear', title: 'World Conqueror', desc: 'Clear every level in any realm', icon: TrophyIcon, coinReward: 60, unlocked: worldClears >= 1 },
+      { id: 'collector', title: 'Skin Collector', desc: 'Own 3 or more worm skins', icon: Palette, coinReward: 40, unlocked: ownedSkins.length >= 3 },
+      { id: 'wealthy', title: 'Coin Hoarder', desc: 'Hold 300+ coins', icon: Coins, coinReward: 50, unlocked: coins >= 300 },
+      { id: 'star-50', title: 'Stargazer', desc: 'Earn 50 total stars', icon: Star, coinReward: 80, unlocked: totalStarsEarned >= 50 },
     ];
   }, [levelProgress, ownedSkins.length, coins, totalStarsEarned]);
 
@@ -1929,6 +2210,7 @@ function App() {
             <button className={`hud-action-icon-btn ${sound ? 'active' : ''}`} onClick={() => setSound(!sound)} title="Sound">{sound ? <Volume2 size={15} /> : <VolumeX size={15} />}</button>
             <button className="hud-action-icon-btn" onClick={() => setShopModal(true)} title="Shop"><ShoppingBag size={15} /></button>
             <button className="hud-action-icon-btn" onClick={() => setAchievementsModal(true)} title="Badges"><Award size={15} /></button>
+            <button className="hud-action-icon-btn" onClick={() => setSettingsModal(true)} title="Settings"><Settings size={15} /></button>
             <button className="hud-action-icon-btn hud-user-avatar" onClick={() => setAuthModal(user ? 'profile' : 'login')} title={user ? user.name : 'Sign in'}>{user ? user.name[0].toUpperCase() : <UserIcon size={14} />}</button>
           </div>
         </div>
@@ -2037,7 +2319,12 @@ function App() {
                 const isDoorCell = (game.doors || []).some(d => same(d, p));
                 const isHazardCell = (level.hazards || []).some(h => same(h, p));
                 const isBlockCell = (game.movingBlocks || level.movingBlocks || []).some(b => same(b, p));
-                const isEmpty = !isWallCell && !isPortalCell && !isAppleCell && !isKeyCell && !isDoorCell && !isHazardCell && !isBlockCell && !game.worm.some(w => same(w, p));
+                const isGrassCell = (game.grass || []).some(g => same(g, p));
+                const isStoneCell = (game.stoneBlocks || []).some(s => same(s.pos, p));
+                const isCrateCell = (game.crates || []).some(c => same(c, p));
+                const isIceCell = (game.ice || []).some(i => same(i, p));
+                const isTreasureCell = (game.treasure || []).some(t => same(t, p));
+                const isEmpty = !isWallCell && !isPortalCell && !isAppleCell && !isKeyCell && !isDoorCell && !isHazardCell && !isBlockCell && !isGrassCell && !isStoneCell && !isCrateCell && !isIceCell && !isTreasureCell && !game.worm.some(w => same(w, p));
                 const showDecor = isEmpty && decor > 0.78;
                 const justCollected = false;
                 let c = 'garden-tile-cell';
@@ -2054,7 +2341,9 @@ function App() {
                 const levelVariant = ` level-variant-${((level.id + r + c2) % 6)}`;
 
                 return (
-                  <div key={i} className={c + levelVariant + (showDecor ? ' has-decor' : '')}>
+                  <div key={i} className={c + levelVariant + (showDecor ? ' has-decor' : '')} onClick={() => {
+                    if (selectedPowerUp) applyPowerUp(selectedPowerUp, p);
+                  }}>
                     {showDecor && <span className={`tile-decor decor-${currentWorld.id} d-${Math.floor(decor * 4)}`} aria-hidden="true" />}
                     {boardFx?.trail?.some(t => same(t, p)) && <span className="tile-trail-fx" aria-hidden="true" />}
                     {isAppleCell ? (
@@ -2071,6 +2360,16 @@ function App() {
                       <span className="mechanic-icon block-icon" title="Block"><ShieldCheck size={18} /></span>
                     ) : isWallCell ? (
                       <StoneWallSVG worldId={currentWorld.id} variant={(level.id + r * 3 + c2) % 4} seed={level.id + r * 7 + c2 * 3} />
+                    ) : isGrassCell ? (
+                      <GrassTileSVG pulsePhase={animTime * 0.001} />
+                    ) : isStoneCell ? (
+                      <StoneBlockSVG hits={(game.stoneBlocks || []).find(s => same(s.pos, p))?.hits || 2} pulsePhase={animTime * 0.001} />
+                    ) : isCrateCell ? (
+                      <CrateTileSVG pulsePhase={animTime * 0.001} />
+                    ) : isIceCell ? (
+                      <IceTileSVG pulsePhase={animTime * 0.001} />
+                    ) : isTreasureCell ? (
+                      <TreasureTileSVG pulsePhase={animTime * 0.001} />
                     ) : null}
                   </div>
                 );
@@ -2111,6 +2410,23 @@ function App() {
           <button className="dock-action-btn hint-btn" onClick={triggerSmartHint} title="Show hint (H)">
             <Lightbulb size={16} /> <span>HINT</span>
           </button>
+          {Object.entries(powerUps).map(([type, count]) => (
+            <button
+              key={type}
+              className={`dock-action-btn ${selectedPowerUp === type ? 'active' : ''} powerup-btn`}
+              onClick={() => setSelectedPowerUp(selectedPowerUp === type ? null : type)}
+              title={type}
+              disabled={count <= 0 && selectedPowerUp !== type}
+            >
+              {type === 'bomb' && <Zap size={16} />}
+              {type === 'lightning' && <Zap size={16} />}
+              {type === 'rainbow' && <Gem size={16} />}
+              {type === 'hammer' && <ShieldCheck size={16} />}
+              {type === 'extraMoves' && <Plus size={16} />}
+              {type === 'magicKey' && <KeyRound size={16} />}
+              <span>{count > 0 ? count : selectedPowerUp === type ? 'SELECT' : '—'}</span>
+            </button>
+          ))}
         </div>
 
         {/* Virtual Ergonomic D-Pad */}
@@ -2697,15 +3013,82 @@ function App() {
               {dailyRewardMsg && <p style={{ marginTop: 8, fontSize: 12, color: '#a7f3d0' }}>{dailyRewardMsg}</p>}
             </div>
 
+            {/* DAILY REWARDS CALENDAR */}
+            <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <span style={{ color: '#a78bfa', fontSize: 11, fontWeight: 800, letterSpacing: '0.1em' }}>Daily Streak Calendar</span>
+                <span style={{ color: '#94a3b8', fontSize: 12 }}>{dailyStreak} day{dailyStreak !== 1 ? 's' : ''} streak</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, textAlign: 'center' }}>
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                  <div key={day} style={{ color: '#64748b', fontSize: 10, fontWeight: 700, textTransform: 'uppercase' }}>{day}</div>
+                ))}
+                {Array.from({ length: 30 }).map((_, d) => {
+                  const claimed = dailyCalendar.includes(d + 1);
+                  const today = d + 1 === new Date().getDate();
+                  return (
+                    <div
+                      key={d}
+                      style={{
+                        width: 26, height: 26, borderRadius: 8,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 11, fontWeight: 700,
+                        background: claimed ? '#34d399' : (today ? 'rgba(168, 85, 247, 0.15)' : 'rgba(255,255,255,0.04)'),
+                        color: claimed ? '#ffffff' : (today ? '#a78bfa' : '#94a3b8'),
+                        border: today ? '1px solid #a78bfa' : 'none',
+                        cursor: claimed || today ? 'pointer' : 'default',
+                        opacity: claimed ? 1 : 0.6
+                      }}
+                      title={`Day ${d + 1}${claimed ? ' — claimed' : ''}`}
+                    >
+                      {d + 1}
+                    </div>
+                  );
+                })}
+              </div>
+              <p style={{ marginTop: 8, fontSize: 11, color: '#94a3b8' }}>Green = claimed · Purple = today</p>
+            </div>
+
             <div className="achievements-grid">
               {achievements.map(a => {
                 const Icon = a.icon;
+                const alreadyClaimed = claimedAchievements.includes(a.id);
+                const canClaim = a.unlocked && !alreadyClaimed;
                 return (
-                  <div key={a.id} className={`achievement-card ${a.unlocked ? 'unlocked' : 'locked'}`}>
+                  <div key={a.id} className={`achievement-card ${a.unlocked ? 'unlocked' : 'locked'} ${alreadyClaimed ? 'claimed' : ''}`}>
                     <div className="achievement-icon" aria-hidden="true"><Icon size={28} /></div>
                     <div className="achievement-title">{a.title}</div>
                     <div className="achievement-desc">{a.desc}</div>
-                    <div className="achievement-state">{a.unlocked ? 'Unlocked' : 'Locked'}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
+                      <div className="achievement-state">{a.unlocked ? 'Unlocked' : 'Locked'}</div>
+                      {a.coinReward && (
+                        <span style={{ color: '#fbbf24', fontSize: 11, fontWeight: 800 }}><Coins size={12} style={{ verticalAlign: 'middle', marginRight: 2 }} /> +{a.coinReward}</span>
+                      )}
+                    </div>
+                    {canClaim && (
+                      <button
+                        className="modal-primary-btn"
+                        style={{ marginTop: 8, width: '100%', fontSize: 12, padding: '6px 10px' }}
+                        onClick={() => {
+                          setCoins(c => c + a.coinReward);
+                          setClaimedAchievements(prev => [...prev, a.id]);
+                          setNotice(`${a.title} unlocked! +${a.coinReward} coins`);
+                          playSound('boost', sound);
+                          if (token) {
+                            fetch(`${API_URL}/player/wallet/spend`, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                              body: JSON.stringify({ amount: -a.coinReward, item: `ACHIEVEMENT_${a.id}` })
+                            }).catch(() => {});
+                          }
+                        }}
+                      >
+                        Claim +{a.coinReward}
+                      </button>
+                    )}
+                    {alreadyClaimed && (
+                      <span style={{ marginTop: 6, fontSize: 11, color: '#34d399' }}>Reward claimed</span>
+                    )}
                   </div>
                 );
               })}
@@ -2722,6 +3105,96 @@ function App() {
                 ))}
                 {history.length > 0 && <button className="undo-timeline-node current" role="listitem" title="Current state"><span>Now</span></button>}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SETTINGS MODAL */}
+      {settingsModal && (
+        <div className="game-modal-backdrop" onClick={() => setSettingsModal(false)}>
+          <div className="game-modal-panel" onClick={e => e.stopPropagation()} style={{ maxWidth: 440 }}>
+            <button className="modal-close-cross-btn" onClick={() => setSettingsModal(false)}>×</button>
+            <span style={{ color: '#a78bfa', fontSize: 12, fontWeight: 800, letterSpacing: '0.12em' }}>PREFERENCES</span>
+            <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 26, marginTop: 4 }}>Settings</h2>
+            <p style={{ color: '#94a3b8', fontSize: 13, marginTop: 4 }}>Tailor your garden experience.</p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 18, marginTop: 22 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <strong>Music Volume</strong>
+                  <p style={{ color: '#94a3b8', fontSize: 12, marginTop: 2 }}>{Math.round(musicVolume * 100)}%</p>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={musicVolume}
+                  onChange={e => { const v = parseFloat(e.target.value); setSettings(prev => ({ ...prev, musicVolume: v })); setMusicVolume(v); }}
+                  className="settings-slider"
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <strong>SFX Volume</strong>
+                  <p style={{ color: '#94a3b8', fontSize: 12, marginTop: 2 }}>{Math.round(sfxVolume * 100)}%</p>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={sfxVolume}
+                  onChange={e => { const v = parseFloat(e.target.value); setSettings(prev => ({ ...prev, sfxVolume: v })); setSfxVolume(v); }}
+                  className="settings-slider"
+                />
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <input
+                  type="checkbox"
+                  checked={reducedMotion}
+                  onChange={() => setReducedMotion(!reducedMotion)}
+                  className="settings-checkbox"
+                />
+                <div>
+                  <strong>Reduced Motion</strong>
+                  <p style={{ color: '#94a3b8', fontSize: 12, marginTop: 2 }}>Disable animations and screen shake</p>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <input
+                  type="checkbox"
+                  checked={highContrast}
+                  onChange={() => setHighContrast(!highContrast)}
+                  className="settings-checkbox"
+                />
+                <div>
+                  <strong>High Contrast</strong>
+                  <p style={{ color: '#94a3b8', fontSize: 12, marginTop: 2 }}>Enhanced visibility for all elements</p>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <input
+                  type="checkbox"
+                  checked={colorblindMode}
+                  onChange={() => setColorblindMode(!colorblindMode)}
+                  className="settings-checkbox"
+                />
+                <div>
+                  <strong>Colorblind Mode</strong>
+                  <p style={{ color: '#94a3b8', fontSize: 12, marginTop: 2 }}>Patterns and symbols alongside colors</p>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ marginTop: 24, display: 'flex', gap: 10 }}>
+              <button className="modal-secondary-btn" style={{ flex: 1 }} onClick={() => setSettingsModal(false)}>Close</button>
+              <button className="modal-primary-btn" style={{ flex: 1 }} onClick={() => { setSettingsModal(false); playSound('click', sound); }}>Apply</button>
             </div>
           </div>
         </div>
@@ -2757,9 +3230,31 @@ function App() {
             {authModal === 'profile' && user ? (
               <div style={{ textAlign: 'center' }}>
                 <div className="hud-user-avatar" style={{ width: 80, height: 80, margin: '0 auto 16px', fontSize: 32 }}>
-                  {user.name[0].toUpperCase()}
+                  {profileEditing ? (
+                    <input
+                      type="text"
+                      value={playerName}
+                      onChange={e => setPlayerName(e.target.value)}
+                      maxLength="1"
+                      style={{ width: 32, height: 32, fontSize: 24, textAlign: 'center', background: 'transparent', border: 'none', color: '#fff' }}
+                      autoFocus
+                    />
+                  ) : (
+                    user.name[0].toUpperCase()
+                  )}
                 </div>
                 <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 24, marginBottom: 4 }}>{user.name}</h2>
+                {profileEditing && (
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ color: '#94a3b8', fontSize: 11, fontWeight: 700, letterSpacing: '0.05em' }}>Display Name</label>
+                    <input
+                      type="text"
+                      value={playerName}
+                      onChange={e => setPlayerName(e.target.value)}
+                      style={{ width: '100%', maxWidth: 200, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border-glass)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 14, marginTop: 4 }}
+                    />
+                  </div>
+                )}
                 <p style={{ color: '#94a3b8', marginBottom: 20 }}>{user.email}</p>
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 24, flexWrap: 'wrap' }}>
                   <div style={{ background: 'rgba(255,255,255,0.06)', padding: '12px 16px', borderRadius: 12, border: '1px solid var(--border-glass)' }}>
@@ -2775,9 +3270,26 @@ function App() {
                     <strong style={{ color: '#34d399', fontSize: 18 }}>{user.currentLevel || 1}</strong>
                   </div>
                 </div>
-                <button className="modal-secondary-btn" style={{ width: '100%' }} onClick={handleLogout}>
-                  <LogOut size={16} /> Sign Out
-                </button>
+                {!profileEditing && (
+                  <button className="modal-secondary-btn" style={{ width: 'auto', padding: '8px 16px', marginRight: 8 }} onClick={() => setProfileEditing(true)}>
+                    <Edit2 size={14} /> Edit Profile
+                  </button>
+                )}
+                {profileEditing && (
+                  <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                    <button className="modal-secondary-btn" style={{ width: 'auto', padding: '8px 16px' }} onClick={() => setProfileEditing(false)}>Cancel</button>
+                    <button className="modal-primary-btn" style={{ width: 'auto', padding: '8px 16px' }} onClick={() => {
+                      setProfileEditing(false);
+                      localStorage.setItem('playerName', playerName);
+                      setNotice('Profile updated!');
+                    }}>Save</button>
+                  </div>
+                )}
+                {!profileEditing && (
+                  <button className="modal-secondary-btn" style={{ width: '100%' }} onClick={handleLogout}>
+                    <LogOut size={16} /> Sign Out
+                  </button>
+                )}
               </div>
             ) : (
               <form onSubmit={handleAuthSubmit} className="auth-form">

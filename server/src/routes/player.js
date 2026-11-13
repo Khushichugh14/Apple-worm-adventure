@@ -378,7 +378,7 @@ router.post('/daily-reward', requireAuth, async (req, res, next) => {
     await WalletTransaction.create({
       userId: user._id, type: 'CREDIT', amount: reward,
       balanceBefore: before, balanceAfter: user.coins,
-      source: 'DAILY_REWARD', referenceId: `daily-${today}`
+      source: 'DAILY_BONUS', referenceId: `daily-${today}`
     });
     await user.save();
     res.json({ claimed: true, reward, coins: user.coins, message: `Daily reward claimed: +${reward} coins` });

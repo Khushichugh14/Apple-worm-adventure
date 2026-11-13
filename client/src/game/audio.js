@@ -4,6 +4,8 @@ let bgmGainNode = null;
 let bgmInterval = null;
 let isBgmPlaying = false;
 let masterGainNode = null;
+let sfxVolume = 0.7;
+let musicVolume = 0.5;
 
 function getAudioContext() {
   if (!audioCtx && typeof window !== 'undefined') {
@@ -28,6 +30,19 @@ export function setMasterVolume(volume) {
   }
 }
 
+// SFX volume control
+export function setSfxVolume(volume) {
+  sfxVolume = Math.max(0, Math.min(1, volume));
+}
+
+// Music volume control
+export function setMusicVolume(volume) {
+  musicVolume = Math.max(0, Math.min(1, volume));
+  if (bgmGainNode && audioCtx) {
+    bgmGainNode.gain.setValueAtTime(musicVolume * 0.04, audioCtx.currentTime);
+  }
+}
+
 // Procedural soothing background music engine
 export function startBgm(enabled = true) {
   if (!enabled || isBgmPlaying) return;
@@ -36,7 +51,7 @@ export function startBgm(enabled = true) {
     if (!ctx) return;
 
     bgmGainNode = ctx.createGain();
-    bgmGainNode.gain.setValueAtTime(0.02, ctx.currentTime);
+    bgmGainNode.gain.setValueAtTime(musicVolume * 0.04, ctx.currentTime);
     bgmGainNode.connect(masterGainNode);
 
     // Warm chord progression (Cmaj7 -> Am7 -> Fmaj7 -> Gsus4)
@@ -111,12 +126,13 @@ export function stopBgm() {
   }
 }
 
-export function playSound(type, enabled = true) {
+export function playSound(type, enabled = true, sfxVolumeParam) {
   if (!enabled) return;
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
     const now = ctx.currentTime;
+    const vol = Math.max(0, Math.min(1, sfxVolumeParam !== undefined ? sfxVolumeParam : sfxVolume));
 
     const createNote = (freq, startTime, duration, oscType = 'sine', gainValue = 0.08, rampType = 'exponential') => {
       const osc = ctx.createOscillator();
@@ -125,9 +141,9 @@ export function playSound(type, enabled = true) {
       osc.frequency.setValueAtTime(freq, startTime);
       gain.gain.setValueAtTime(0.001, startTime);
       if (rampType === 'linear') {
-        gain.gain.linearRampToValueAtTime(gainValue, startTime + 0.05);
+        gain.gain.linearRampToValueAtTime(gainValue * vol, startTime + 0.05);
       } else {
-        gain.gain.exponentialRampToValueAtTime(gainValue, startTime + 0.05);
+        gain.gain.exponentialRampToValueAtTime(gainValue * vol, startTime + 0.05);
       }
       gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
       osc.connect(gain);
