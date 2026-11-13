@@ -8,7 +8,7 @@ import {
   Compass, Play, RefreshCw, Flame, Crown, Flag, AlertCircle,
   Maximize2, Minimize2, Music, Undo2, HelpCircle, MapPin, ShoppingBag,
   Heart, Gift, Palette, Crown as CrownIcon, KeyRound,
-  Leaf, Mountain, TreePine
+  Leaf, Mountain, TreePine, Trophy as TrophyIcon, Target, Medal, Gem as GemIcon
 } from 'lucide-react';
 import { GAME_NAME, API_URL } from './config/gameConfig';
 import { LEVELS, WORLDS } from './data/levels';
@@ -1718,16 +1718,16 @@ function App() {
     const perfectLevels = Object.values(levelProgress).filter(p => p.bestStars === 3).length;
     const worldClears = WORLDS.filter(w => LEVELS.slice(w.range[0] - 1, w.range[1]).every(l => (levelProgress[l.id]?.bestStars || 0) > 0)).length;
     return [
-      { id: 'first-step', title: 'First Bite', desc: 'Complete any level', icon: 'ðŸŽ', unlocked: completedCount >= 1 },
-      { id: 'garden-10', title: 'Garden Explorer', desc: 'Complete 10 levels', icon: 'ðŸŒ¿', unlocked: completedCount >= 10 },
-      { id: 'garden-25', title: 'Trailblazer', desc: 'Complete 25 levels', icon: 'ðŸ§­', unlocked: completedCount >= 25 },
-      { id: 'garden-50', title: 'Realm Master', desc: 'Complete all 50 levels', icon: 'ðŸ†', unlocked: completedCount >= 50 },
-      { id: 'perfect-5', title: 'Precision', desc: 'Earn 3 stars on 5 levels', icon: 'â­', unlocked: perfectLevels >= 5 },
-      { id: 'perfect-20', title: 'Perfectionist', desc: 'Earn 3 stars on 20 levels', icon: 'âœ¨', unlocked: perfectLevels >= 20 },
-      { id: 'world-clear', title: 'World Conqueror', desc: 'Clear every level in any realm', icon: 'ðŸ—ºï¸', unlocked: worldClears >= 1 },
-      { id: 'collector', title: 'Skin Collector', desc: 'Own 3 or more worm skins', icon: 'ðŸŽ¨', unlocked: ownedSkins.length >= 3 },
-      { id: 'wealthy', title: 'Coin Hoarder', desc: 'Hold 300+ coins', icon: 'ðŸª™', unlocked: coins >= 300 },
-      { id: 'star-50', title: 'Stargazer', desc: 'Earn 50 total stars', icon: 'ðŸŒŸ', unlocked: totalStarsEarned >= 50 },
+      { id: 'first-step', title: 'First Bite', desc: 'Complete any level', icon: Apple, unlocked: completedCount >= 1 },
+      { id: 'garden-10', title: 'Garden Explorer', desc: 'Complete 10 levels', icon: Compass, unlocked: completedCount >= 10 },
+      { id: 'garden-25', title: 'Trailblazer', desc: 'Complete 25 levels', icon: MapPin, unlocked: completedCount >= 25 },
+      { id: 'garden-50', title: 'Realm Master', desc: 'Complete all 50 levels', icon: CrownIcon, unlocked: completedCount >= 50 },
+      { id: 'perfect-5', title: 'Precision', desc: 'Earn 3 stars on 5 levels', icon: Target, unlocked: perfectLevels >= 5 },
+      { id: 'perfect-20', title: 'Perfectionist', desc: 'Earn 3 stars on 20 levels', icon: GemIcon, unlocked: perfectLevels >= 20 },
+      { id: 'world-clear', title: 'World Conqueror', desc: 'Clear every level in any realm', icon: TrophyIcon, unlocked: worldClears >= 1 },
+      { id: 'collector', title: 'Skin Collector', desc: 'Own 3 or more worm skins', icon: Palette, unlocked: ownedSkins.length >= 3 },
+      { id: 'wealthy', title: 'Coin Hoarder', desc: 'Hold 300+ coins', icon: Coins, unlocked: coins >= 300 },
+      { id: 'star-50', title: 'Stargazer', desc: 'Earn 50 total stars', icon: Star, unlocked: totalStarsEarned >= 50 },
     ];
   }, [levelProgress, ownedSkins.length, coins, totalStarsEarned]);
 
@@ -1911,9 +1911,16 @@ function App() {
               <span className="hud-stat-value">{game.apples.length}</span>
             </div>
             <div className="hud-stat stars" title="Current star rating">
-              <span className={`star-icon-unit ${liveStars >= 1 ? 'earned' : ''}`}>★</span>
-              <span className={`star-icon-unit ${liveStars >= 2 ? 'earned' : ''}`}>★</span>
-              <span className={`star-icon-unit ${liveStars >= 3 ? 'earned' : ''}`}>★</span>
+              {[1, 2, 3].map(i => (
+                <Star
+                  key={i}
+                  size={16}
+                  className={`star-icon-unit ${liveStars >= i ? 'earned' : ''}`}
+                  fill={liveStars >= i ? '#fbbf24' : 'transparent'}
+                  stroke={liveStars >= i ? '#fbbf24' : '#64748b'}
+                  strokeWidth={liveStars >= i ? 0 : 2}
+                />
+              ))}
             </div>
           </div>
 
@@ -1930,7 +1937,7 @@ function App() {
             <span className="hud-progress-fill" style={{ width: `${moveProgress.pct}%` }} />
             <span className="hud-progress-par" style={{ left: `${moveProgress.parPct}%` }} />
           </div>
-          <span className="hud-progress-meta">Par {level.parMoves} · {totalStarsEarned}/150 ★</span>
+          <span className="hud-progress-meta">Par {level.parMoves} · <Star size={14} style={{ verticalAlign: 'middle', marginLeft: 2, fill: '#fbbf24' }} /> {totalStarsEarned}/150</span>
         </div>
       </header>
 
@@ -2175,7 +2182,13 @@ function App() {
               </div>
               <div className="summary-metric-card">
                 <small>BEST STARS</small>
-                <strong style={{ color: '#fbbf24' }}>{'★'.repeat(levelProgress[levelId]?.bestStars || earnedStars) || '—'}</strong>
+                <strong style={{ color: '#fbbf24' }}>
+                  {(levelProgress[levelId]?.bestStars || earnedStars) > 0
+                    ? [...Array(levelProgress[levelId]?.bestStars || earnedStars)].map((_, i) => (
+                        <Star key={i} size={16} fill="#fbbf24" style={{ marginRight: 2 }} />
+                      ))
+                    : '—'}
+                </strong>
               </div>
               <div className="summary-metric-card">
                 <small>BEST MOVES</small>
@@ -2189,7 +2202,7 @@ function App() {
 
             <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 22 }}>
               {game.moves <= level.parMoves
-                ? 'ðŸŒŸ Flawless precision! You matched the master Par moves target.'
+                ? <span><GemIcon size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} /> Flawless precision! You matched the master Par moves target.</span>
                 : 'Well played! Slither into the next garden or replay to earn 3 stars.'}
             </p>
 
@@ -2247,7 +2260,7 @@ function App() {
               </button>
               {failureType?.type === 'moves' && (
                 <button className="modal-secondary-btn" onClick={buyBoost} style={{ borderColor: '#f59e0b', color: '#fbbf24' }}>
-                  <Zap size={14} /> +5 Moves (30ðŸª™)
+                  <Zap size={14} /> +5 Moves (<Coins size={14} style={{ verticalAlign: 'middle' }} /> 30)
                 </button>
               )}
             </div>
@@ -2323,7 +2336,7 @@ function App() {
                       <span className="world-preview-stat-label">Total Gardens</span>
                     </div>
                     <div className="world-preview-stat">
-                      <span className="world-preview-stat-value">★{completedInWorld * 3}</span>
+                      <span className="world-preview-stat-value"><Star size={14} style={{ verticalAlign: 'middle', fill: '#fbbf24', marginRight: 2 }} /> {completedInWorld * 3}</span>
                       <span className="world-preview-stat-label">Max Stars</span>
                     </div>
                   </div>
@@ -2409,11 +2422,11 @@ function App() {
               </div>
               <div className="level-preview-stat">
                 <small>APPLES TO EAT</small>
-                <strong>{levelPreview.apples.length} ðŸŽ</strong>
+                <strong><Apple size={14} style={{ verticalAlign: 'middle', marginRight: 4 }} /> {levelPreview.apples.length}</strong>
               </div>
               <div className="level-preview-stat">
-                <small>PAR MOVES (3★)</small>
-                <strong style={{ color: '#fbbf24' }}>â‰¤ {levelPreview.parMoves} moves</strong>
+                <small>PAR MOVES (<Star size={12} fill="#fbbf24" style={{ verticalAlign: 'middle' }} /><Star size={12} fill="#fbbf24" style={{ verticalAlign: 'middle' }} /><Star size={12} fill="#fbbf24" style={{ verticalAlign: 'middle' }} />)</small>
+                <strong style={{ color: '#fbbf24' }}>≤ {levelPreview.parMoves} moves</strong>
               </div>
               <div className="level-preview-stat">
                 <small>MOVE LIMIT</small>
@@ -2461,7 +2474,7 @@ function App() {
                           {idx === 0 ? <CrownIcon size={36} fill="#fbbf24" /> : idx === 1 ? <Award size={32} fill="#94a3b8" /> : <Flag size={32} fill="#b45309" />}
                         </div>
                         <div className="podium-player-name">{entry.name || 'Anonymous'}</div>
-                        <div className="podium-stars-count">★ {entry.totalStars || 0}</div>
+                        <div className="podium-stars-count"><Star size={14} fill="#fbbf24" style={{ verticalAlign: 'middle', marginRight: 4 }} /> {entry.totalStars || 0}</div>
                       </div>
                     ))}
                   </div>
@@ -2481,7 +2494,7 @@ function App() {
                         {(entry.name || 'A')[0].toUpperCase()}
                       </div>
                       <span className="leaderboard-name">{entry.name || 'Anonymous'}</span>
-                      <span className="leaderboard-stars">★ {entry.totalStars || 0}</span>
+                      <span className="leaderboard-stars"><Star size={14} fill="#fbbf24" style={{ verticalAlign: 'middle', marginRight: 4 }} /> {entry.totalStars || 0}</span>
                     </div>
                   ))}
                   {leaderboard.length <= 3 && (
@@ -2495,7 +2508,7 @@ function App() {
                 {myRank && (
                   <div style={{ marginTop: 16, padding: 12, background: 'rgba(52, 211, 153, 0.1)', border: '1px solid rgba(52, 211, 153, 0.3)', borderRadius: 12, textAlign: 'center' }}>
                     <span style={{ color: '#34d399', fontWeight: 700 }}>Your Rank: #{myRank.rank}</span>
-                    <span style={{ color: '#fbbf24', marginLeft: 16, fontWeight: 800 }}>★ {myRank.totalStars} Stars</span>
+                    <span style={{ color: '#fbbf24', marginLeft: 16, fontWeight: 800 }}><Star size={14} fill="#fbbf24" style={{ verticalAlign: 'middle', marginRight: 4 }} /> {myRank.totalStars} Stars</span>
                   </div>
                 )}
               </>
@@ -2583,10 +2596,10 @@ function App() {
                   <div className="step-title">Move & Slither</div>
                   <div className="step-desc">Swipe or use arrow keys / WASD to move. Your worm slides one tile at a time.</div>
                   <div className="step-keys">
-                    <span className="key-badge">â†‘</span>
-                    <span className="key-badge">â†“</span>
-                    <span className="key-badge">â†</span>
-                    <span className="key-badge">â†’</span>
+                    <span className="key-badge"><ArrowUp size={14} /></span>
+                    <span className="key-badge"><ArrowDown size={14} /></span>
+                    <span className="key-badge"><ArrowLeft size={14} /></span>
+                    <span className="key-badge"><ArrowRight size={14} /></span>
                     <span className="key-badge">WASD</span>
                   </div>
                 </div>
@@ -2595,7 +2608,7 @@ function App() {
               <div className="how-to-step">
                 <div className="step-number">2</div>
                 <div className="step-content">
-                  <div className="step-title">Eat Apples ðŸŽ</div>
+                  <div className="step-title"><Apple size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} /> Eat Apples</div>
                   <div className="step-desc">Collect all apples in the garden. Each apple makes your worm grow longer!</div>
                 </div>
               </div>
@@ -2603,7 +2616,7 @@ function App() {
               <div className="how-to-step">
                 <div className="step-number">3</div>
                 <div className="step-content">
-                  <div className="step-title">Enter the Portal ðŸŒ€</div>
+                  <div className="step-title"><Compass size={16} style={{ verticalAlign: 'middle', marginRight: 6 }} /> Enter the Portal</div>
                   <div className="step-desc">After eating all apples, the cosmic portal unlocks. Slither into it to complete the level.</div>
                 </div>
               </div>
@@ -2685,14 +2698,17 @@ function App() {
             </div>
 
             <div className="achievements-grid">
-              {achievements.map(a => (
-                <div key={a.id} className={`achievement-card ${a.unlocked ? 'unlocked' : 'locked'}`}>
-                  <div className="achievement-icon" aria-hidden="true">{a.icon}</div>
-                  <div className="achievement-title">{a.title}</div>
-                  <div className="achievement-desc">{a.desc}</div>
-                  <div className="achievement-state">{a.unlocked ? 'Unlocked' : 'Locked'}</div>
-                </div>
-              ))}
+              {achievements.map(a => {
+                const Icon = a.icon;
+                return (
+                  <div key={a.id} className={`achievement-card ${a.unlocked ? 'unlocked' : 'locked'}`}>
+                    <div className="achievement-icon" aria-hidden="true"><Icon size={28} /></div>
+                    <div className="achievement-title">{a.title}</div>
+                    <div className="achievement-desc">{a.desc}</div>
+                    <div className="achievement-state">{a.unlocked ? 'Unlocked' : 'Locked'}</div>
+                  </div>
+                );
+              })}
             </div>
 
             <div className="undo-timeline-wrap">
