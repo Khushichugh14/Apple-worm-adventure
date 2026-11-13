@@ -870,7 +870,7 @@ button:focus-visible {
   align-items: center;
   justify-content: center;
   width: 100%;
-  max-width: min(80vmin, 520px, calc(100dvh - 250px));
+  max-width: min(75vmin, 480px, calc(100dvh - 240px));
   margin: 0 auto;
 }
 
@@ -903,15 +903,15 @@ button:focus-visible {
   position: relative;
   width: 100%;
   aspect-ratio: 1;
-  padding: 10px;
-  border-radius: var(--radius-2xl);
+  padding: 8px;
+  border-radius: var(--radius-xl);
   background:
     radial-gradient(ellipse at 50% 20%, rgba(28, 34, 66, 0.95) 0%, rgba(14, 18, 39, 0.98) 100%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%, rgba(0, 0, 0, 0.3) 100%);
-  border: 2px solid var(--border-glass);
+  border: 1.5px solid var(--border-glass);
   box-shadow:
-    0 40px 80px rgba(0, 0, 0, 0.9),
-    0 0 60px rgba(16, 185, 129, 0.15),
+    0 24px 48px rgba(0, 0, 0, 0.8),
+    0 0 40px rgba(16, 185, 129, 0.12),
     inset 0 2px 4px rgba(255, 255, 255, 0.15),
     inset 0 -8px 16px rgba(0, 0, 0, 0.6),
     inset 0 0 1px rgba(255, 255, 255, 0.1);

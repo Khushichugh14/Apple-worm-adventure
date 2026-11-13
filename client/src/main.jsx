@@ -7,7 +7,8 @@ import {
   Trophy, Volume2, VolumeX, Zap, User as UserIcon, LogOut, Check, X,
   Compass, Play, RefreshCw, Flame, Crown, Flag, AlertCircle,
   Maximize2, Minimize2, Music, Undo2, HelpCircle, MapPin, ShoppingBag,
-  Heart, Gift, Palette, Crown as CrownIcon, KeyRound
+  Heart, Gift, Palette, Crown as CrownIcon, KeyRound,
+  Leaf, Mountain, TreePine
 } from 'lucide-react';
 import { GAME_NAME, API_URL } from './config/gameConfig';
 import { LEVELS, WORLDS } from './data/levels';
@@ -48,6 +49,20 @@ function calculateStars(moves, limit, parMoves) {
   if (moves <= Math.ceil(limit * 0.8)) return 2;
   return 1;
 }
+
+// Icon mapping for world icons
+const WorldIcons = {
+  leaf: Leaf,
+  mountain: Mountain,
+  gem: Gem,
+  'tree-pine': TreePine,
+  sparkles: Sparkles,
+};
+
+const WorldIcon = ({ name, size = 20, className = '' }) => {
+  const Icon = WorldIcons[name] || Sparkles;
+  return <Icon size={size} className={className} />;
+};
 
 /* ===================================================
    PREMIUM CUSTOM VECTOR GRAPHIC COMPONENTS
@@ -2259,7 +2274,7 @@ function App() {
                 onClick={() => setSelectedWorldTab(0)}
                 style={{ '--world-tab-color': '#34d399' }}
               >
-                <span>ðŸŒ All Realms</span>
+                <span><Compass size={16} /> All Realms</span>
                 <span className="world-progress-badge">50</span>
               </button>
               {WORLDS.map(w => {
@@ -2271,7 +2286,7 @@ function App() {
                     onClick={() => setSelectedWorldTab(w.id)}
                     style={{ '--world-tab-color': w.color }}
                   >
-                    <span>{w.icon} {w.name}</span>
+                    <span><WorldIcon name={w.icon} size={16} /> {w.name}</span>
                     <span className="world-progress-badge">{worldCompleted}/10</span>
                   </button>
                 );
@@ -2287,7 +2302,7 @@ function App() {
               return (
                 <div className="world-preview-thumbnail" style={{ '--world-preview-color': previewWorld.color }}>
                   <div className="world-preview-header">
-                    <span className="world-preview-icon">{previewWorld.icon}</span>
+                    <WorldIcon name={previewWorld.icon} size={32} className="world-preview-icon" />
                     <div className="world-preview-info">
                       <h3>{previewWorld.name}</h3>
                       <p>{worldLevels[0]?.objective || previewWorld.objective}</p>
@@ -2343,7 +2358,27 @@ function App() {
                       {unlocked ? String(l.id).padStart(2, '0') : <LockKeyhole size={18} />}
                     </span>
                     <span className="level-node-stars-label">
-                      {best >= 3 ? '★★★' : best === 2 ? '★★â˜†' : best === 1 ? '★â˜†â˜†' : unlocked ? 'â˜†â˜†â˜†' : 'LOCKED'}
+                      {best > 0 ? (
+                        <>
+                          {[...Array(3)].map((_, i) => (
+                            <Star
+                              key={i}
+                              size={12}
+                              fill={i < best ? world.color : 'transparent'}
+                              stroke={world.color}
+                              strokeWidth={i < best ? 0 : 2}
+                            />
+                          ))}
+                        </>
+                      ) : unlocked ? (
+                        <>
+                          {[...Array(3)].map((_, i) => (
+                            <Star key={i} size={12} fill="transparent" stroke="#64748b" strokeWidth={2} />
+                          ))}
+                        </>
+                      ) : (
+                        'LOCKED'
+                      )}
                     </span>
                   </button>
                 );

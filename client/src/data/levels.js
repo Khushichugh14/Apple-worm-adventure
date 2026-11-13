@@ -7,7 +7,7 @@
     color: '#10b981',
     accentBg: 'rgba(16, 185, 129, 0.15)',
     difficulty: 'Beginner',
-    icon: 'ðŸŒ±'
+    icon: 'leaf'
   },
   {
     id: 2,
@@ -17,7 +17,7 @@
     color: '#f59e0b',
     accentBg: 'rgba(245, 158, 11, 0.15)',
     difficulty: 'Easy',
-    icon: 'ðŸ›ï¸'
+    icon: 'mountain'
   },
   {
     id: 3,
@@ -27,7 +27,7 @@
     color: '#38bdf8',
     accentBg: 'rgba(56, 189, 248, 0.15)',
     difficulty: 'Medium',
-    icon: 'ðŸ’Ž'
+    icon: 'gem'
   },
   {
     id: 4,
@@ -37,7 +37,7 @@
     color: '#a855f7',
     accentBg: 'rgba(168, 85, 247, 0.15)',
     difficulty: 'Hard',
-    icon: 'ðŸ”®'
+    icon: 'tree-pine'
   },
   {
     id: 5,
@@ -47,7 +47,7 @@
     color: '#ec4899',
     accentBg: 'rgba(236, 72, 153, 0.15)',
     difficulty: 'Expert',
-    icon: 'âœ¨'
+    icon: 'sparkles'
   }
 ];
 
