@@ -100,12 +100,32 @@ if (clientDist) {
       }
     }
   }));
+  
+  // Debug: log static file requests
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/assets/') || req.path.startsWith('/icons/')) {
+      console.log(`[Static Request] ${req.method} ${req.path}`);
+    }
+    next();
+  });
+  
   // All non-API routes → serve React index.html (SPA routing)
-  app.get('*', (_req, res) => {
-    res.sendFile(path.join(clientDist, 'index.html'));
+  app.get('*', (req, res) => {
+    // Don't serve index.html for API routes that weren't matched
+    if (req.path.startsWith('/api/')) {
+      return res.status(404).json({ error: 'API endpoint not found' });
+    }
+    res.sendFile(path.join(clientDist, 'index.html'), (err) => {
+      if (err) {
+        console.error('[Static] sendFile error:', err);
+        res.status(500).send('Internal Server Error');
+      }
+    });
   });
 } else {
   console.warn('[Static] Client dist folder not found! Checked:', possibleClientDistPaths);
+  console.warn('[Static] cwd:', process.cwd());
+  console.warn('[Static] __dirname:', __dirname);
   // Fallback if frontend not built
   app.get('/', (_req, res) => res.json({ status: 'online', game: GAME_NAME, health: '/api/health' }));
 }
