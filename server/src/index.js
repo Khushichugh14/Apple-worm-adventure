@@ -115,19 +115,17 @@ if (clientDist) {
       if (filePath.endsWith('.html')) {
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       }
+      // Ensure correct MIME types
+      if (filePath.endsWith('.css')) {
+        res.setHeader('Content-Type', 'text/css; charset=utf-8');
+      } else if (filePath.endsWith('.js')) {
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      }
     }
   });
   
-  // Wrap static middleware to catch errors
-  app.use((req, res, next) => {
-    staticMiddleware(req, res, (err) => {
-      if (err) {
-        console.error('[Static] express.static error:', err.message, 'for', req.path);
-        return next(err);
-      }
-      next();
-    });
-  });
+  // CRITICAL: Register static middleware DIRECTLY, before any other routes
+  app.use(staticMiddleware);
   
   // Debug: log static file requests
   app.use((req, res, next) => {
