@@ -9,6 +9,7 @@ import { SKINS, calculateStars, WorldIcons, WorldIcon,
 import { initialState, step, same, applyBomb, applyLightning, applyHammer, applyMagicKey, applyRainbow } from './game/engine';
 import { playSound, startBgm, stopBgm, setSfxVolume, setMusicVolume } from './game/audio';
 import { findNextHint } from './game/solver';
+import { API_URL } from './config/gameConfig';
 import './style.css';
 
 // Icons needed inline since not all re-exported
