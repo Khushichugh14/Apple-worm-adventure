@@ -1,3 +1,6 @@
+import {
+  Leaf, Mountain, TreePine, Gem as GemIcon, Sparkles
+} from 'lucide-react';
 import '../style.css';
 
 /* ===================================================
@@ -22,7 +25,7 @@ function calculateStars(moves, limit, parMoves) {
 const WorldIcons = {
   leaf: Leaf,
   mountain: Mountain,
-  gem: Gem,
+  gem: GemIcon,
   'tree-pine': TreePine,
   sparkles: Sparkles,
 };
