@@ -1,7 +1,7 @@
 ﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { LEVELS, WORLDS } from './data/levels';
-import { SKINS, calculateStars } from './components/GameElements';
+import { SKINS, calculateStars, ContinuousWormSVG } from './components/GameElements';
 import HUD from './components/game/HUD';
 import Board from './components/game/Board';
 import ControlDock from './components/game/ControlDock';
@@ -166,6 +166,9 @@ function App() {
   const moveTimeoutRef = useRef(null);
   const prevWormRef = useRef(null);
   const animFrameRef = useRef(null);
+  const lastMoveDirRef = useRef(null);
+  const [isTouchDevice, setIsTouchDevice] = useState('ontouchstart' in window);
+  const [showDragHint, setShowDragHint] = useState(isTouchDevice);
 
   const level = LEVELS[levelId - 1] || LEVELS[0];
   const [game, setGame] = useState(() => initialState(LEVELS[levelId - 1] || LEVELS[0]));
@@ -224,9 +227,16 @@ function App() {
   useEffect(() => { hideSplash(); }, []);
 
   useEffect(() => {
+    if (!isTouchDevice || !showDragHint) return;
+    const t = setTimeout(() => setShowDragHint(false), 5000);
+    return () => clearTimeout(t);
+  }, [isTouchDevice, showDragHint]);
+
+  useEffect(() => {
     if (reducedMotion) {
       setRenderWorm(game.worm.map(p => [...p]));
       prevWormRef.current = null;
+      lastMoveDirRef.current = null;
       return;
     }
     const prev = prevWormRef.current;
@@ -234,9 +244,42 @@ function App() {
       setRenderWorm(game.worm.map(p => [...p]));
       return;
     }
+
+    // Detect turn: compare head movement direction with previous segment direction
+    const headFrom = prev[0];
+    const headTo = game.worm[0];
+    const neckFrom = prev[1] || headFrom;
+    const prevDir = lastMoveDirRef.current;
+    let curDir = null;
+    const dx = headTo[0] - headFrom[0];
+    const dy = headTo[1] - headFrom[1];
+    if (dx !== 0 || dy !== 0) {
+      curDir = dx !== 0 ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+    }
+    const isTurn = curDir && prevDir && curDir !== prevDir;
+    if (curDir) lastMoveDirRef.current = curDir;
+
     const duration = 165;
     const start = performance.now();
     const ease = t => 1 - Math.pow(1 - t, 3);
+
+    // Inside corner control point for curved turns
+    let controlPoint = null;
+    if (isTurn) {
+      // The corner point is where head was; control point is offset into the turn
+      const cx = headFrom[0];
+      const cy = headFrom[1];
+      // Move control point diagonally into the inside of the turn
+      const turnDirX = dx !== 0 ? dx : 0;
+      const turnDirY = dy !== 0 ? dy : 0;
+      const prevDirX = neckFrom[0] - headFrom[0];
+      const prevDirY = neckFrom[1] - headFrom[1];
+      // Inside corner: average of incoming and outgoing directions, pointing into the corner
+      const ix = headFrom[0] + (prevDirX + turnDirX) * 0.5;
+      const iy = headFrom[1] + (prevDirY + turnDirY) * 0.5;
+      controlPoint = [ix, iy];
+    }
+
     const animate = (now) => {
       const elapsed = now - start;
       const nextWorm = game.worm.map((seg, i) => {
@@ -244,6 +287,16 @@ function App() {
         const lag = Math.min(0.55, i * 0.055);
         const localT = Math.max(0, Math.min(1, (elapsed / duration - lag) / Math.max(0.001, 1 - lag)));
         const k = ease(localT);
+
+        if (i === 0 && isTurn && controlPoint) {
+          // Quadratic Bézier curve for head turning corner
+          const p0x = from[0], p0y = from[1];
+          const p1x = controlPoint[0], p1y = controlPoint[1];
+          const p2x = seg[0], p2y = seg[1];
+          const x = (1 - k) * (1 - k) * p0x + 2 * (1 - k) * k * p1x + k * k * p2x;
+          const y = (1 - k) * (1 - k) * p0y + 2 * (1 - k) * k * p1y + k * k * p2y;
+          return [x, y];
+        }
         return [from[0] + (seg[0] - from[0]) * k, from[1] + (seg[1] - from[1]) * k];
       });
       setRenderWorm(nextWorm);
@@ -432,6 +485,7 @@ function App() {
     setGame(init);
     setRenderWorm(init.worm.map(p => [...p]));
     prevWormRef.current = null;
+    lastMoveDirRef.current = null;
     setBonusMoves(0);
     setHistory([]);
     setHint(false);
@@ -1104,6 +1158,13 @@ function App() {
         </div>
       ))}
 
+      {/* DRAG GESTURE HINT (mobile) */}
+      {isTouchDevice && showDragHint && (
+        <div className={`drag-gesture-hint ${showDragHint ? 'show' : ''}`}>
+          <span>👆 Drag to slither</span>
+        </div>
+      )}
+
       <Board
         level={level}
         game={game}
@@ -1352,7 +1413,7 @@ function App() {
                   >
                     {isCurrent && (
                       <div className="level-node-mascot-head">
-                        <WormHeadSVG facing="right" skinId={wormSkin} skinColor={currentSkin} time={animTime} />
+                        <ContinuousWormSVG segments={[[0, 0]]} wormSkin={wormSkin} expression="idle" skinColor={currentSkin} animTime={animTime} facing="right" levelSize={8} />
                       </div>
                     )}
                     <span className="level-node-number">

@@ -36,251 +36,306 @@ const WorldIcon = ({ name, size = 20, className = '' }) => {
 };
 
 /* ===================================================
-   ICONIC ADORABLE APPLE WORM (Grow Worm Style)
-   Cute spherical segments, huge glossy eyes, sprout leaf,
-   rosy cheeks & happy chomp animations
+   PREMIUM CONTINUOUS WORM - Realistic Segmented Earthworm
+   Single connected body path, tapered segments, expressive head,
+   peristaltic movement, 3D glossy shading, curved corners
    =================================================== */
 
-/* 1. Worm Head - Huge cute eyes, cheerful smile, tiny sprout on head */
-function WormHeadSVG({ facing = 'right', skinId = 'emerald', expression = 'idle', skinColor = {}, time = 0, angle = null }) {
-  const skin = SKINS.find(s => s.id === skinId) || SKINS[0];
+/* 1. Continuous Worm Body - Single SVG drawing the entire worm as one creature */
+function ContinuousWormSVG({
+  segments,
+  wormSkin = 'emerald',
+  expression = 'idle',
+  skinColor = {},
+  animTime = 0,
+  facing = 'right',
+  width = 120,
+  height = 120,
+  levelSize = 8,
+}) {
+  const skin = SKINS.find(s => s.id === wormSkin) || SKINS[0];
   const primary = skinColor.primary || skin.primary;
   const secondary = skinColor.secondary || skin.secondary;
   const highlight = skinColor.highlight || skin.highlight;
   const belly = skinColor.belly || skin.belly || '#dcfce7';
+  const eye = skinColor.eye || skin.eye;
+
+  const segCount = segments.length;
+  if (segCount === 0) return null;
+
+  // Normalize grid coordinates to fit within viewBox with padding
+  const pad = 16;
+  const cellSize = (width - pad * 2) / levelSize;
 
   const isEating = expression === 'eating';
   const isMoving = expression === 'moving';
   const isHappy = expression === 'happy' || expression === 'victory';
   const isIdle = !isEating && !isMoving && !isHappy;
 
-  // Natural idle breathing & blinking
-  const breath = Math.sin(time * 0.005) * 1.5;
-  const blinkPhase = (Math.sin(time * 0.0035) + 1) / 2;
-  const blink = isIdle && blinkPhase > 0.95 ? 0.15 : 1;
-  const eyeOpen = isEating ? 0.35 : isHappy ? 1.1 : blink;
+  // Peristaltic wave phase
+  const waveTime = animTime * 0.006;
 
-  // Sprout wiggle
-  const sproutWiggle = Math.sin(time * 0.008) * 8;
+  // Blink animation
+  const blinkPhase = (Math.sin(animTime * 0.0035) + 1) / 2;
+  const blink = isIdle && blinkPhase > 0.96 ? 0.1 : 1;
+  const eyeOpen = isEating ? 0.3 : isHappy ? 1.2 : blink;
 
-  // Eye look direction - look ahead towards food/movement
-  const lookX = isMoving ? 3.5 : isEating ? 2 : 1.5;
-  const lookY = isMoving ? 0.5 : 0;
+  // Breathing pulse
+  const breath = Math.sin(animTime * 0.004) * 0.02;
 
-  // Mouth chomp when eating
-  const chomp = isEating ? Math.sin(time * 0.03) * 3 : 0;
+  // Build normalized segment points
+  const points = segments.map((seg, i) => {
+    const t = i / Math.max(1, segCount - 1);
+    const maxW = cellSize * 0.30; // head width
+    const minW = cellSize * 0.10; // tail width
+    const segWidth = maxW - (maxW - minW) * t;
+    return {
+      x: pad + seg[0] * cellSize,
+      y: pad + seg[1] * cellSize,
+      width: segWidth,
+      index: i,
+    };
+  });
 
-  // Angle: if angle provided use directly, else map facing direction
-  const rotation = angle != null ? angle : ({ right: 0, down: 90, left: 180, up: -90 }[facing] ?? 0);
+  // Build continuous body path
+  let pathD = '';
+  const head = points[0];
+
+  if (points.length === 1) {
+    const p = points[0];
+    const hw = p.width / 2;
+    pathD = `M${p.x - hw},${p.y} L${p.x + hw},${p.y} L${p.x + hw},${p.y + hw} Q${p.x},${p.y + hw + 8} ${p.x - hw},${p.y + hw} Z`;
+  } else {
+    const neck = points[1];
+    const headAngle = Math.atan2(neck.y - head.y, neck.x - head.x);
+    const hw = head.width / 2;
+    const headNx = Math.cos(headAngle + Math.PI / 2) * hw;
+    const headNy = Math.sin(headAngle + Math.PI / 2) * hw;
+
+    pathD = `M${head.x - headNx},${head.y - headNy}`;
+
+    for (let i = 0; i < points.length; i++) {
+      const p = points[i];
+      const next = points[i + 1];
+      const w = p.width / 2;
+
+      if (next) {
+        const dx = next.x - p.x;
+        const dy = next.y - p.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const nx = dist > 0 ? -dy / dist : 0;
+        const ny = dist > 0 ? dx / dist : 0;
+
+        const p1x = p.x + nx * w;
+        const p1y = p.y + ny * w;
+        const p2x = p.x - nx * w;
+        const p2y = p.y - ny * w;
+
+        const nw = next.width / 2;
+        const n1x = next.x + nx * nw;
+        const n1y = next.y + ny * nw;
+        const n2x = next.x - nx * nw;
+        const n2y = next.y - ny * nw;
+
+        if (i === 0) {
+          pathD += ` L${p1x},${p1y}`;
+        } else {
+          pathD += ` Q${p.x},${p.y} ${p1x},${p1y}`;
+        }
+        pathD += ` L${n1x},${n1y}`;
+        pathD += ` Q${next.x},${next.y} ${n2x},${n2y}`;
+        pathD += ` L${p2x},${p2y}`;
+        pathD += ` Q${p.x},${p.y} ${p.x - nx * w},${p.y - ny * w}`;
+      } else {
+        pathD += ` Q${p.x},${p.y} ${p.x},${p.y - w} Z`;
+      }
+    }
+    pathD += ' Z';
+  }
+
+  // Head rotation angle
+  let headRotation = 0;
+  if (segCount > 1) {
+    const neck = points[1];
+    headRotation = Math.atan2(neck.y - head.y, neck.x - head.x) * 180 / Math.PI;
+  } else {
+    headRotation = { right: 0, down: 90, left: 180, up: -90 }[facing] ?? 0;
+  }
 
   return (
     <svg
-      className={`worm-head-svg-container worm-head facing-${facing} ${isMoving ? 'moving' : ''} ${isEating ? 'eating' : ''} ${isHappy ? 'happy' : ''} ${isIdle ? 'idle' : ''}`}
+      className="continuous-worm-svg"
       viewBox="0 0 120 120"
-      style={{ transform: `rotate(${rotation}deg)` }}
+      style={{ transform: `rotate(${headRotation}deg)`, width: '100%', height: '100%', transformOrigin: '50% 50%' }}
     >
       <defs>
-        {/* Soft 3D spherical gradient for body ball */}
-        <radialGradient id={`wormBallHead-${skinId}`} cx="32%" cy="28%" r="72%">
+        <radialGradient id={`wormBodyGrad-${wormSkin}`} cx="30%" cy="30%" r="70%">
           <stop offset="0%" stopColor="#ffffff" stopOpacity="0.85" />
-          <stop offset="15%" stopColor={highlight} />
-          <stop offset="55%" stopColor={primary} />
-          <stop offset="88%" stopColor={secondary} />
+          <stop offset="20%" stopColor={highlight} />
+          <stop offset="50%" stopColor={primary} />
+          <stop offset="85%" stopColor={secondary} />
           <stop offset="100%" stopColor={secondary} stopOpacity="0.95" />
         </radialGradient>
-        {/* Cute rosy blush */}
-        <radialGradient id="wormBlushGrad" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#ff4d6d" stopOpacity="0.65" />
-          <stop offset="100%" stopColor="#ff4d6d" stopOpacity="0" />
-        </radialGradient>
-        {/* Soft cartoon drop shadow */}
-        <filter id={`wormHeadShadow-${skinId}`} x="-20%" y="-20%" width="150%" height="150%">
-          <feDropShadow dx="0" dy="5" stdDeviation="3.5" floodColor="#021a0c" floodOpacity="0.4" />
+
+        <linearGradient id={`wormRingGrad-${wormSkin}`} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="rgba(255,255,255,0.4)" />
+          <stop offset="50%" stopColor="rgba(0,0,0,0.15)" />
+          <stop offset="100%" stopColor="rgba(255,255,255,0.2)" />
+        </linearGradient>
+
+        <linearGradient id={`wormBellyGrad-${wormSkin}`} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor={belly} stopOpacity="0.7" />
+          <stop offset="100%" stopColor={belly} stopOpacity="0.3" />
+        </linearGradient>
+
+        <filter id={`wormBodyShadow-${wormSkin}`} x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="6" stdDeviation="4" floodColor="#000000" floodOpacity="0.5" />
         </filter>
       </defs>
 
-      <g filter={`url(#wormHeadShadow-${skinId})`}>
-        {/* Ground shadow beneath worm head */}
-        <ellipse cx="60" cy="98" rx="38" ry="10" fill="rgba(0,0,0,0.22)" />
+      <ellipse cx="60" cy="108" rx="24" ry="8" fill="rgba(0,0,0,0.25)" opacity={isMoving ? 0.6 : 0.4} />
 
-        {/* Adorable little leaf sprout on top of head */}
-        <g transform={`translate(48, 12) rotate(${sproutWiggle} 8 20)`}>
-          <path d="M8 20 Q12 8 22 6 Q26 14 14 20 Z" fill="#22c55e" stroke="#15803d" strokeWidth="1.8" />
-          <path d="M8 20 Q2 12 -4 14 Q-2 22 8 22 Z" fill="#4ade80" stroke="#15803d" strokeWidth="1.5" />
-          <path d="M8 22 Q9 15 12 10" stroke="#166534" strokeWidth="1.2" fill="none" />
-        </g>
+      <path
+        d={pathD}
+        fill={`url(#wormBodyGrad-${wormSkin})`}
+        stroke="rgba(255,255,255,0.25)"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+        filter={`url(#wormBodyShadow-${wormSkin})`}
+      />
 
-        {/* Neck connector to blend with body segment smoothly */}
-        <ellipse cx="32" cy="60" rx="22" ry="34" fill={secondary} opacity="0.85" />
+      {segments.map((seg, i) => {
+        const wave = Math.sin(waveTime + i * 1.2);
+        const ringOpacity = Math.abs(wave) > 0.7 ? 0.3 : 0;
+        if (ringOpacity === 0 || i === 0 || i === segCount - 1) return null;
+        const p = points[i];
+        const next = points[i + 1];
+        if (!next) return null;
+        const dx = next.x - p.x;
+        const dy = next.y - p.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const nx = dist > 0 ? -dy / dist : 0;
+        const ny = dist > 0 ? dx / dist : 0;
+        const w = p.width / 2;
+        const nw = next.width / 2;
+        const r1x = p.x + nx * w * 0.85;
+        const r1y = p.y + ny * w * 0.85;
+        const r2x = p.x - nx * w * 0.85;
+        const r2y = p.y - ny * w * 0.85;
+        const nr1x = next.x + nx * nw * 0.85;
+        const nr1y = next.y + ny * nw * 0.85;
+        const nr2x = next.x - nx * nw * 0.85;
+        const nr2y = next.y - ny * nw * 0.85;
+        return (
+          <path
+            key={`ring-${i}`}
+            d={`M${r1x},${r1y} L${nr1x},${nr1y} L${nr2x},${nr2y} L${r2x},${r2y} Z`}
+            fill="rgba(0,0,0,0.25)"
+            opacity={ringOpacity}
+          />
+        );
+      })}
 
-        {/* Main round cartoon worm head ball */}
-        <circle cx="64" cy="60" r="42" fill={`url(#wormBallHead-${skinId})`} stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" />
+      {segments.map((seg, i) => {
+        if (i === 0 || i === segCount - 1) return null;
+        const p = points[i];
+        const next = points[i + 1];
+        if (!next) return null;
+        const dx = next.x - p.x;
+        const dy = next.y - p.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const nx = dist > 0 ? -dy / dist : 0;
+        const ny = dist > 0 ? dx / dist : 0;
+        const w = p.width / 2;
+        const nw = next.width / 2;
+        return (
+          <path
+            key={`seg-ring-${i}`}
+            d={`M${p.x + nx * w},${p.y + ny * w} Q${p.x},${p.y} ${p.x - nx * w},${p.y - ny * w} L${next.x - nx * nw},${next.y - ny * nw} Q${next.x},${next.y} ${next.x + nx * nw},${next.y + ny * nw} Z`}
+            fill="none"
+            stroke={`url(#wormRingGrad-${wormSkin})`}
+            strokeWidth="1"
+            opacity={0.5}
+          />
+        );
+      })}
 
-        {/* Underbelly soft highlight */}
-        <ellipse cx="66" cy="80" rx="30" ry="14" fill={belly} opacity="0.5" />
+      <path
+        d={pathD}
+        fill="none"
+        stroke={`url(#wormBellyGrad-${wormSkin})`}
+        strokeWidth="8"
+        strokeLinejoin="round"
+        opacity={0.35}
+      />
 
-        {/* Big cute cartoon eyes */}
-        {/* Eye 1 (Left / Upper) */}
-        <g transform="translate(68, 38)">
-          {/* White sclera */}
-          <ellipse cx="0" cy="0" rx="14" ry={15 * eyeOpen} fill="#ffffff" stroke="#052e16" strokeWidth="2.2" />
-          {/* Pupil with look-ahead direction */}
-          {eyeOpen > 0.25 && (
+      <path
+        d={pathD}
+        fill="none"
+        stroke="#ffffff"
+        strokeWidth="2"
+        strokeLinejoin="round"
+        opacity={0.25}
+      />
+
+      <g transform={`translate(${head.x},${head.y}) rotate(${headRotation})`}>
+        <ellipse cx="0" cy="8" rx="22" ry="6" fill="rgba(0,0,0,0.3)" />
+
+        <ellipse cx="-8" cy="0" rx="16" ry="14" fill={secondary} opacity="0.7" />
+        <path d="M-20 -8 Q-8 -14 4 -8 Q16 -14 28 -8" stroke="rgba(0,0,0,0.2)" strokeWidth="1.5" fill="none" />
+
+        <ellipse cx="8" cy="0" rx="24" ry="20" fill={`url(#wormBodyGrad-${wormSkin})`} stroke="rgba(255,255,255,0.35)" strokeWidth="1.5" />
+        <ellipse cx="12" cy="2" rx="16" ry="14" fill={highlight} opacity="0.4" />
+
+        <path d="M-4 -16 Q8 -20 20 -16" stroke="rgba(0,0,0,0.2)" strokeWidth="1" fill="none" />
+
+        <g transform="translate(16, -6)">
+          <ellipse cx="0" cy="0" rx="7" ry={8 * eyeOpen} fill="#ffffff" stroke={eye} strokeWidth="2" />
+          {eyeOpen > 0.2 && (
             <>
-              <ellipse cx={lookX} cy={lookY} rx="8.5" ry="9" fill="#091c0e" />
-              {/* Eye sparkle highlights (kawaii anime style) */}
-              <circle cx={lookX + 3.2} cy={lookY - 3.2} r="3.4" fill="#ffffff" />
-              <circle cx={lookX - 2.8} cy={lookY + 3.2} r="1.6" fill="#ffffff" />
+              <ellipse cx={isMoving ? 2 : 1} cy={0} rx="3.5" ry="4" fill="#0a0a0a" />
+              <circle cx={2.5} cy={-1.5} r="1.8" fill="#ffffff" />
             </>
           )}
-          {eyeOpen <= 0.25 && (
-            <path d="M-10 0 Q0 -5 10 0" stroke="#052e16" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+          {eyeOpen <= 0.2 && (
+            <path d="M-5 0 Q0 -3 5 0" stroke={eye} strokeWidth="2" fill="none" strokeLinecap="round" />
           )}
         </g>
-
-        {/* Eye 2 (Right / Lower) */}
-        <g transform="translate(90, 48)">
-          <ellipse cx="0" cy="0" rx="12" ry={13 * eyeOpen} fill="#ffffff" stroke="#052e16" strokeWidth="2" />
-          {eyeOpen > 0.25 && (
+        <g transform="translate(16, 6)">
+          <ellipse cx="0" cy="0" rx="7" ry={8 * eyeOpen} fill="#ffffff" stroke={eye} strokeWidth="2" />
+          {eyeOpen > 0.2 && (
             <>
-              <ellipse cx={lookX * 0.8} cy={lookY} rx="7" ry="7.5" fill="#091c0e" />
-              <circle cx={lookX * 0.8 + 2.6} cy={lookY - 2.6} r="2.8" fill="#ffffff" />
-              <circle cx={lookX * 0.8 - 2.2} cy={lookY + 2.5} r="1.3" fill="#ffffff" />
+              <ellipse cx={isMoving ? 2 : 1} cy={0} rx="3.5" ry="4" fill="#0a0a0a" />
+              <circle cx={2.5} cy={-1.5} r="1.8" fill="#ffffff" />
             </>
           )}
-          {eyeOpen <= 0.25 && (
-            <path d="M-8 0 Q0 -4 8 0" stroke="#052e16" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+          {eyeOpen <= 0.2 && (
+            <path d="M-5 0 Q0 -3 5 0" stroke={eye} strokeWidth="2" fill="none" strokeLinecap="round" />
           )}
         </g>
 
-        {/* Rosy blush cheeks */}
-        <ellipse cx="58" cy="74" rx="7" ry="4.5" fill="url(#wormBlushGrad)" />
-        <ellipse cx="94" cy="74" rx="6" ry="4" fill="url(#wormBlushGrad)" />
-
-        {/* Cheerful mouth / Chomp expression */}
-        <g transform="translate(82, 70)">
+        <g transform="translate(24, 0)">
           {isEating ? (
-            /* Open mouth chomping on apple */
             <g>
-              <ellipse cx="4" cy="2" rx="9" ry={6 + chomp} fill="#4a0404" stroke="#052e16" strokeWidth="1.8" />
-              <ellipse cx="5" cy="5" rx="5" ry="3" fill="#ff4d6d" />
-              <path d="M-1 -1 Q4 3 9 -1" fill="#ffffff" stroke="#ffffff" strokeWidth="1.5" />
+              <ellipse cx="0" cy="2" rx="8" ry={5 + Math.sin(animTime * 0.04) * 2} fill="#2a0a0a" stroke={eye} strokeWidth="1.5" />
+              <ellipse cx="1" cy="4" rx="4" ry="2" fill="#ff4d6d" />
             </g>
           ) : isHappy ? (
-            /* Big happy open smile */
-            <g>
-              <path d="M-4 -1 Q4 10 12 -1 Z" fill="#991b1b" stroke="#052e16" strokeWidth="2" strokeLinejoin="round" />
-              <ellipse cx="4" cy="5" rx="4" ry="2" fill="#ff4d6d" />
-            </g>
+            <path d="M-4 0 Q0 6 4 0" stroke={eye} strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
           ) : (
-            /* Cute playful smirk smile */
-            <path d="M-3 0 Q4 6 11 1" stroke="#052e16" strokeWidth="2.8" fill="none" strokeLinecap="round" />
+            <path d="M-3 1 Q0 5 3 1" stroke={eye} strokeWidth="2" fill="none" strokeLinecap="round" />
           )}
         </g>
+
+        <ellipse cx="6" cy="-4" rx="10" ry="6" fill="#ffffff" opacity={0.25} transform="rotate(-15 6 -4)" />
       </g>
-    </svg>
-  );
-}
 
-/* 2. Worm Body Segment - Seamless round puffy ball with soft ring ridges */
-function WormSegmentSVG({ skinId = 'emerald', scale = 1, index = 0, skinColor = {}, wavePhase = 0, angle = 0, bend = 0 }) {
-  const skin = SKINS.find(s => s.id === skinId) || SKINS[0];
-  const primary = skinColor.primary || skin.primary;
-  const secondary = skinColor.secondary || skin.secondary;
-  const highlight = skinColor.highlight || skin.highlight;
-  const belly = skinColor.belly || skin.belly || '#dcfce7';
-
-  // Smooth squish & stretch crawling wave
-  const wave = Math.sin(wavePhase + index * 0.85);
-  const squash = 1 + wave * 0.08;
-  const stretch = 1 - wave * 0.05;
-
-  return (
-    <svg
-      className="worm-segment-svg-container worm-segment"
-      viewBox="0 0 120 120"
-      style={{ transform: `rotate(${angle}deg) scale(${squash * scale}, ${stretch * scale})` }}
-    >
-      <defs>
-        <radialGradient id={`wormBallSeg-${skinId}-${index}`} cx="35%" cy="30%" r="70%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.8" />
-          <stop offset="18%" stopColor={highlight} />
-          <stop offset="55%" stopColor={primary} />
-          <stop offset="90%" stopColor={secondary} />
-          <stop offset="100%" stopColor={secondary} />
-        </radialGradient>
-        <filter id={`wormSegShadow-${skinId}-${index}`} x="-20%" y="-20%" width="145%" height="145%">
-          <feDropShadow dx="0" dy="4" stdDeviation="3" floodColor="#021a0c" floodOpacity="0.3" />
-        </filter>
-      </defs>
-
-      <g filter={`url(#wormSegShadow-${skinId}-${index})`}>
-        {/* Soft ground shadow */}
-        <ellipse cx="60" cy="94" rx="34" ry="9" fill="rgba(0,0,0,0.18)" />
-
-        {/* Overlapping connector bulge to prevent gaps between segments */}
-        <circle cx="34" cy="60" r="32" fill={secondary} opacity="0.9" />
-        <circle cx="86" cy="60" r="32" fill={secondary} opacity="0.9" />
-
-        {/* Main puffy sphere body segment */}
-        <circle cx="60" cy="60" r="38" fill={`url(#wormBallSeg-${skinId}-${index})`} stroke="rgba(255,255,255,0.3)" strokeWidth="1.2" />
-
-        {/* Soft belly glow */}
-        <ellipse cx="60" cy="78" rx="26" ry="12" fill={belly} opacity="0.45" />
-
-        {/* Subtle cute segmented ring ridge */}
-        <path d="M42 42 Q60 52 78 42" stroke="rgba(255,255,255,0.35)" strokeWidth="3" fill="none" strokeLinecap="round" />
-        <path d="M40 60 Q60 70 80 60" stroke="rgba(0,0,0,0.1)" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-
-        {/* Specular gloss highlight */}
-        <ellipse cx="48" cy="42" rx="9" ry="5.5" fill="#ffffff" opacity="0.4" transform="rotate(-25 48 42)" />
-      </g>
-    </svg>
-  );
-}
-
-/* 3. Worm Tail - Adorable tapered button tip with little curl */
-function WormTailSVG({ skinId = 'emerald', skinColor = {}, time = 0, angle = 0 }) {
-  const skin = SKINS.find(s => s.id === skinId) || SKINS[0];
-  const primary = skinColor.primary || skin.primary;
-  const secondary = skinColor.secondary || skin.secondary;
-  const highlight = skinColor.highlight || skin.highlight;
-  const belly = skinColor.belly || skin.belly || '#dcfce7';
-  const wiggle = Math.sin(time * 0.007) * 6;
-
-  return (
-    <svg className="worm-tail-svg-container worm-tail" viewBox="0 0 120 120" style={{ transform: `rotate(${angle + wiggle}deg)` }}>
-      <defs>
-        <radialGradient id={`wormBallTail-${skinId}`} cx="35%" cy="30%" r="70%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.75" />
-          <stop offset="20%" stopColor={highlight} />
-          <stop offset="55%" stopColor={primary} />
-          <stop offset="90%" stopColor={secondary} />
-          <stop offset="100%" stopColor={secondary} />
-        </radialGradient>
-        <filter id={`wormTailShadow-${skinId}`} x="-20%" y="-20%" width="145%" height="145%">
-          <feDropShadow dx="0" dy="4" stdDeviation="3" floodColor="#021a0c" floodOpacity="0.3" />
-        </filter>
-      </defs>
-
-      <g filter={`url(#wormTailShadow-${skinId})`}>
-        {/* Soft shadow */}
-        <ellipse cx="52" cy="90" rx="26" ry="8" fill="rgba(0,0,0,0.18)" />
-
-        {/* Connector body sphere */}
-        <circle cx="70" cy="60" r="30" fill={secondary} opacity="0.9" />
-
-        {/* Tapered cute round tail sphere */}
-        <ellipse cx="48" cy="60" rx="30" ry="26" fill={`url(#wormBallTail-${skinId})`} stroke="rgba(255,255,255,0.3)" strokeWidth="1.2" />
-
-        {/* Little rounded tail tip button */}
-        <circle cx="24" cy="60" r="14" fill={secondary} stroke={highlight} strokeWidth="1" />
-        <circle cx="22" cy="58" r="5" fill="#ffffff" opacity="0.5" />
-
-        {/* Cute ring ridge */}
-        <path d="M38 48 Q50 56 62 48" stroke="rgba(255,255,255,0.35)" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-        <ellipse cx="44" cy="46" rx="7" ry="4" fill="#ffffff" opacity="0.35" transform="rotate(-20 44 46)" />
-      </g>
+      {segCount > 1 && (
+        <g transform={`translate(${points[segCount - 1].x},${points[segCount - 1].y})`}>
+          <circle cx="0" cy="0" r={points[segCount - 1].width / 2.5} fill={secondary} opacity="0.85" />
+          <circle cx="0" cy="0" r={points[segCount - 1].width / 4} fill="#ffffff" opacity="0.3" />
+        </g>
+      )}
     </svg>
   );
 }
@@ -679,7 +734,7 @@ function PremiumTreasureTileSVG({ pulsePhase = 0 }) {
 }
 
 export { SKINS, calculateStars, WorldIcons, WorldIcon,
-  WormHeadSVG, WormSegmentSVG, WormTailSVG,
+  ContinuousWormSVG,
   PremiumAppleSVG, PremiumPortalSVG, PremiumStoneWallSVG,
   PremiumGrassTileSVG, PremiumStoneBlockSVG, PremiumCrateTileSVG,
   PremiumIceTileSVG, PremiumTreasureTileSVG };

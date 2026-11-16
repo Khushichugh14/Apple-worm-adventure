@@ -488,7 +488,79 @@ button:focus-visible {
   .ambient-near-orb:nth-child(1) { width: 350px; height: 350px; }
   .ambient-near-orb:nth-child(2) { width: 280px; height: 280px; }
   .ambient-near-orb:nth-child(3) { width: 220px; height: 220px; }
+
+  /* Larger touch targets on mobile */
+  .dpad-direction-button {
+    width: 64px;
+    height: 64px;
+  }
+  .dpad-row-keys { gap: 10px; }
+  .virtual-dpad-cluster { gap: 12px; }
+
+  /* Dock buttons larger on mobile */
+  .dock-action-btn {
+    padding: 14px 24px;
+    font-size: 14px;
+    min-width: 100px;
+  }
+  .dock-action-btn.powerup-btn { min-width: 56px; padding: 12px 10px; }
+
+  /* HUD compact on mobile */
+  .hud-action-icon-btn { width: 48px; height: 48px; }
+  .hud-brand-pill { padding: 8px 12px; gap: 8px; }
+  .brand-title-text { font-size: 13px; }
+
+  /* Board fills more of screen on mobile */
+  .garden-board-wrapper {
+    max-width: min(95vw, 700px);
+    max-height: min(72vh, 700px);
+    padding: 4px;
+  }
+  .garden-matrix-grid { gap: 2px; padding: 4px; }
+
+  /* Modal padding on mobile */
+  .game-modal-panel { padding: 24px 20px; margin: 12px; }
+  .game-modal-backdrop { padding: 12px; }
+
+  /* Victory/failure modal stats */
+  .stats-summary-grid { grid-template-columns: 1fr; gap: 10px; }
 }
+
+@media (max-width: 768px) and (min-width: 481px) {
+  /* Tablet adjustments */
+  .dpad-direction-button { width: 56px; height: 56px; }
+  .garden-board-wrapper { max-width: min(80vw, 640px); max-height: min(75vh, 640px); }
+}
+
+/* Drag-to-move gesture area for mobile */
+.drag-gesture-hint {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-toast);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: rgba(18, 22, 44, 0.8);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  backdrop-filter: blur(12px);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+.drag-gesture-hint.show { opacity: 0.85; }
+
+/* Improved HUD stat spacing */
+.hud-stat-value small { font-size: 0.7em; opacity: 0.7; }
+
+/* Level node badge improvements */
+.level-node-badge { min-width: 64px; height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 
 @media (prefers-reduced-motion: reduce) {
   .ambient-far-mote,
@@ -1412,7 +1484,46 @@ button:focus-visible {
 .hazard-icon { color: var(--ruby-bright); }
 .block-icon { color: var(--gold-bright); }
 
-/* Worm overlay layer */
+/* Continuous Worm SVG - Single connected creature */
+.continuous-worm-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.6));
+  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.continuous-worm-svg.moving {
+  animation: wormBodySquish 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.continuous-worm-svg.eating {
+  animation: wormEatPulse 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.continuous-worm-svg.happy {
+  animation: wormHappyBounce 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes wormBodySquish {
+  0% { transform: rotate(var(--head-rot, 0deg)) scale(0.95, 1.05); }
+  50% { transform: rotate(var(--head-rot, 0deg)) scale(1.08, 0.92); }
+  100% { transform: rotate(var(--head-rot, 0deg)) scale(1, 1); }
+}
+
+@keyframes wormEatPulse {
+  0% { transform: rotate(var(--head-rot, 0deg)) scale(1); }
+  30% { transform: rotate(var(--head-rot, 0deg)) scale(1.15); }
+  60% { transform: rotate(var(--head-rot, 0deg)) scale(0.9); }
+  100% { transform: rotate(var(--head-rot, 0deg)) scale(1); }
+}
+
+@keyframes wormHappyBounce {
+  0% { transform: rotate(var(--head-rot, 0deg)) translateY(0) scale(1); }
+  100% { transform: rotate(var(--head-rot, 0deg)) translateY(-3px) scale(1.02); }
+}
+
+/* Smooth curved movement transition for worm position */
 .worm-overlay-layer {
   position: absolute;
   inset: 0;
@@ -1420,89 +1531,11 @@ button:focus-visible {
   z-index: 15;
 }
 
-.worm-overlay-seg {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--transition-fast);
-}
+/* Remove old segment-specific styles - worm is now a single continuous SVG */
 
-/* Worm Head */
-.worm-head-svg-container {
-  width: 98%;
-  height: 98%;
-  display: block;
-  transition: transform var(--transition-fast);
-  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.7));
-  z-index: 20;
-}
-
-.worm-head-svg-container.facing-up { transform: rotate(-90deg); }
-.worm-head-svg-container.facing-down { transform: rotate(90deg); }
-.worm-head-svg-container.facing-left { transform: scaleX(-1); }
-.worm-head-svg-container.facing-right { transform: scaleX(1); }
-
-.worm-head-svg-container.moving {
-  animation: headSlitherLunge 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.worm-head-svg-container.eating {
-  animation: headEatChomp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.worm-head-svg-container.idle {
-  animation: headIdleBreath 4s ease-in-out infinite;
-}
-
-@keyframes headSlitherLunge {
-  0% { transform: scale(0.92); }
-  40% { transform: scale(1.12); }
-  100% { transform: scale(1); }
-}
-
-@keyframes headEatChomp {
-  0% { transform: scale(1); }
-  30% { transform: scale(1.18); }
-  60% { transform: scale(0.92); }
-  100% { transform: scale(1); }
-}
-
-@keyframes headIdleBreath {
-  0%, 100% { transform: scale(1) translateY(0); }
-  50% { transform: scale(1.015) translateY(-1.5px); }
-}
-
-/* Worm Segments */
-.worm-segment-svg-container {
-  width: calc(92% * var(--seg-scale, 1));
-  height: calc(92% * var(--seg-scale, 1));
-  display: block;
-  filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.55));
-  transition: all var(--transition-fast);
-}
-
-/* Worm Tail */
-.worm-tail-svg-container {
-  width: 88%;
-  height: 88%;
-  display: block;
-  animation: wormTailWiggle 2s ease-in-out infinite alternate;
-  filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.55));
-}
-
-@keyframes wormTailWiggle {
-  from { transform: rotate(-4deg) scale(0.97); }
-  to { transform: rotate(4deg) scale(1.03); }
-}
-
-/* Head cell animation trigger */
+/* Head cell highlight */
 .garden-tile-cell.head {
   z-index: 25;
-}
-
-.garden-tile-cell.head .worm-head-svg-container {
-  animation: headSlitherLunge 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 /* Apple collected animation */
