@@ -4,6 +4,21 @@ import {
 import '../style.css';
 
 /* ===================================================
+   WORLD THEME PALETTES - Premium 3D environment colors
+   =================================================== */
+const WORLD_PALETTES = {
+  1: { name: 'Enchanted Forest', bg: '#0b1a12', grass: '#22c55e', dirt: '#78350f', stone: '#475569', glow: '#34d399', accent: '#15803d', deep: '#062614' },
+  2: { name: 'Magical Garden', bg: '#1a1408', grass: '#f59e0b', dirt: '#854d0e', stone: '#78350f', glow: '#fbbf24', accent: '#d97706', deep: '#120c02' },
+  3: { name: 'Crystal Underground', bg: '#051018', grass: '#38bdf8', dirt: '#164e63', stone: '#334155', glow: '#67e8f9', accent: '#0e7490', deep: '#020c17' },
+  4: { name: 'Frozen Ice Kingdom', bg: '#0a0c14', grass: '#60a5fa', dirt: '#1e293b', stone: '#475569', glow: '#7dd3fc', accent: '#38bdf8', deep: '#050714' },
+  5: { name: 'Cosmic Galaxy', bg: '#0a0410', grass: '#a855f7', dirt: '#581c87', stone: '#4c1d95', glow: '#c084fc', accent: '#9333ea', deep: '#05020e' },
+};
+
+function worldPalette(worldId = 1) {
+  return WORLD_PALETTES[worldId] || WORLD_PALETTES[1];
+}
+
+/* ===================================================
    WORM SKINS - Cheerful, Cartoon Apple Worm Skins
    =================================================== */
 const SKINS = [
@@ -353,86 +368,66 @@ function ContinuousWormSVG({
   );
 }
 
-/* 4. Glossy 3D Candy Apple (Juicy & Delicious) */
-function PremiumAppleSVG({ collected = false, bobPhase = 0 }) {
+/* 4. World-Aware Glossy 3D Apple - Each world has distinct apple styling */
+function PremiumAppleSVG({ collected = false, bobPhase = 0, worldId = 1 }) {
   const bobY = Math.sin(bobPhase) * 3.5;
   const bobRotate = Math.sin(bobPhase * 0.7) * 2;
+  const t = worldPalette(worldId);
+
+  const appleColor = worldId === 5 ? '#f472b6' : worldId === 3 ? '#38bdf8' : worldId === 4 ? '#7dd3fc' : '#ef4444';
+  const appleDark = worldId === 5 ? '#db2777' : worldId === 3 ? '#0e7490' : worldId === 4 ? '#38bdf8' : '#b91c1c';
+  const stemColor = worldId === 4 ? '#0f172a' : '#78350f';
+  const leafColor = worldId === 3 ? '#22c55e' : worldId === 5 ? '#a855f7' : '#22c55e';
 
   return (
     <svg
-      className={`premium-apple ${collected ? 'collected' : ''}`}
+      className={`premium-apple apple-world-${worldId} ${collected ? 'collected' : ''}`}
       viewBox="0 0 120 120"
       style={{
         transform: `translateY(${bobY}px) rotate(${bobRotate}deg)`
       }}
     >
       <defs>
-        {/* Candy Gloss Apple Gradient */}
-        <radialGradient id="candyAppleGrad" cx="30%" cy="25%" r="75%">
+        <radialGradient id={`candyAppleGrad-${worldId}`} cx="30%" cy="25%" r="75%">
           <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
-          <stop offset="12%" stopColor="#fecaca" />
-          <stop offset="30%" stopColor="#f87171" />
-          <stop offset="60%" stopColor="#ef4444" />
-          <stop offset="85%" stopColor="#b91c1c" />
-          <stop offset="100%" stopColor="#7f1d1d" />
+          <stop offset="12%" stopColor="rgba(255,255,255,0.6)" />
+          <stop offset="30%" stopColor={appleColor} />
+          <stop offset="60%" stopColor={appleColor} />
+          <stop offset="85%" stopColor={appleDark} />
+          <stop offset="100%" stopColor={appleDark} />
         </radialGradient>
-        {/* Wooden Stem */}
-        <linearGradient id="appleStemGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#78350f" />
-          <stop offset="50%" stopColor="#92400e" />
-          <stop offset="100%" stopColor="#451a03" />
+        <linearGradient id={`appleStemGrad-${worldId}`} x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor={stemColor} />
+          <stop offset="100%" stopColor="#1e293b" />
         </linearGradient>
-        {/* Juicy Leaf */}
-        <linearGradient id="appleLeafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#86efac" />
-          <stop offset="50%" stopColor="#22c55e" />
-          <stop offset="100%" stopColor="#15803d" />
+        <linearGradient id={`appleLeafGrad-${worldId}`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.4" />
+          <stop offset="50%" stopColor={leafColor} />
+          <stop offset="100%" stopColor={leafColor} />
         </linearGradient>
-        <filter id="appleGlowDrop" x="-30%" y="-30%" width="160%" height="160%">
-          <feDropShadow dx="0" dy="6" stdDeviation="4" floodColor="#ef4444" floodOpacity="0.5" />
+        <filter id={`appleGlowDrop-${worldId}`} x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="6" stdDeviation="4" floodColor={t.glow} floodOpacity="0.5" />
         </filter>
       </defs>
 
-      <g filter="url(#appleGlowDrop)">
-        {/* Ground shadow */}
+      <g filter={`url(#appleGlowDrop-${worldId})`}>
         <ellipse cx="60" cy="100" rx="34" ry="10" fill="rgba(0,0,0,0.25)" />
 
-        {/* Curved wooden stem */}
-        <path d="M60 42 Q62 24 72 16" stroke="url(#appleStemGrad)" strokeWidth="6" strokeLinecap="round" fill="none" />
-
-        {/* Fresh vibrant green leaf */}
+        <path d="M60 42 Q62 24 72 16" stroke={`url(#appleStemGrad-${worldId})`} strokeWidth="6" strokeLinecap="round" fill="none" />
         <g transform="translate(68, 16) rotate(18)">
-          <path d="M0 14 C8 2, 26 2, 32 12 C34 20, 20 26, 0 18 Z" fill="url(#appleLeafGrad)" stroke="#166534" strokeWidth="1.8" />
+          <path d="M0 14 C8 2, 26 2, 32 12 C34 20, 20 26, 0 18 Z" fill={`url(#appleLeafGrad-${worldId})`} stroke="#166534" strokeWidth="1.8" />
           <path d="M0 15 Q14 8 28 12" stroke="#14532d" strokeWidth="1.4" fill="none" />
         </g>
 
-        {/* Main plump 3D Apple body (double lobe heart-like shape) */}
         <path
-          d="M60 44
-             C46 36, 18 42, 18 68
-             C18 94, 44 104, 60 102
-             C76 104, 102 94, 102 68
-             C102 42, 74 36, 60 44 Z"
-          fill="url(#candyAppleGrad)"
+          d="M60 44 C46 36, 18 42, 18 68 C18 94, 44 104, 60 102 C76 104, 102 94, 102 68 C102 42, 74 36, 60 44 Z"
+          fill={`url(#candyAppleGrad-${worldId})`}
           stroke="rgba(255,255,255,0.4)"
           strokeWidth="1.5"
         />
-
-        {/* Shiny curved gloss streak */}
-        <path
-          d="M32 54 C28 64, 28 78, 38 88"
-          stroke="#ffffff"
-          strokeWidth="5"
-          strokeLinecap="round"
-          fill="none"
-          opacity="0.65"
-        />
+        <path d="M32 54 C28 64, 28 78, 38 88" stroke="#ffffff" strokeWidth="5" strokeLinecap="round" fill="none" opacity="0.65" />
         <circle cx="36" cy="50" r="3.5" fill="#ffffff" opacity="0.8" />
-
-        {/* Apple dimple top */}
-        <ellipse cx="60" cy="45" rx="7" ry="3.5" fill="#7f1d1d" opacity="0.6" />
-
-        {/* Twinkle sparkle stars */}
+        <ellipse cx="60" cy="45" rx="7" ry="3.5" fill={appleDark} opacity="0.6" />
         <g transform="translate(86, 48)">
           <polygon points="6,0 7.5,4.5 12,6 7.5,7.5 6,12 4.5,7.5 0,6 4.5,4.5" fill="#fef08a" />
         </g>
@@ -441,61 +436,66 @@ function PremiumAppleSVG({ collected = false, bobPhase = 0 }) {
   );
 }
 
-/* 5. Mysterious Black Hole / Stargate Portal (Grow Worm Objective) */
-function PremiumPortalSVG({ unlocked = false, pulsePhase = 0 }) {
+/* 5. World-Aware Mystical Portal - Rotating rings, glow, world-specific colors */
+function PremiumPortalSVG({ unlocked = false, pulsePhase = 0, worldId = 1 }) {
   const pulseScale = 1 + Math.sin(pulsePhase * 2) * 0.05;
+  const t = worldPalette(worldId);
+  const portalColor = unlocked ? t.glow : '#475569';
+  const portalColor2 = unlocked ? t.accent : '#334155';
 
   return (
-    <svg className={`premium-portal ${unlocked ? 'unlocked' : 'locked'}`} viewBox="0 0 140 140" style={{ transform: unlocked ? `scale(${pulseScale})` : 'scale(1)' }}>
+    <svg className={`premium-portal portal-world-${worldId} ${unlocked ? 'unlocked' : 'locked'}`} viewBox="0 0 140 140" style={{ transform: unlocked ? `scale(${pulseScale})` : 'scale(1)' }}>
       <defs>
-        <radialGradient id="blackHoleCore" cx="50%" cy="50%" r="50%">
+        <radialGradient id={`blackHoleCore-${worldId}`} cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#000000" />
           <stop offset="55%" stopColor="#050014" />
-          <stop offset="80%" stopColor={unlocked ? '#6d28d9' : '#1e1b4b'} />
-          <stop offset="100%" stopColor={unlocked ? '#a855f7' : '#312e81'} stopOpacity="0.8" />
+          <stop offset="80%" stopColor={unlocked ? portalColor : '#1e1b4b'} />
+          <stop offset="100%" stopColor={unlocked ? portalColor2 : '#312e81'} stopOpacity="0.8" />
         </radialGradient>
-        <radialGradient id="portalAccretionDisk" cx="50%" cy="50%" r="50%">
+        <radialGradient id={`portalAccretionDisk-${worldId}`} cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="transparent" />
-          <stop offset="65%" stopColor={unlocked ? '#38bdf8' : '#475569'} stopOpacity="0.4" />
-          <stop offset="85%" stopColor={unlocked ? '#a855f7' : '#334155'} stopOpacity="0.8" />
-          <stop offset="100%" stopColor={unlocked ? '#f472b6' : '#1e293b'} stopOpacity="0" />
+          <stop offset="65%" stopColor={unlocked ? t.glow : '#475569'} stopOpacity="0.4" />
+          <stop offset="85%" stopColor={unlocked ? portalColor : '#334155'} stopOpacity="0.8" />
+          <stop offset="100%" stopColor={unlocked ? portalColor2 : '#1e293b'} stopOpacity="0" />
         </radialGradient>
-        <filter id="portalBlackHoleGlow" x="-30%" y="-30%" width="160%" height="160%">
+        <filter id={`portalBlackHoleGlow-${worldId}`} x="-30%" y="-30%" width="160%" height="160%">
           <feGaussianBlur stdDeviation="6" result="blur" />
+          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+        <filter id={`portalInnerGlow-${worldId}`} x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3" result="blur" />
           <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
       </defs>
 
-      {/* Outer accretion swirl */}
-      <circle cx="70" cy="70" r="64" fill="url(#portalAccretionDisk)" filter="url(#portalBlackHoleGlow)" />
+      {/* Outer accretion swirl - rotates slowly */}
+      <circle cx="70" cy="70" r="64" fill="url(#portalAccretionDisk-${worldId})" filter={`url(#portalBlackHoleGlow-${worldId})`} />
 
-      {/* Swirling accretion spiral arms */}
       {unlocked ? (
-        <g style={{ transformOrigin: '70px 70px', animation: 'galaxySpinOrbit 3.5s linear infinite' }}>
-          <path d="M70 70 Q95 30 125 50" stroke="#38bdf8" strokeWidth="5" strokeLinecap="round" fill="none" opacity="0.9" />
-          <path d="M70 70 Q45 110 15 90" stroke="#c084fc" strokeWidth="5" strokeLinecap="round" fill="none" opacity="0.9" />
-          <path d="M70 70 Q110 95 90 125" stroke="#f472b6" strokeWidth="4" strokeLinecap="round" fill="none" opacity="0.8" />
+        <g style={{ transformOrigin: '70px 70px', animation: 'galaxySpinOrbit 4s linear infinite' }}>
+          <path d="M70 70 Q95 30 125 50" stroke={t.glow} strokeWidth="5" strokeLinecap="round" fill="none" opacity="0.9" filter={`url(#portalInnerGlow-${worldId})`} />
+          <path d="M70 70 Q45 110 15 90" stroke={portalColor2} strokeWidth="5" strokeLinecap="round" fill="none" opacity="0.9" filter={`url(#portalInnerGlow-${worldId})`} />
+          <path d="M70 70 Q110 95 90 125" stroke={t.accent} strokeWidth="4" strokeLinecap="round" fill="none" opacity="0.8" />
           <path d="M70 70 Q30 45 50 15" stroke="#fbbf24" strokeWidth="4" strokeLinecap="round" fill="none" opacity="0.8" />
         </g>
       ) : (
-        /* Dormant locked portal ring */
         <g opacity="0.7">
           <circle cx="70" cy="70" r="54" fill="none" stroke="#475569" strokeWidth="3" strokeDasharray="8 6" />
         </g>
       )}
 
-      {/* Deep Black Hole center (event horizon) */}
-      <circle cx="70" cy="70" r="44" fill="url(#blackHoleCore)" filter="url(#portalBlackHoleGlow)" />
+      {/* Deep Black Hole center */}
+      <circle cx="70" cy="70" r="44" fill={`url(#blackHoleCore-${worldId})`} filter={`url(#portalBlackHoleGlow-${worldId})`} />
       <circle cx="70" cy="70" r="30" fill="#000000" />
 
-      {/* Center glowing singularity dot */}
+      {/* Center glowing singularity */}
       {unlocked ? (
-        <g>
-          <circle cx="70" cy="70" r="6" fill="#ffffff" filter="url(#portalBlackHoleGlow)" />
-          <circle cx="70" cy="70" r="10" fill="#38bdf8" opacity="0.5" />
+        <g filter={`url(#portalInnerGlow-${worldId})`}>
+          <circle cx="70" cy="70" r="6" fill="#ffffff" />
+          <circle cx="70" cy="70" r="10" fill={t.glow} opacity="0.5" />
+          <circle cx="70" cy="70" r="14" fill={t.glow} opacity="0.25" />
         </g>
       ) : (
-        /* Cute lock icon when locked */
         <g transform="translate(56, 52)">
           <rect x="3" y="14" width="22" height="18" rx="4" fill="#334155" stroke="#94a3b8" strokeWidth="2" />
           <path d="M8 14 V8 C8 4 20 4 20 8 V14" fill="none" stroke="#94a3b8" strokeWidth="2.5" strokeLinecap="round" />
@@ -507,72 +507,74 @@ function PremiumPortalSVG({ unlocked = false, pulsePhase = 0 }) {
   );
 }
 
-/* 6. Lush Cartoon Maze Wall Block (Dirt with Vibrant Grass Top) */
+/* 6. World-Aware 3D Raised Maze Wall - Beveled edges, depth, shadows, world materials */
 function PremiumStoneWallSVG({ worldId = 1, variant = 0, seed = 0 }) {
-  // Rich cartoon environments for each realm
-  const themes = {
-    1: { grass: '#22c55e', grassLight: '#86efac', grassDark: '#15803d', dirt: '#78350f', dirtDark: '#451a03', dirtLight: '#92400e', rock: '#a16207' },
-    2: { grass: '#eab308', grassLight: '#fef08a', grassDark: '#a16207', dirt: '#854d0e', dirtDark: '#543007', dirtLight: '#a16207', rock: '#ca8a04' },
-    3: { grass: '#06b6d4', grassLight: '#a5f3fc', grassDark: '#0e7490', dirt: '#164e63', dirtDark: '#083344', dirtLight: '#155e75', rock: '#0284c7' },
-    4: { grass: '#a855f7', grassLight: '#e9d5ff', grassDark: '#7e22ce', dirt: '#581c87', dirtDark: '#3b0764', dirtLight: '#6b21a8', rock: '#9333ea' },
-    5: { grass: '#ec4899', grassLight: '#fbcfe8', grassDark: '#be185d', dirt: '#831843', dirtDark: '#500724', dirtLight: '#9d174d', rock: '#db2777' },
-  };
-  const t = themes[worldId] || themes[1];
+  const t = worldPalette(worldId);
   const gid = `mazeWall-${worldId}-${variant}-${seed % 5}`;
+
+  // World-specific wall materials
+  const materials = {
+    1: { side: '#3f624a', top: '#22c55e', topLight: '#86efac', topDark: '#15803d', rim: '#4ade80', crack: '#15803d' },
+    2: { side: '#6b4a1e', top: '#f59e0b', topLight: '#fef08a', topDark: '#a16207', rim: '#fcd34d', crack: '#78350f' },
+    3: { side: '#2d4a5f', top: '#38bdf8', topLight: '#a5f3fc', topDark: '#0e7490', rim: '#67e8f9', crack: '#0369a1' },
+    4: { side: '#2e1065', top: '#60a5fa', topLight: '#7dd3fc', topDark: '#38bdf8', rim: '#bae6fd', crack: '#1e3a8a' },
+    5: { side: '#5b21b6', top: '#a855f7', topLight: '#e9d5ff', topDark: '#7e22ce', rim: '#d8b4fe', crack: '#7e22ce' },
+  };
+  const m = materials[worldId] || materials[1];
 
   return (
     <svg className="premium-wall" viewBox="0 0 120 120">
       <defs>
-        {/* Rich dirt gradient */}
-        <linearGradient id={`${gid}-dirt`} x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor={t.dirtLight} />
-          <stop offset="50%" stopColor={t.dirt} />
-          <stop offset="100%" stopColor={t.dirtDark} />
-        </linearGradient>
-        {/* Lush grass gradient */}
-        <linearGradient id={`${gid}-grass`} x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor={t.grassLight} />
-          <stop offset="40%" stopColor={t.grass} />
-          <stop offset="100%" stopColor={t.grassDark} />
-        </linearGradient>
-        <filter id={`${gid}-shadow`} x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="5" stdDeviation="3.5" floodColor="#000000" floodOpacity="0.45" />
+        <filter id={`${gid}-wallShadow`} x="-25%" y="-25%" width="150%" height="150%">
+          <feDropShadow dx="0" dy="8" stdDeviation="6" floodColor="#000000" floodOpacity="0.5" />
         </filter>
       </defs>
 
-      <g filter={`url(#${gid}-shadow)`}>
-        {/* Main block foundation */}
-        <rect x="4" y="4" width="112" height="112" rx="14" fill={`url(#${gid}-dirt)`} stroke="#1c1004" strokeWidth="2.5" />
+      <g filter={`url(#${gid}-wallShadow)`}>
+        {/* Left side face - 3D depth */}
+        <path d="M4 4 L14 14 L14 110 L4 100 Z" fill={t.dirt} opacity="0.7" />
+        {/* Right side face - 3D depth */}
+        <path d="M116 4 L106 14 L106 110 L116 100 Z" fill={t.dirt} opacity="0.4" />
+        {/* Top side face - 3D depth */}
+        <path d="M4 4 L14 14 L106 14 L116 4 Z" fill="#000000" opacity="0.3" />
 
-        {/* Embedded cartoon pebbles / texture */}
-        <circle cx="30" cy="65" r="7" fill={t.dirtDark} opacity="0.6" />
-        <circle cx="28" cy="63" r="5" fill={t.rock} opacity="0.8" />
-        <circle cx="85" cy="80" r="9" fill={t.dirtDark} opacity="0.6" />
-        <circle cx="83" cy="78" r="6.5" fill={t.rock} opacity="0.8" />
-        <ellipse cx="60" cy="92" rx="11" ry="6" fill={t.dirtDark} opacity="0.7" />
+        {/* Main front face - raised block */}
+        <rect x="14" y="14" width="92" height="92" rx="12" fill={`url(#${gid}-dirt)`} stroke="#1c1004" strokeWidth="2" />
 
-        {/* Top vibrant cartoon grass crown */}
-        <path
-          d="M4 18
-             Q12 4 20 16
-             Q28 26 36 12
-             Q44 24 54 14
-             Q64 26 74 12
-             Q84 24 94 14
-             Q104 26 116 18
-             L116 4 Q116 4 104 4 L16 4 Q4 4 4 18 Z"
-          fill={`url(#${gid}-grass)`}
-        />
+        {/* Top bevel edge - highlights the raised top */}
+        <path d="M14 14 Q60 8 106 14" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" fill="none" />
+        <path d="M16 14 Q60 10 104 14" stroke="rgba(0,0,0,0.3)" strokeWidth="1" strokeLinecap="round" fill="none" />
 
-        {/* Hanging grass tufts dropping down over dirt */}
-        <path d="M14 18 Q18 36 24 18" fill={t.grassDark} />
-        <path d="M38 16 Q44 40 50 16" fill={t.grassDark} />
-        <path d="M70 16 Q76 38 82 16" fill={t.grassDark} />
-        <path d="M96 18 Q100 34 106 18" fill={t.grassDark} />
+        {/* World-specific top material */}
+        <path d="M16 16 Q60 12 104 16 Q108 18 108 100 Q60 104 12 100 Q10 18 16 16 Z" fill={`url(#${gid}-top)`} />
 
-        {/* Gloss highlight on top border */}
-        <path d="M10 8 Q60 5 110 8" stroke="rgba(255,255,255,0.45)" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+        {/* Embedded stones/texture on front face */}
+        <circle cx="30" cy="40" r="6" fill={t.dirt} opacity="0.5" />
+        <circle cx="28" cy="38" r="4" fill={m.side} opacity="0.8" />
+        <circle cx="85" cy="55" r="7" fill={t.dirt} opacity="0.5" />
+        <circle cx="83" cy="53" r="5" fill={m.side} opacity="0.8" />
+        <circle cx="55" cy="85" r="5" fill={t.dirt} opacity="0.5" />
+
+        {/* Vertical highlight rim on right edge */}
+        <path d="M104 16 Q106 60 104 104" stroke="rgba(255,255,255,0.2)" strokeWidth="2" strokeLinecap="round" fill="none" />
+
+        {/* Crack detail lines */}
+        <g stroke={m.crack} strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.3">
+          <path d="M25 25 Q60 35 95 25" />
+          <path d="M25 95 Q60 85 95 95" />
+        </g>
+
+        {/* Top surface highlight glow */}
+        <path d="M20 18 Q60 14 100 18" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.6" />
       </g>
+
+      <defs>
+        <linearGradient id={`${gid}-top`} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor={m.topLight} />
+          <stop offset="40%" stopColor={m.top} />
+          <stop offset="100%" stopColor={m.topDark} />
+        </linearGradient>
+      </defs>
     </svg>
   );
 }
@@ -746,8 +748,213 @@ function PremiumTreasureTileSVG({ pulsePhase = 0 }) {
   );
 }
 
+/* 12. World Background - Rich layered background per world theme */
+function WorldBackgroundSVG({ worldId = 1 }) {
+  const t = worldPalette(worldId);
+
+  const worldDetails = {
+    1: {
+      gradient: `linear-gradient(180deg, ${t.deep} 0%, ${t.bg} 40%, ${t.bg} 100%)`,
+      decorations: `
+        <g opacity="0.6">
+          <ellipse cx="20" cy="30" rx="40" ry="20" fill="${t.grass}" opacity="0.15" filter="blur(8px)" />
+          <ellipse cx="100" cy="90" rx="50" ry="30" fill="${t.grass}" opacity="0.15" filter="blur(8px)" />
+          <ellipse cx="60" cy="10" rx="60" ry="25" fill="#ffffff" opacity="0.08" filter="blur(10px)" />
+        </g>
+      `
+    },
+    2: {
+      gradient: `linear-gradient(180deg, ${t.deep} 0%, ${t.bg} 40%, ${t.bg} 100%)`,
+      decorations: `
+        <g opacity="0.5">
+          <ellipse cx="30" cy="40" rx="35" ry="20" fill="${t.glow}" opacity="0.15" filter="blur(10px)" />
+          <ellipse cx="110" cy="80" rx="45" ry="25" fill="${t.glow}" opacity="0.15" filter="blur(10px)" />
+        </g>
+      `
+    },
+    3: {
+      gradient: `linear-gradient(180deg, ${t.deep} 0%, ${t.bg} 40%, ${t.bg} 100%)`,
+      decorations: `
+        <g opacity="0.6">
+          <ellipse cx="25" cy="35" rx="40" ry="25" fill="${t.glow}" opacity="0.2" filter="blur(12px)" />
+          <ellipse cx="95" cy="85" rx="50" ry="30" fill="${t.accent}" opacity="0.15" filter="blur(12px)" />
+          <circle cx="60" cy="60" r="80" fill="${t.glow}" opacity="0.05" filter="blur(20px)" />
+        </g>
+      `
+    },
+    4: {
+      gradient: `linear-gradient(180deg, ${t.deep} 0%, ${t.bg} 40%, ${t.bg} 100%)`,
+      decorations: `
+        <g opacity="0.5">
+          <ellipse cx="30" cy="30" rx="35" ry="20" fill="${t.glow}" opacity="0.15" filter="blur(10px)" />
+          <ellipse cx="110" cy="90" rx="45" ry="25" fill="#e0f2fe" opacity="0.15" filter="blur(10px)" />
+        </g>
+      `
+    },
+    5: {
+      gradient: `linear-gradient(180deg, ${t.deep} 0%, ${t.bg} 40%, ${t.bg} 100%)`,
+      decorations: `
+        <g opacity="0.6">
+          <ellipse cx="20" cy="40" rx="45" ry="30" fill="${t.glow}" opacity="0.2" filter="blur(15px)" />
+          <ellipse cx="100" cy="70" rx="55" ry="35" fill="#fbbf24" opacity="0.15" filter="blur(15px)" />
+          <circle cx="60" cy="60" r="90" fill="${t.glow}" opacity="0.04" filter="blur(25px)" />
+        </g>
+      `
+    }
+  };
+
+  const w = worldDetails[worldId] || worldDetails[1];
+
+  return (
+    <svg className="world-background-svg" viewBox="0 0 100 100" preserveAspectRatio="none" style={{ width: '100%', height: '100%', display: 'block' }}>
+      <defs>
+        <linearGradient id={`worldBg-${worldId}`} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor={t.deep} />
+          <stop offset="40%" stopColor={t.bg} />
+          <stop offset="100%" stopColor={t.bg} />
+        </linearGradient>
+        <filter id={`worldNoise-${worldId}`} x="0%" y="0%" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="3" stitchTiles="stitch" />
+          <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.15 0" />
+        </filter>
+      </defs>
+      <rect x="0" y="0" width="100" height="100" fill="url(#worldBg-${worldId})" />
+      <rect x="0" y="0" width="100" height="100" fill="none" filter="url(#worldNoise-${worldId})" opacity="0.3" />
+      <g dangerouslySetInnerHTML={{ __html: w.decorations }} />
+    </svg>
+  );
+}
+
+/* 13. World Tree - Forest decoration for board perimeter */
+function WorldTreeSVG({ worldId = 1, variant = 0 }) {
+  const t = worldPalette(worldId);
+  const treeColor = worldId === 1 ? '#15803d' : worldId === 3 ? '#0e7490' : worldId === 4 ? '#38bdf8' : worldId === 5 ? '#9333ea' : '#a16207';
+  const leafColor = worldId === 1 ? '#22c55e' : worldId === 3 ? '#38bdf8' : worldId === 4 ? '#60a5fa' : worldId === 5 ? '#a855f7' : '#d97706';
+
+  return (
+    <svg className="world-tree-svg" viewBox="0 0 60 100" style={{ width: '100%', height: '100%', display: 'block' }}>
+      <defs>
+        <filter id={`treeShadow-${worldId}`} x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="4" stdDeviation="3" floodColor="#000000" floodOpacity="0.4" />
+        </filter>
+      </defs>
+      <g filter={`url(#treeShadow-${worldId})`}>
+        <path d="M28 100 L32 100 L30 60 L28 100 Z" fill="#4a3728" />
+        <ellipse cx="30" cy="30" rx="18" ry="25" fill={treeColor} />
+        <ellipse cx="22" cy="22" rx="14" ry="18" fill={leafColor} opacity="0.9" />
+        <ellipse cx="38" cy="22" rx="14" ry="18" fill={leafColor} opacity="0.9" />
+        <ellipse cx="30" cy="14" rx="16" ry="16" fill={leafColor} opacity="0.85" />
+      </g>
+    </svg>
+  );
+}
+
+/* 14. World Mushroom - Forest/garden decoration */
+function WorldMushroomSVG({ worldId = 1, variant = 0 }) {
+  const t = worldPalette(worldId);
+  const capColor = worldId === 1 ? '#ef4444' : worldId === 2 ? '#f59e0b' : worldId === 3 ? '#a855f7' : worldId === 4 ? '#fbbf24' : '#c084fc';
+  const stemColor = '#d1d5db';
+
+  return (
+    <svg className="world-mushroom-svg" viewBox="0 0 40 50" style={{ width: '100%', height: '100%', display: 'block' }}>
+      <path d="M10 30 Q20 10 30 30 Q20 34 10 30 Z" fill={capColor} />
+      <path d="M16 30 Q20 26 24 30 Q20 34 16 30 Z" fill="#ffffff" opacity="0.3" />
+      <rect x="18" y="30" width="4" height="16" rx="2" fill={stemColor} />
+      <circle cx="14" cy="26" r="2" fill="#ffffff" opacity="0.6" />
+      <circle cx="24" cy="22" r="2" fill="#ffffff" opacity="0.6" />
+      <circle cx="18" cy="32" r="2" fill="#ffffff" opacity="0.6" />
+    </svg>
+  );
+}
+
+/* 15. World Crystal - Cave decoration */
+function WorldCrystalSVG({ worldId = 1, variant = 0 }) {
+  const t = worldPalette(worldId);
+  const crystalColor = worldId === 1 ? '#22c55e' : worldId === 2 ? '#f59e0b' : worldId === 3 ? '#38bdf8' : worldId === 4 ? '#60a5fa' : '#a855f7';
+
+  return (
+    <svg className="world-crystal-svg" viewBox="0 0 40 60" style={{ width: '100%', height: '100%', display: 'block' }}>
+      <defs>
+        <linearGradient id={`crystalGrad-${worldId}`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.8" />
+          <stop offset="40%" stopColor={crystalColor} />
+          <stop offset="100%" stopColor={crystalColor} />
+        </linearGradient>
+      </defs>
+      <path d="M20 5 L28 25 L20 45 L12 25 Z" fill="url(#crystalGrad-${worldId})" />
+      <path d="M20 15 L24 25 L20 35 L16 25 Z" fill="#ffffff" opacity="0.4" />
+      <circle cx="20" cy="25" r="3" fill="#ffffff" opacity="0.8" />
+    </svg>
+  );
+}
+
+/* 16. World Ice Crystal - Frozen decoration */
+function WorldIceCrystalSVG({ worldId = 1, variant = 0 }) {
+  return (
+    <svg className="world-ice-crystal-svg" viewBox="0 0 40 50" style={{ width: '100%', height: '100%', display: 'block' }}>
+      <defs>
+        <linearGradient id="iceCrystalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="50%" stopColor="#bae6fd" />
+          <stop offset="100%" stopColor="#38bdf8" />
+        </linearGradient>
+      </defs>
+      <path d="M20 2 L30 22 L20 42 L10 22 Z" fill="url(#iceCrystalGrad)" opacity="0.8" />
+      <path d="M20 12 L26 22 L20 32 L14 22 Z" fill="#ffffff" opacity="0.5" />
+      <path d="M20 8 Q22 15 20 22 Q18 15 20 8" fill="none" stroke="#ffffff" strokeWidth="1" opacity="0.6" />
+    </svg>
+  );
+}
+
+/* 17. World Planet - Cosmic decoration */
+function WorldPlanetSVG({ worldId = 1, variant = 0 }) {
+  const t = worldPalette(worldId);
+  const planetColor = worldId === 5 ? '#a855f7' : worldId === 3 ? '#38bdf8' : worldId === 4 ? '#60a5fa' : '#f59e0b';
+
+  return (
+    <svg className="world-planet-svg" viewBox="0 0 50 50" style={{ width: '100%', height: '100%', display: 'block' }}>
+      <defs>
+        <radialGradient id={`planetGrad-${worldId}`} cx="40%" cy="40%" r="60%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.8" />
+          <stop offset="30%" stopColor={planetColor} />
+          <stop offset="100%" stopColor={worldPalette(worldId === 5 ? 1 : 5).deep} />
+        </radialGradient>
+      </defs>
+      <circle cx="25" cy="25" r="18" fill="url(#planetGrad-${worldId})" />
+      <ellipse cx="18" cy="20" rx="6" ry="10" fill="#ffffff" opacity="0.2" transform="rotate(-20 18 20)" />
+      <circle cx="30" cy="32" r="2" fill="#ffffff" opacity="0.6" />
+      <circle cx="15" cy="35" r="1.5" fill="#ffffff" opacity="0.5" />
+    </svg>
+  );
+}
+
+/* 18. Floating Particle - Ambient decoration */
+function FloatingParticleSVG({ worldId = 1, type = 'sparkle' }) {
+  const t = worldPalette(worldId);
+  const color = type === 'sparkle' ? t.glow : type === 'glow' ? t.accent : '#ffffff';
+
+  if (type === 'sparkle') {
+    return (
+      <svg viewBox="0 0 12 12" style={{ width: '100%', height: '100%', display: 'block' }}>
+        <polygon points="6,0 7.5,3 10,3 8.5,6 9,9 6,7.5 3,9 3.5,6 2,3 4.5,3" fill={color} />
+      </svg>
+    );
+  }
+  if (type === 'glow') {
+    return (
+      <svg viewBox="0 0 20 20" style={{ width: '100%', height: '100%', display: 'block' }}>
+        <circle cx="10" cy="10" r="8" fill={color} opacity="0.3" />
+        <circle cx="10" cy="10" r="3" fill={color} opacity="0.8" />
+      </svg>
+    );
+  }
+  return null;
+}
+
 export { SKINS, calculateStars, WorldIcons, WorldIcon,
   ContinuousWormSVG,
   PremiumAppleSVG, PremiumPortalSVG, PremiumStoneWallSVG,
   PremiumGrassTileSVG, PremiumStoneBlockSVG, PremiumCrateTileSVG,
-  PremiumIceTileSVG, PremiumTreasureTileSVG };
+  PremiumIceTileSVG, PremiumTreasureTileSVG,
+  WORLD_PALETTES, worldPalette,
+  WorldBackgroundSVG, WorldTreeSVG, WorldMushroomSVG, WorldCrystalSVG, WorldIceCrystalSVG, WorldPlanetSVG, FloatingParticleSVG };
