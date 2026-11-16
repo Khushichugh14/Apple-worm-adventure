@@ -86,8 +86,8 @@ function ContinuousWormSVG({
   // Build normalized segment points
   const points = segments.map((seg, i) => {
     const t = i / Math.max(1, segCount - 1);
-    const maxW = cellSize * 0.30; // head width
-    const minW = cellSize * 0.10; // tail width
+    const maxW = cellSize * 0.20; // head width
+    const minW = cellSize * 0.06; // tail width
     const segWidth = maxW - (maxW - minW) * t;
     return {
       x: pad + seg[0] * cellSize,
@@ -193,7 +193,7 @@ function ContinuousWormSVG({
         </filter>
       </defs>
 
-      <ellipse cx="60" cy="108" rx="24" ry="8" fill="rgba(0,0,0,0.25)" opacity={isMoving ? 0.6 : 0.4} />
+      <ellipse cx="60" cy="108" rx="18" ry="6" fill="rgba(0,0,0,0.25)" opacity={isMoving ? 0.6 : 0.4} />
 
       <path
         d={pathD}
