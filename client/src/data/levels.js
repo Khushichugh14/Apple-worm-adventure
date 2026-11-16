@@ -68,7 +68,7 @@ const LEVEL_DESIGNS = [
     portal: [6, 1],
     walls: [[2, 3], [2, 4]],
     moveLimit: 22,
-    parMoves: 11
+    parMoves: 16
   },
   {
     id: 2,
@@ -98,7 +98,7 @@ const LEVEL_DESIGNS = [
     portal: [6, 2],
     walls: [[3, 4], [3, 5], [5, 5], [1, 3], [0, 2], [6, 4]],
     moveLimit: 23,
-    parMoves: 12
+    parMoves: 13
   },
   {
     id: 4,
@@ -113,7 +113,7 @@ const LEVEL_DESIGNS = [
     portal: [6, 5],
     walls: [[2, 4], [4, 4], [3, 6], [0, 4], [6, 3], [4, 1]],
     moveLimit: 24,
-    parMoves: 13
+    parMoves: 18
   },
   {
     id: 5,
@@ -128,7 +128,7 @@ const LEVEL_DESIGNS = [
     portal: [5, 1],
     walls: [[3, 1], [3, 2], [3, 3], [3, 5], [0, 3], [6, 4], [1, 4]],
     moveLimit: 24,
-    parMoves: 13
+    parMoves: 16
   },
   {
     id: 6,
@@ -143,7 +143,7 @@ const LEVEL_DESIGNS = [
     portal: [1, 6],
     walls: [[2, 2], [2, 5], [5, 2], [5, 4], [3, 0], [4, 6], [0, 1]],
     moveLimit: 25,
-    parMoves: 14
+    parMoves: 18
   },
   {
     id: 7,
@@ -158,7 +158,7 @@ const LEVEL_DESIGNS = [
     portal: [4, 4],
     walls: [[3, 3], [4, 3], [5, 3], [3, 5], [1, 4], [0, 2], [6, 1]],
     moveLimit: 25,
-    parMoves: 14
+    parMoves: 16
   },
   {
     id: 8,
@@ -173,7 +173,7 @@ const LEVEL_DESIGNS = [
     portal: [6, 2],
     walls: [[3, 2], [3, 3], [3, 4], [1, 6], [5, 4], [0, 5], [4, 3]],
     moveLimit: 25,
-    parMoves: 14
+    parMoves: 19
   },
   {
     id: 9,
@@ -188,7 +188,7 @@ const LEVEL_DESIGNS = [
     portal: [6, 6],
     walls: [[2, 3], [4, 3], [3, 6], [0, 4], [6, 3], [1, 4], [3, 1]],
     moveLimit: 26,
-    parMoves: 15
+    parMoves: 18
   },
   {
     id: 10,
@@ -203,7 +203,7 @@ const LEVEL_DESIGNS = [
     portal: [6, 1],
     walls: [[2, 3], [4, 4], [4, 5], [6, 4], [1, 3], [5, 6], [3, 1]],
     moveLimit: 26,
-    parMoves: 15
+    parMoves: 17
   },
 
   // World 2: Stone Ruins (Levels 11-20) - Easy
@@ -220,7 +220,7 @@ const LEVEL_DESIGNS = [
     portal: [6, 1],
     walls: [[2, 4], [3, 4], [4, 4], [5, 4], [1, 2], [6, 3], [2, 1]],
     moveLimit: 27,
-    parMoves: 15
+    parMoves: 16
   },
   {
     id: 12,
@@ -235,7 +235,7 @@ const LEVEL_DESIGNS = [
     portal: [6, 6],
     walls: [[2, 2], [3, 2], [4, 2], [2, 5], [3, 5], [4, 5], [1, 3], [6, 3]],
     moveLimit: 28,
-    parMoves: 16
+    parMoves: 20
   },
   {
     id: 13,
@@ -250,7 +250,7 @@ const LEVEL_DESIGNS = [
     portal: [6, 2],
     walls: [[3, 2], [3, 3], [3, 5], [5, 2], [5, 5], [1, 3], [6, 4], [0, 3]],
     moveLimit: 28,
-    parMoves: 16
+    parMoves: 17
   },
   {
     id: 14,
@@ -280,7 +280,7 @@ const LEVEL_DESIGNS = [
     portal: [6, 3],
     walls: [[3, 1], [3, 6], [1, 3], [5, 3], [4, 4], [0, 3], [6, 4], [2, 6]],
     moveLimit: 29,
-    parMoves: 17
+    parMoves: 20
   },
   {
     id: 16,
@@ -295,7 +295,7 @@ const LEVEL_DESIGNS = [
     portal: [4, 1],
     walls: [[2, 2], [2, 4], [4, 2], [4, 4], [6, 4], [1, 3], [5, 3], [3, 6]],
     moveLimit: 30,
-    parMoves: 18
+    parMoves: 21
   },
   {
     id: 17,
@@ -325,7 +325,7 @@ const LEVEL_DESIGNS = [
     portal: [4, 3],
     walls: [[2, 1], [2, 5], [4, 1], [4, 5], [6, 3], [1, 1], [5, 3]],
     moveLimit: 30,
-    parMoves: 17
+    parMoves: 19
   },
   {
     id: 19,
@@ -355,7 +355,7 @@ const LEVEL_DESIGNS = [
     portal: [4, 6],
     walls: [[2, 2], [3, 3], [4, 4], [5, 3], [5, 5], [1, 4], [3, 6], [2, 5]],
     moveLimit: 31,
-    parMoves: 18
+    parMoves: 24
   },
 
   // World 3: Crystal Caverns (Levels 21-30) - Medium
@@ -432,7 +432,7 @@ const LEVEL_DESIGNS = [
     portal: [5, 5],
     walls: [[2, 1], [2, 5], [4, 2], [4, 5], [6, 3], [3, 2], [1, 1], [5, 3]],
     moveLimit: 34,
-    parMoves: 21
+    parMoves: 24
   },
   {
     id: 26,
@@ -442,12 +442,12 @@ const LEVEL_DESIGNS = [
     title: 'Quartz Maze 26',
     difficulty: 'Medium',
     size: 8,
-    worm: [[6, 1], [6, 0]],
-    apples: [[1, 1], [1, 5], [4, 3]],
-    portal: [3, 6],
-    walls: [[4, 1], [4, 2], [4, 4], [4, 5], [2, 3], [5, 3], [5, 4], [3, 5]],
+    worm: [[1, 6], [0, 6]],
+    apples: [[2, 4], [5, 2], [6, 5]],
+    portal: [4, 1],
+    walls: [[3, 2], [3, 3], [4, 4], [1, 3], [5, 4]],
     moveLimit: 34,
-    parMoves: 21
+    parMoves: 20
   },
   {
     id: 27,
@@ -492,7 +492,7 @@ const LEVEL_DESIGNS = [
     portal: [4, 1],
     walls: [[3, 1], [3, 6], [1, 4], [5, 4], [4, 3], [2, 5], [0, 3], [5, 1]],
     moveLimit: 36,
-    parMoves: 23
+    parMoves: 25
   },
   {
     id: 30,
@@ -522,11 +522,11 @@ const LEVEL_DESIGNS = [
     difficulty: 'Hard',
     size: 8,
     worm: [[1, 6], [0, 6]],
-    apples: [[3, 5], [5, 3], [2, 2], [6, 4]],
+    apples: [[3, 5], [5, 3], [2, 2], [6, 5]],
     portal: [4, 1],
-    walls: [[2, 4], [3, 4], [4, 4], [5, 4], [4, 2], [1, 3], [6, 3], [3, 2], [5, 2]],
+    walls: [[2, 4], [3, 4], [4, 4], [1, 3], [5, 4], [3, 2], [6, 3], [2, 3]],
     moveLimit: 37,
-    parMoves: 24
+    parMoves: 26
   },
   {
     id: 32,
@@ -552,11 +552,11 @@ const LEVEL_DESIGNS = [
     difficulty: 'Hard',
     size: 8,
     worm: [[1, 6], [0, 6]],
-    apples: [[2, 4], [4, 2], [6, 5], [3, 3]],
-    portal: [5, 1],
-    walls: [[3, 4], [3, 5], [5, 4], [1, 4], [5, 2], [2, 3], [4, 3], [1, 2]],
+    apples: [[2, 4], [4, 3], [6, 5], [5, 1]],
+    portal: [2, 1],
+    walls: [[3, 4], [3, 5], [5, 4], [1, 3], [4, 2], [6, 2], [2, 3], [5, 5]],
     moveLimit: 38,
-    parMoves: 25
+    parMoves: 24
   },
   {
     id: 34,
@@ -596,12 +596,12 @@ const LEVEL_DESIGNS = [
     title: 'Fae Circle 36',
     difficulty: 'Hard',
     size: 8,
-    worm: [[6, 1], [6, 0]],
-    apples: [[1, 1], [1, 5], [4, 3], [3, 6]],
-    portal: [2, 4],
-    walls: [[4, 1], [4, 2], [4, 4], [4, 5], [2, 3], [5, 3], [3, 3], [5, 4]],
+    worm: [[6, 6], [6, 5]],
+    apples: [[4, 5], [2, 4], [1, 2], [5, 2]],
+    portal: [3, 1],
+    walls: [[4, 4], [3, 4], [2, 3], [5, 3], [4, 2], [1, 5], [0, 4], [0, 3]],
     moveLimit: 40,
-    parMoves: 27
+    parMoves: 25
   },
   {
     id: 37,
@@ -611,12 +611,12 @@ const LEVEL_DESIGNS = [
     title: 'Elder Tree 37',
     difficulty: 'Hard',
     size: 8,
-    worm: [[3, 6], [2, 6]],
-    apples: [[1, 2], [5, 4], [6, 1], [4, 5]],
-    portal: [3, 2],
-    walls: [[2, 2], [4, 2], [2, 4], [4, 4], [1, 4], [5, 2], [3, 5], [5, 5], [1, 3]],
+    worm: [[1, 6], [0, 6]],
+    apples: [[2, 4], [4, 5], [5, 2], [2, 1]],
+    portal: [6, 3],
+    walls: [[3, 4], [3, 5], [4, 3], [2, 3], [5, 4], [6, 2], [0, 1], [7, 6]],
     moveLimit: 40,
-    parMoves: 27
+    parMoves: 25
   },
   {
     id: 38,
@@ -648,7 +648,7 @@ const LEVEL_DESIGNS = [
     portal: [4, 1],
     walls: [[3, 6], [1, 4], [5, 4], [4, 3], [2, 5], [5, 2], [0, 3], [6, 1]],
     moveLimit: 41,
-    parMoves: 28
+    parMoves: 31
   },
   {
     id: 40,
@@ -658,14 +658,14 @@ const LEVEL_DESIGNS = [
     title: 'Orchard Crown 40',
     difficulty: 'Hard',
     size: 8,
-    worm: [[1, 1], [0, 1]],
-    apples: [[6, 1], [3, 5], [6, 6], [2, 3]],
-    portal: [4, 4],
-    walls: [[2, 2], [3, 3], [5, 3], [5, 5], [2, 4], [1, 4], [3, 4], [6, 4]],
+    worm: [[1, 6], [0, 6]],
+    apples: [[2, 4], [4, 5], [5, 2], [6, 4]],
+    portal: [3, 1],
+    walls: [[3, 4], [3, 5], [4, 3], [2, 3], [5, 4], [1, 0], [2, 0], [3, 0]],
     grass: [[0, 0], [7, 7]],
-    treasure: [[5, 0]],
+    treasure: [[6, 1]],
     moveLimit: 42,
-    parMoves: 29
+    parMoves: 27
   },
 
   // World 5: Celestial Sanctuary (Levels 41-50) - Expert
@@ -692,12 +692,12 @@ const LEVEL_DESIGNS = [
     title: 'Nebula Nexus 42',
     difficulty: 'Expert',
     size: 8,
-    worm: [[1, 5], [0, 5]],
-    apples: [[3, 4], [5, 2], [6, 6], [2, 3], [4, 5]],
-    portal: [4, 2],
-    walls: [[2, 4], [4, 4], [5, 4], [2, 2], [4, 6], [6, 4], [1, 3], [3, 6], [1, 4]],
+    worm: [[1, 6], [0, 6]],
+    apples: [[2, 4], [4, 5], [5, 3], [6, 1], [3, 2]],
+    portal: [4, 1],
+    walls: [[3, 4], [3, 5], [4, 3], [2, 3], [5, 4], [1, 3], [0, 0], [1, 0]],
     moveLimit: 44,
-    parMoves: 31
+    parMoves: 30
   },
   {
     id: 43,
@@ -707,12 +707,12 @@ const LEVEL_DESIGNS = [
     title: 'Cosmic Bridge 43',
     difficulty: 'Expert',
     size: 8,
-    worm: [[1, 6], [0, 6]],
-    apples: [[2, 4], [4, 2], [6, 5], [3, 3], [4, 1]],
-    portal: [5, 1],
-    walls: [[3, 4], [3, 5], [5, 4], [1, 4], [5, 2], [2, 3], [4, 3], [1, 2]],
+    worm: [[6, 6], [6, 5]],
+    apples: [[4, 5], [2, 4], [1, 2], [3, 1], [5, 2]],
+    portal: [4, 3],
+    walls: [[3, 4], [3, 5], [4, 4], [2, 3], [5, 3], [0, 0], [1, 0], [2, 0]],
     moveLimit: 44,
-    parMoves: 31
+    parMoves: 30
   },
   {
     id: 44,
@@ -752,12 +752,12 @@ const LEVEL_DESIGNS = [
     title: 'Celestial Spiral 46',
     difficulty: 'Expert',
     size: 8,
-    worm: [[6, 1], [6, 0]],
-    apples: [[1, 1], [1, 5], [4, 3], [3, 6], [5, 2]],
-    portal: [2, 4],
-    walls: [[4, 1], [4, 2], [4, 4], [4, 5], [2, 3], [5, 3], [3, 3], [2, 5]],
+    worm: [[1, 6], [0, 6]],
+    apples: [[2, 4], [4, 5], [5, 3], [6, 5], [3, 1]],
+    portal: [5, 1],
+    walls: [[3, 4], [3, 5], [4, 3], [2, 3], [5, 4], [0, 0], [1, 0], [2, 0]],
     moveLimit: 46,
-    parMoves: 33
+    parMoves: 31
   },
   {
     id: 47,
@@ -767,12 +767,12 @@ const LEVEL_DESIGNS = [
     title: 'Ethereal Hall 47',
     difficulty: 'Expert',
     size: 8,
-    worm: [[3, 6], [2, 6]],
-    apples: [[1, 2], [5, 4], [6, 1], [4, 5], [2, 3]],
-    portal: [3, 2],
-    walls: [[2, 2], [4, 2], [2, 4], [4, 4], [1, 4], [5, 2], [3, 4], [5, 5], [1, 3]],
+    worm: [[6, 6], [6, 5]],
+    apples: [[4, 5], [2, 4], [1, 3], [5, 2], [3, 1]],
+    portal: [2, 1],
+    walls: [[3, 4], [4, 4], [2, 3], [4, 3], [3, 2], [0, 0], [4, 0], [5, 0]],
     moveLimit: 46,
-    parMoves: 33
+    parMoves: 31
   },
   {
     id: 48,
@@ -813,14 +813,14 @@ const LEVEL_DESIGNS = [
     title: 'Sanctum Aeternum 50',
     difficulty: 'Expert',
     size: 8,
-    worm: [[1, 1], [0, 1]],
-    apples: [[6, 1], [3, 5], [6, 6], [2, 3], [4, 2]],
-    portal: [4, 4],
-    walls: [[2, 2], [3, 3], [5, 3], [5, 5], [2, 4], [1, 4], [3, 4], [6, 4], [1, 5]],
-    grass: [[0, 7], [7, 0]],
-    treasure: [[0, 0], [7, 7]],
-    moveLimit: 48,
-    parMoves: 35
+    worm: [[1, 6], [0, 6]],
+    apples: [[2, 4], [4, 5], [5, 3], [6, 1], [3, 2]],
+    portal: [4, 1],
+    walls: [[3, 4], [3, 5], [4, 3], [2, 3], [5, 4], [1, 0], [2, 0], [3, 0]],
+    grass: [[0, 0], [7, 7]],
+    treasure: [[6, 6], [1, 1]],
+    moveLimit: 50,
+    parMoves: 33
   }
 ];
 

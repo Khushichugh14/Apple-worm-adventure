@@ -1,88 +1,76 @@
-import { same } from './engine.js';
+import { step, same } from './engine.js';
 
-const DIRECTIONS = [
-  { name: 'up', delta: [0, -1] },
-  { name: 'down', delta: [0, 1] },
-  { name: 'left', delta: [-1, 0] },
-  { name: 'right', delta: [1, 0] }
-];
+const DIRECTIONS = ['up', 'down', 'left', 'right'];
 
-function blocked(pos, level, state) {
-  const doors = state.doors ?? level.doors ?? [];
-  const movingBlocks = state.movingBlocks ?? level.movingBlocks ?? [];
-  const hazards = level.hazards ?? [];
-  const crates = state.crates ?? level.crates ?? [];
-  const stoneBlocks = state.stoneBlocks ?? level.stoneBlocks ?? [];
-  if (level.walls.some(w => same(w, pos))) return true;
-  if (doors.some(d => same(d, pos))) return true;
-  if (movingBlocks.some(b => same(b, pos))) return true;
-  if (crates.some(c => same(c, pos))) return true;
-  if (stoneBlocks.some(s => same(s.pos, pos))) return true;
-  if (hazards.some(h => same(h, pos))) return true;
-  return false;
+function stateKey(state) {
+  const w = state.worm.map(p => `${p[0]},${p[1]}`).join('|');
+  const a = [...state.apples].map(p => `${p[0]},${p[1]}`).sort().join(';');
+  const k = [...(state.keys || [])].map(p => `${p[0]},${p[1]}`).sort().join(';');
+  const d = (state.doors || []).length;
+  const g = (state.grass || []).length;
+  const t = (state.treasure || []).length;
+  const sb = (state.stoneBlocks || []).map(s => `${s.pos[0]},${s.pos[1]}:${s.hits}`).sort().join(';');
+  const c = (state.crates || []).length;
+  const b = (state.movingBlocks || []).length;
+  return `${w}#${a}#${k}#${d}#${g}#${t}#${sb}#${c}#${b}`;
 }
 
-export function findNextHint(state, level) {
-  if (!state || state.status !== 'playing' || !state.worm || !state.worm.length) {
-    return null;
-  }
+export function findNextHint(state, level, maxExplored = 12000) {
+  if (!state || state.status !== 'playing' || !state.worm || !state.worm.length) return null;
 
-  const head = state.worm[0];
   const targets = state.apples.length > 0 ? state.apples : [level.portal];
   const targetLabel = state.apples.length > 0 ? 'the next apple' : 'the portal';
 
+  const startKey = stateKey(state);
+  const visited = new Set([startKey]);
   const queue = [];
-  const visited = new Set();
-  const key = p => `${p[0]},${p[1]}`;
-
-  visited.add(key(head));
 
   for (const dir of DIRECTIONS) {
-    const nx = head[0] + dir.delta[0];
-    const ny = head[1] + dir.delta[1];
-    const nextPos = [nx, ny];
-
-    if (nx < 0 || ny < 0 || nx >= level.size || ny >= level.size) continue;
-    if (blocked(nextPos, level, state)) continue;
-    const eating = state.apples.some(a => same(a, nextPos));
-    const body = eating ? state.worm : state.worm.slice(0, -1);
-    if (body.some(b => same(b, nextPos))) continue;
-
-    visited.add(key(nextPos));
-    queue.push({ pos: nextPos, path: [nextPos], firstDir: dir.name });
+    const next = step(state, dir, level);
+    if (next === state) continue;
+    const k = stateKey(next);
+    if (visited.has(k)) continue;
+    visited.add(k);
+    const path = [next.worm[0]];
+    if (next.status === 'completed') {
+      return { nextDirection: dir, target: level.portal, targetLabel: 'the portal', distance: 1, path };
+    }
+    if (next.status === 'playing') {
+      queue.push({ state: next, firstDir: dir, path, moves: 1 });
+    }
   }
 
-  while (queue.length > 0) {
-    const { pos, path, firstDir } = queue.shift();
+  let qi = 0;
+  while (qi < queue.length && visited.size < maxExplored) {
+    const cur = queue[qi++];
+    if (cur.moves > level.moveLimit) continue;
 
-    const reachedTarget = targets.find(t => same(t, pos));
-    if (reachedTarget) {
-      return {
-        nextDirection: firstDir,
-        target: reachedTarget,
-        targetLabel,
-        distance: path.length,
-        path
-      };
-    }
-
+    // Early win: if all apples eaten and head adjacent to portal in path sense? completion only when stepping on portal.
+    // Check if current head is on any target for display? targets are apples/portal; stepping on apple consumes it, stepping on portal completes.
+    // So we rely on step results.
     for (const dir of DIRECTIONS) {
-      const nx = pos[0] + dir.delta[0];
-      const ny = pos[1] + dir.delta[1];
-      const nextPos = [nx, ny];
+      const next = step(cur.state, dir, level);
+      if (next === cur.state) continue;
+      const nk = stateKey(next);
+      if (visited.has(nk)) continue;
+      visited.add(nk);
 
-      if (nx < 0 || ny < 0 || nx >= level.size || ny >= level.size) continue;
-      if (visited.has(key(nextPos))) continue;
-      if (blocked(nextPos, level, state)) continue;
+      const npath = [...cur.path, next.worm[0]];
+      if (next.status === 'completed') {
+        return { nextDirection: cur.firstDir, target: level.portal, targetLabel: 'the portal', distance: cur.moves + 1, path: npath };
+      }
+      if (next.status === 'failed') continue;
 
-      visited.add(key(nextPos));
-      queue.push({
-        pos: nextPos,
-        path: [...path, nextPos],
-        firstDir
-      });
+      // If we just ate an apple or reached interesting state, can report target as that apple position.
+      const ateApple = next.apples.length < cur.state.apples.length;
+      if (ateApple) {
+        const eaten = cur.state.apples.find(a => !next.apples.some(b => same(a, b))) || next.worm[0];
+        return { nextDirection: cur.firstDir, target: eaten, targetLabel: 'the next apple', distance: cur.moves + 1, path: npath };
+      }
+      queue.push({ state: next, firstDir: cur.firstDir, path: npath, moves: cur.moves + 1 });
     }
   }
 
+  // Fallback: nearest reachable apple/portal by simple BFS ignoring body dynamics? keep null to avoid wrong hint.
   return null;
 }

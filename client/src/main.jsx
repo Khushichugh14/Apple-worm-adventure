@@ -1,22 +1,20 @@
 ﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { LEVELS, WORLDS } from './data/levels';
-import { SKINS, calculateStars, WorldIcons, WorldIcon,
-  WormHeadSVG, WormSegmentSVG, WormTailSVG,
-  PremiumAppleSVG, PremiumPortalSVG, PremiumStoneWallSVG,
-  PremiumGrassTileSVG, PremiumStoneBlockSVG, PremiumCrateTileSVG,
-  PremiumIceTileSVG, PremiumTreasureTileSVG } from './components/GameElements';
+import { SKINS, calculateStars } from './components/GameElements';
+import HUD from './components/game/HUD';
+import Board from './components/game/Board';
+import ControlDock from './components/game/ControlDock';
 import { initialState, step, same, applyBomb, applyLightning, applyHammer, applyMagicKey, applyRainbow } from './game/engine';
 import { playSound, startBgm, stopBgm, setSfxVolume, setMusicVolume } from './game/audio';
 import { findNextHint } from './game/solver';
 import { API_URL } from './config/gameConfig';
 import './style.css';
 
-// Icons needed inline since not all re-exported
 import {
   Apple as AppleIcon, ArrowDown as ArrowDownIcon, ArrowLeft as ArrowLeftIcon, ArrowRight as ArrowRightIcon, ArrowUp as ArrowUpIcon,
   Award as AwardIcon, ChevronRight as ChevronRightIcon, CircleHelp as CircleHelpIcon, Coins as CoinsIcon,
-  Gamepad2 as Gamepad2Icon, Gem as GemIcon, Lightbulb as LightbulbIcon, LockKeyhole as LockKeyholeIcon,
+  Gem as GemIcon, Lightbulb as LightbulbIcon, LockKeyhole as LockKeyholeIcon,
   RotateCcw as RotateCcwIcon, Settings as SettingsIcon, ShieldCheck as ShieldCheckIcon, Sparkles as SparklesIcon,
   Star as StarIcon, Trophy as TrophyIcon, Volume2 as Volume2Icon, VolumeX as VolumeXIcon, Zap as ZapIcon,
   User as UserIcon, LogOut as LogOutIcon, Check as CheckIcon, X as XIcon, Edit2 as Edit2Icon,
@@ -26,8 +24,7 @@ import {
   ShoppingBag as ShoppingBagIcon, Heart as HeartIcon, Gift as GiftIcon, Palette as PaletteIcon,
   Crown as CrownIcon2, KeyRound as KeyRoundIcon, Leaf as LeafIcon, Mountain as MountainIcon,
   TreePine as TreePineIcon, Trophy as TrophyIcon2, Target as TargetIcon, Medal as MedalIcon,
-  Gem as GemIcon2, Plus as PlusIcon, Menu as MenuIcon, X as XIcon2, Home as HomeIcon,
-  Settings as SettingsIcon2
+  Gem as GemIcon2, Plus as PlusIcon, Menu as MenuIcon, Home as HomeIcon
 } from 'lucide-react';
 
 if ('serviceWorker' in navigator) {
@@ -229,6 +226,7 @@ function App() {
   useEffect(() => {
     if (reducedMotion) {
       setRenderWorm(game.worm.map(p => [...p]));
+      prevWormRef.current = null;
       return;
     }
     const prev = prevWormRef.current;
@@ -236,19 +234,24 @@ function App() {
       setRenderWorm(game.worm.map(p => [...p]));
       return;
     }
-    const duration = 140;
+    const duration = 165;
     const start = performance.now();
     const ease = t => 1 - Math.pow(1 - t, 3);
     const animate = (now) => {
-      const t = Math.min(1, (now - start) / duration);
-      const k = ease(t);
+      const elapsed = now - start;
       const nextWorm = game.worm.map((seg, i) => {
         const from = prev[i] || prev[prev.length - 1] || seg;
+        const lag = Math.min(0.55, i * 0.055);
+        const localT = Math.max(0, Math.min(1, (elapsed / duration - lag) / Math.max(0.001, 1 - lag)));
+        const k = ease(localT);
         return [from[0] + (seg[0] - from[0]) * k, from[1] + (seg[1] - from[1]) * k];
       });
       setRenderWorm(nextWorm);
-      if (t < 1) animFrameRef.current = requestAnimationFrame(animate);
-      else prevWormRef.current = null;
+      if (elapsed < duration * 1.55) animFrameRef.current = requestAnimationFrame(animate);
+      else {
+        setRenderWorm(game.worm.map(p => [...p]));
+        prevWormRef.current = null;
+      }
     };
     if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     animFrameRef.current = requestAnimationFrame(animate);
@@ -533,6 +536,7 @@ function App() {
       if (next.status === 'completed') {
         const stars = calculateStars(next.moves, level.moveLimit + bonusMoves, level.parMoves);
         setEarnedStars(stars);
+        setWormExpression('happy');
         playSound('complete', sound);
         triggerConfetti();
         triggerScreenShake();
@@ -1032,75 +1036,29 @@ function App() {
         </div>
       </div>
 
-      {/* TOP BAR */}
-      <header className="game-arcade-hud redesigned-hud">
-        <div className="hud-top-row">
-          <button className="hud-level-chip" onClick={() => setMapModal(true)} title="Levels & realms">
-            <span className="hud-level-dot" style={{ background: currentWorld.color }} />
-            <span className="hud-level-text"><strong>Level {levelId}</strong> <small>{currentWorld.name}</small></span>
-          </button>
-
-          <div className="hud-stats-row">
-            <div className="hud-stat" title="Moves used / limit">
-              <span className="hud-stat-label">Moves</span>
-              <span className="hud-stat-value">{game.moves}<small>/{level.moveLimit + bonusMoves}</small></span>
-            </div>
-            <div className="hud-stat" title="Apples remaining">
-              <AppleIcon size={14} />
-              <span className="hud-stat-value">{game.apples.length}</span>
-            </div>
-            <div className="hud-stat stars" title="Current star rating">
-              {[1, 2, 3].map(i => (
-                <StarIcon
-                  key={i}
-                  size={16}
-                  className={`star-icon-unit ${liveStars >= i ? 'earned' : ''}`}
-                  fill={liveStars >= i ? '#fbbf24' : 'transparent'}
-                  stroke={liveStars >= i ? '#fbbf24' : '#64748b'}
-                  strokeWidth={liveStars >= i ? 0 : 2}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="hud-actions-compact">
-            <div className="coin-badge-pill compact" title="Coins"><CoinsIcon size={14} /><span>{coins}</span></div>
-            <button className={`hud-action-icon-btn ${sound ? 'active' : ''}`} onClick={() => setSound(!sound)} title="Sound">{sound ? <Volume2Icon size={15} /> : <VolumeXIcon size={15} />}</button>
-            <button className="hud-action-icon-btn" onClick={() => setShopModal(true)} title="Shop"><ShoppingBagIcon size={15} /></button>
-            <button className="hud-action-icon-btn" onClick={() => setAchievementsModal(true)} title="Badges"><AwardIcon size={15} /></button>
-            <button className="hud-action-icon-btn" onClick={() => setSettingsModal(true)} title="Settings"><SettingsIcon size={15} /></button>
-            <button className="hud-action-icon-btn hud-user-avatar" onClick={() => setAuthModal(user ? 'profile' : 'login')} title={user ? user.name : 'Sign in'}>{user ? user.name[0].toUpperCase() : <UserIcon size={14} />}</button>
-          </div>
-        </div>
-        <div className="hud-progress-strip" aria-hidden="true">
-          <div className="hud-progress-track">
-            <span className="hud-progress-fill" style={{ width: `${moveProgress.pct}%` }} />
-            <span className="hud-progress-par" style={{ left: `${moveProgress.parPct}%` }} />
-          </div>
-          <span className="hud-progress-meta">Par {level.parMoves} · <StarIcon size={14} style={{ verticalAlign: 'middle', marginLeft: 2, fill: '#fbbf24' }} /> {totalStarsEarned}/150</span>
-        </div>
-      </header>
-
-      {/* NOTICE TOAST */}
-      {game.apples.length === 0 ? (
-        <div className="notice-banner-pill notice-success" key="portal-open">
-          <SparklesIcon size={16} /> <span>All apples collected! The portal is open.</span>
-        </div>
-      ) : notice && game.status === 'playing' ? (
-        <div className="notice-banner-pill">
-          <span>{notice}</span>
-          <button className="toast-dismiss" onClick={() => setNotice('')}>×</button>
-        </div>
-      ) : null}
-
-      {/* SOLVER HINT BANNER */}
-      {solverHint && (
-        <div className="solver-hint-pill">
-          <CompassIcon size={16} style={{ color: '#38bdf8' }} />
-          <span>Suggested: Slither <b>{solverHint.nextDirection.toUpperCase()}</b> ({solverHint.distance} steps to {solverHint.targetLabel})</span>
-          <button className="toast-dismiss" onClick={() => setSolverHint(null)}>×</button>
-        </div>
-      )}
+      <HUD
+        levelId={levelId}
+        currentWorld={currentWorld}
+        game={game}
+        level={level}
+        bonusMoves={bonusMoves}
+        liveStars={liveStars}
+        coins={coins}
+        sound={sound}
+        user={user}
+        moveProgress={moveProgress}
+        totalStarsEarned={totalStarsEarned}
+        notice={notice}
+        solverHint={solverHint}
+        onOpenMap={() => setMapModal(true)}
+        onToggleSound={() => setSound(!sound)}
+        onOpenShop={() => setShopModal(true)}
+        onOpenAchievements={() => setAchievementsModal(true)}
+        onOpenSettings={() => setSettingsModal(true)}
+        onOpenAuth={() => setAuthModal(user ? 'profile' : 'login')}
+        onDismissNotice={() => setNotice('')}
+        onDismissHint={() => setSolverHint(null)}
+      />
 
       {/* PARTICLE BURSTS */}
       {particleBurst.map(p => (
@@ -1146,154 +1104,36 @@ function App() {
         </div>
       ))}
 
-      {/* CENTER STAGE */}
-      <main className="game-play-stage">
-        <div className="garden-board-wrapper">
-          {/* Floating score popups */}
-          {floatingScores.map(s => {
-            const pctX = (s.x / level.size) * 100 + (100 / (level.size * 2));
-            const pctY = (s.y / level.size) * 100;
-            return (
-              <div key={s.id} className="floating-points-toast" style={{ left: `${pctX}%`, top: `${pctY}%` }}>
-                {s.text}
-              </div>
-            );
-          })}
+      <Board
+        level={level}
+        game={game}
+        board={board}
+        currentWorld={currentWorld}
+        animTime={animTime}
+        hint={hint}
+        solverHint={solverHint}
+        showHintPath={showHintPath}
+        boardFx={boardFx}
+        renderWorm={renderWorm}
+        wormSkin={wormSkin}
+        wormExpression={wormExpression}
+        currentSkin={currentSkin}
+        facing={facing}
+        selectedPowerUp={selectedPowerUp}
+        onApplyPowerUp={applyPowerUp}
+        floatingScores={floatingScores}
+      />
 
-          <div className="garden-floating-island" data-world={currentWorld.id}>
-            <div className="garden-matrix-grid" style={{ '--grid-size': level.size }}>
-              {board.map((p, i) => {
-                const decorSeed = (i * 9301 + 49297) % 233280;
-                const decor = decorSeed / 233280;
-                const r = Math.floor(i / level.size);
-                const c2 = i % level.size;
-                const isWallCell = level.walls.some(w => same(w, p));
-                const isPortalCell = same(level.portal, p);
-                const isAppleCell = isApple(p);
-                const isKeyCell = (game.keys || []).some(k => same(k, p));
-                const isDoorCell = (game.doors || []).some(d => same(d, p));
-                const isHazardCell = (level.hazards || []).some(h => same(h, p));
-                const isBlockCell = (game.movingBlocks || level.movingBlocks || []).some(b => same(b, p));
-                const isGrassCell = (game.grass || []).some(g => same(g, p));
-                const isStoneCell = (game.stoneBlocks || []).some(s => same(s.pos, p));
-                const isCrateCell = (game.crates || []).some(c => same(c, p));
-                const isIceCell = (game.ice || []).some(i => same(i, p));
-                const isTreasureCell = (game.treasure || []).some(t => same(t, p));
-                const isEmpty = !isWallCell && !isPortalCell && !isAppleCell && !isKeyCell && !isDoorCell && !isHazardCell && !isBlockCell && !isGrassCell && !isStoneCell && !isCrateCell && !isIceCell && !isTreasureCell && !game.worm.some(w => same(w, p));
-                const showDecor = isEmpty && decor > 0.78;
-                const levelVariant = ` level-variant-${((level.id + r + c2) % 6)}`;
-
-                return (
-                  <div
-                    key={i}
-                    className={`garden-tile-cell${levelVariant}${showDecor ? ' has-decor' : ''}${isWallCell ? ' wall' : ''}${isKeyCell ? ' key-tile' : ''}${isDoorCell ? ' door-tile' : ''}${isHazardCell ? ' hazard-tile' : ''}${isBlockCell ? ' block-tile' : ''}${isAppleCell ? ' apple' : ''}${isPortalCell ? ' portal' : ''}${hint && game.apples.length && same(game.apples[0], p) ? ' hinted' : ''}${showHintPath && solverHint && solverHint.path && solverHint.path.some(pt => same(pt, p)) ? ' hint-path hint-path-anim' : ''}${boardFx?.trail?.some(t => same(t, p)) ? ' worm-trail' : ''}${isHead(p) ? ' head' : ''}${game.worm.some(w => same(w, p)) ? ' worm' : ''}`}
-                    onClick={() => {
-                      if (selectedPowerUp) applyPowerUp(selectedPowerUp, p);
-                    }}
-                  >
-                    {showDecor && <span className={`tile-decor decor-${currentWorld.id} d-${Math.floor(decor * 4)}`} aria-hidden="true" />}
-                    {boardFx?.trail?.some(t => same(t, p)) && <span className="tile-trail-fx" aria-hidden="true" />}
-                    {isAppleCell ? (
-                      <PremiumAppleSVG collected={false} bobPhase={(animTime * 0.001 + p[0] * 0.5 + p[1] * 0.3) % (Math.PI * 2)} />
-                    ) : isPortalCell ? (
-                      <PremiumPortalSVG unlocked={game.apples.length === 0} pulsePhase={animTime * 0.001} />
-                    ) : isKeyCell ? (
-                      <span className="mechanic-icon key-icon" title="Key"><KeyRoundIcon size={18} /></span>
-                    ) : isDoorCell ? (
-                      <span className="mechanic-icon door-icon" title="Locked Gate"><LockKeyholeIcon size={18} /></span>
-                    ) : isHazardCell ? (
-                      <span className="mechanic-icon hazard-icon" title="Hazard"><FlameIcon size={18} /></span>
-                    ) : isBlockCell ? (
-                      <span className="mechanic-icon block-icon" title="Block"><ShieldCheckIcon size={18} /></span>
-                    ) : isWallCell ? (
-                      <PremiumStoneWallSVG worldId={currentWorld.id} variant={(level.id + r * 3 + c2) % 4} seed={level.id + r * 7 + c2 * 3} />
-                    ) : isGrassCell ? (
-                      <PremiumGrassTileSVG pulsePhase={animTime * 0.001} />
-                    ) : isStoneCell ? (
-                      <PremiumStoneBlockSVG hits={(game.stoneBlocks || []).find(s => same(s.pos, p))?.hits || 2} pulsePhase={animTime * 0.001} />
-                    ) : isCrateCell ? (
-                      <PremiumCrateTileSVG pulsePhase={animTime * 0.001} />
-                    ) : isIceCell ? (
-                      <PremiumIceTileSVG pulsePhase={animTime * 0.001} />
-                    ) : isTreasureCell ? (
-                      <PremiumTreasureTileSVG pulsePhase={animTime * 0.001} />
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-            <div className="worm-overlay-layer" aria-hidden="true">
-              {renderWorm.map((seg, idx) => {
-                const x = (seg[0] / level.size) * 100;
-                const y = (seg[1] / level.size) * 100;
-                const isHeadSeg = idx === 0;
-                const isTailSeg = idx === renderWorm.length - 1 && idx > 0;
-                const wavePhase = (animTime * 0.002) + (idx * 0.6);
-                return (
-                  <div key={`w-${idx}`} className={`worm-overlay-seg ${isHeadSeg ? 'head' : ''} ${isTailSeg ? 'tail' : ''}`} style={{ left: `${x}%`, top: `${y}%`, width: `${100 / level.size}%`, height: `${100 / level.size}%`, zIndex: 30 - idx }}>
-                    {isHeadSeg ? (
-                      <WormHeadSVG facing={facing} skinId={wormSkin} expression={wormExpression} skinColor={currentSkin} time={animTime} />
-                    ) : isTailSeg ? (
-                      <WormTailSVG skinId={wormSkin} skinColor={currentSkin} time={animTime} />
-                    ) : (
-                      <WormSegmentSVG skinId={wormSkin} scale={Math.max(0.7, 1 - (idx * 0.035))} index={idx} skinColor={currentSkin} wavePhase={wavePhase} />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </main>
-
-      {/* BOTTOM DOCK */}
-      <footer className="game-bottom-dock">
-        <div className="dock-controls-left">
-          <button className="dock-action-btn" onClick={undo} disabled={!history.length} title="Undo last move (Z)">
-            <Undo2Icon size={16} /> <span>UNDO</span>
-          </button>
-          <button className="dock-action-btn" onClick={restart} title="Restart (R)">
-            <RefreshCwIcon size={16} /> <span>RESET</span>
-          </button>
-          <button className="dock-action-btn hint-btn" onClick={triggerSmartHint} title="Show hint (H)">
-            <LightbulbIcon size={16} /> <span>HINT</span>
-          </button>
-          {Object.entries(powerUps).map(([type, count]) => (
-            <button
-              key={type}
-              className={`dock-action-btn ${selectedPowerUp === type ? 'active' : ''} powerup-btn`}
-              onClick={() => setSelectedPowerUp(selectedPowerUp === type ? null : type)}
-              title={type}
-              disabled={count <= 0 && selectedPowerUp !== type}
-            >
-              {type === 'bomb' && <ZapIcon size={16} />}
-              {type === 'lightning' && <ZapIcon size={16} />}
-              {type === 'rainbow' && <GemIcon2 size={16} />}
-              {type === 'hammer' && <ShieldCheckIcon size={16} />}
-              {type === 'extraMoves' && <PlusIcon size={16} />}
-              {type === 'magicKey' && <KeyRoundIcon size={16} />}
-              <span>{count > 0 ? count : selectedPowerUp === type ? 'SELECT' : '—'}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="virtual-dpad-cluster" onTouchStart={e => e.stopPropagation()} onTouchEnd={e => e.stopPropagation()}>
-          <button type="button" className="dpad-direction-button" onPointerDown={e => { e.preventDefault(); e.stopPropagation(); move('up'); }} aria-label="Move Up">
-            <ArrowUpIcon size={22} />
-          </button>
-          <div className="dpad-row-keys">
-            <button type="button" className="dpad-direction-button" onPointerDown={e => { e.preventDefault(); e.stopPropagation(); move('left'); }} aria-label="Move Left">
-              <ArrowLeftIcon size={22} />
-            </button>
-            <button type="button" className="dpad-direction-button" onPointerDown={e => { e.preventDefault(); e.stopPropagation(); move('down'); }} aria-label="Move Down">
-              <ArrowDownIcon size={22} />
-            </button>
-            <button type="button" className="dpad-direction-button" onPointerDown={e => { e.preventDefault(); e.stopPropagation(); move('right'); }} aria-label="Move Right">
-              <ArrowRightIcon size={22} />
-            </button>
-          </div>
-        </div>
-      </footer>
+      <ControlDock
+        historyLength={history.length}
+        onUndo={undo}
+        onRestart={restart}
+        onHint={triggerSmartHint}
+        powerUps={powerUps}
+        selectedPowerUp={selectedPowerUp}
+        onSelectPowerUp={setSelectedPowerUp}
+        onMove={move}
+      />
 
       {/* CELEBRATION CONFETTI */}
       {game.status === 'completed' && (

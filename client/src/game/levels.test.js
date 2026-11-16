@@ -59,81 +59,75 @@ test('Level integrity: All 50 levels have valid structure and no overlapping ent
   });
 });
 
-// Full solvability test: Using BFS state-space search (worm body + apples remaining)
-// to verify levels can actually be won within their move limits!
-function solveLevelBFS(level, maxExplored = 50000) {
+// State-aware BFS solvability check (worm, apples, and dynamic mechanics state)
+function solveLevelBFS(level, maxExplored = 120000) {
   const startState = initialState(level);
-  const queue = [{
-    worm: startState.worm,
-    apples: startState.apples,
-    moves: 0,
-    path: []
-  }];
+  const queue = [startState];
 
-  const stateKey = (worm, apples) => {
-    const wKey = worm.map(p => `${p[0]},${p[1]}`).join(':');
-    const aKey = apples.map(p => `${p[0]},${p[1]}`).sort().join(':');
-    return `${wKey}|${aKey}`;
+  const stateKey = s => {
+    const wKey = s.worm.map(p => `${p[0]},${p[1]}`).join(':');
+    const aKey = s.apples.map(p => `${p[0]},${p[1]}`).sort().join(';');
+    const kKey = (s.keys || []).map(p => `${p[0]},${p[1]}`).sort().join(';');
+    const dKey = String((s.doors || []).length);
+    const gKey = (s.grass || []).map(p => `${p[0]},${p[1]}`).sort().join(';');
+    const tKey = (s.treasure || []).map(p => `${p[0]},${p[1]}`).sort().join(';');
+    const sKey = (s.stoneBlocks || []).map(b => `${b.pos[0]},${b.pos[1]}:${b.hits}`).sort().join(';');
+    const cKey = (s.crates || []).map(p => `${p[0]},${p[1]}`).sort().join(';');
+    const mKey = (s.movingBlocks || []).map(p => `${p[0]},${p[1]}`).sort().join(';');
+    return [wKey, aKey, kKey, dKey, gKey, tKey, sKey, cKey, mKey].join('|');
   };
 
-  const visited = new Set();
-  visited.add(stateKey(startState.worm, startState.apples));
-
+  const visited = new Set([stateKey(startState)]);
   const directions = ['up', 'down', 'left', 'right'];
+  let i = 0;
 
-  let count = 0;
-  while (queue.length > 0 && count < maxExplored) {
-    count++;
-    const current = queue.shift();
-
+  while (i < queue.length && visited.size < maxExplored) {
+    const current = queue[i++];
     if (current.moves > level.moveLimit) continue;
 
     for (const dir of directions) {
-      const simulatedState = {
-        worm: current.worm,
-        apples: current.apples,
-        moves: current.moves,
-        score: 0,
-        status: 'playing',
-        reason: ''
-      };
-
-      const next = step(simulatedState, dir, level);
+      const next = step(current, dir, level);
+      if (next === current) continue;
 
       if (next.status === 'completed') {
-        return { solved: true, moves: next.moves, path: [...current.path, dir] };
+        return { solved: true, moves: next.moves, explored: visited.size };
       }
+      if (next.status !== 'playing') continue;
 
-      if (next.status === 'playing') {
-        const key = stateKey(next.worm, next.apples);
-        if (!visited.has(key)) {
-          visited.add(key);
-          queue.push({
-            worm: next.worm,
-            apples: next.apples,
-            moves: next.moves,
-            path: [...current.path, dir]
-          });
-        }
+      const key = stateKey(next);
+      if (!visited.has(key)) {
+        visited.add(key);
+        queue.push(next);
       }
     }
   }
 
-  return { solved: false, explored: count };
+  return { solved: false, explored: visited.size };
 }
 
 test('Solvability verification for beginner & easy levels (Worlds 1-2)', () => {
   const unsolvable = [];
   const earlyLevels = LEVELS.filter(l => l.worldId <= 2);
-  
+
   earlyLevels.forEach(lvl => {
-    const res = solveLevelBFS(lvl, 50000);
+    const res = solveLevelBFS(lvl, 60000);
     if (!res.solved) {
       unsolvable.push({ id: lvl.id, title: lvl.title, explored: res.explored });
     }
   });
 
   assert.equal(unsolvable.length, 0, `Unsolvable early levels found: ${JSON.stringify(unsolvable)}`);
+});
+
+test('All 50 levels are solvable within move limits', () => {
+  const unsolvable = [];
+  LEVELS.forEach(lvl => {
+    const res = solveLevelBFS(lvl, 120000);
+    if (!res.solved) {
+      unsolvable.push({ id: lvl.id, title: lvl.title, explored: res.explored, limit: lvl.moveLimit });
+    }
+  });
+  assert.equal(unsolvable.length, 0, `Unsolvable levels found: ${JSON.stringify(unsolvable)}`);
 });
 
 test('Medium levels have valid structure and reasonable move limits (World 3)', () => {

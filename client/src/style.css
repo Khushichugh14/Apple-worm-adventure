@@ -6216,3 +6216,283 @@ input:focus-visible {
 /* ===================================================
    END OF PREMIUM STYLES
    =================================================== */
+
+/* === Worm redesign overrides (Phase 2) === */
+.worm-head-svg-container.facing-up,
+.worm-head-svg-container.facing-down,
+.worm-head-svg-container.facing-left,
+.worm-head-svg-container.facing-right { transform: none !important; }
+.worm-overlay-seg .worm-head-svg-container,
+.worm-overlay-seg .worm-segment-svg-container,
+.worm-overlay-seg .worm-tail-svg-container { width: 96%; height: 96%; transition: none; }
+.worm-segment-svg-container { animation: none !important; }
+.worm-tail-svg-container { animation: none !important; }
+.worm-head-svg-container.idle { animation: none !important; }
+
+/* Phase 3 readability */
+.portal-cell-wrap { position: relative; width: 100%; height: 100%; display:flex; align-items:center; justify-content:center; }
+.portal-state-badge { position:absolute; right:4px; bottom:4px; font-size:9px; font-weight:800; padding:2px 5px; border-radius:999px; background:rgba(15,23,42,.8); color:#e2e8f0; border:1px solid rgba(255,255,255,.2); line-height:1; }
+.portal-cell-wrap.open .portal-state-badge { color:#022c22; background:rgba(52,211,153,.95); border-color:rgba(167,243,208,.9); }
+.portal-cell-wrap.locked .portal-state-badge { color:#fde68a; background:rgba(120,53,15,.85); border-color:rgba(251,191,36,.6); }
+.garden-tile-cell.portal { box-shadow: inset 0 0 0 1px rgba(168,85,247,.35), 0 0 18px rgba(168,85,247,.12); }
+.garden-tile-cell.portal .portal-cell-wrap.open { filter: drop-shadow(0 0 10px rgba(34,211,238,.35)); }
+.garden-tile-cell.apple { box-shadow: inset 0 0 0 1px rgba(251,191,36,.2); }
+/* === Phase 4 visual polish (responsive HUD/board/dock/modals) === */
+.game-play-stage {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: clamp(6px, 1.4vw, 14px);
+  box-sizing: border-box;
+}
+.garden-board-wrapper {
+  position: relative;
+  width: min(92vw, 72vh, 620px);
+  max-width: 100%;
+}
+.garden-floating-island {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  padding: clamp(6px, 1.2vw, 12px);
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  box-shadow: 0 18px 50px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+.garden-matrix-grid {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(var(--grid-size), 1fr);
+  grid-template-rows: repeat(var(--grid-size), 1fr);
+  gap: clamp(2px, 0.35vw, 4px);
+}
+.garden-tile-cell {
+  border-radius: clamp(6px, 0.9vw, 10px);
+  overflow: hidden;
+  position: relative;
+}
+.redesigned-hud {
+  width: min(100%, 980px);
+  margin: 0 auto 8px;
+  padding: 8px 10px;
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  background: linear-gradient(180deg, rgba(15,23,42,0.72), rgba(15,23,42,0.52));
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+}
+.hud-top-row { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+.hud-level-chip { display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); color:inherit; }
+.hud-level-dot { width:10px; height:10px; border-radius:50%; box-shadow:0 0 0 3px rgba(255,255,255,0.08); }
+.hud-level-text { display:flex; flex-direction:column; line-height:1.05; text-align:left; }
+.hud-level-text small { opacity:0.75; font-size:11px; }
+.hud-stats-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center; }
+.hud-stat { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); font-weight:700; }
+.hud-stat-label { font-size:11px; opacity:0.7; text-transform:uppercase; letter-spacing:.04em; }
+.hud-stat-value small { opacity:0.7; margin-left:1px; }
+.hud-actions-compact { display:flex; align-items:center; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+.coin-badge-pill.compact { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; background:rgba(251,191,36,0.12); border:1px solid rgba(251,191,36,0.28); font-weight:800; }
+.hud-progress-strip { margin-top:8px; display:flex; align-items:center; gap:10px; }
+.hud-progress-track { position:relative; flex:1; height:8px; border-radius:999px; background:rgba(255,255,255,0.08); overflow:hidden; }
+.hud-progress-fill { position:absolute; left:0; top:0; bottom:0; border-radius:999px; background:linear-gradient(90deg,#34d399,#38bdf8); }
+.hud-progress-par { position:absolute; top:-3px; bottom:-3px; width:2px; background:#fbbf24; box-shadow:0 0 0 2px rgba(251,191,36,0.25); }
+.hud-progress-meta { font-size:12px; opacity:0.8; white-space:nowrap; }
+.notice-banner-pill, .solver-hint-pill {
+  width: fit-content; max-width: min(96vw, 760px); margin: 8px auto; padding: 8px 12px;
+  display:flex; align-items:center; gap:8px; border-radius:999px;
+  background: rgba(15,23,42,0.78); border:1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2); backdrop-filter: blur(8px);
+}
+.notice-banner-pill.notice-success { background: rgba(6,78,59,0.72); border-color: rgba(52,211,153,0.35); color:#ecfdf5; }
+.toast-dismiss { margin-left:auto; background:transparent; border:none; color:inherit; font-size:18px; cursor:pointer; opacity:.7; }
+.game-bottom-dock {
+  width:min(100%, 980px); margin:10px auto 0; padding:10px; border-radius:18px;
+  display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+  background: linear-gradient(180deg, rgba(15,23,42,0.72), rgba(15,23,42,0.52));
+  border:1px solid rgba(255,255,255,0.08); backdrop-filter: blur(10px);
+}
+.dock-controls-left { display:flex; flex-wrap:wrap; gap:8px; align-items:center; flex:1 1 320px; }
+.dock-action-btn {
+  display:inline-flex; align-items:center; gap:6px; padding:8px 10px; border-radius:12px;
+  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); color:#e5e7eb; font-weight:700;
+}
+.dock-action-btn:hover:not(:disabled) { transform: translateY(-1px); background:rgba(255,255,255,0.1); }
+.dock-action-btn:disabled { opacity:.45; }
+.dock-action-btn.active, .dock-action-btn.hint-btn { border-color: rgba(56,189,248,0.45); box-shadow: 0 0 0 1px rgba(56,189,248,0.15) inset; }
+.virtual-dpad-cluster { display:flex; flex-direction:column; align-items:center; gap:6px; }
+.dpad-row-keys { display:flex; gap:6px; }
+.dpad-direction-button {
+  width:48px; height:48px; border-radius:14px; display:grid; place-items:center;
+  background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); color:#f8fafc;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+}
+.dpad-direction-button:active { transform: translateY(1px) scale(0.98); }
+.game-modal-backdrop { backdrop-filter: blur(6px); }
+.game-modal-panel {
+  border-radius: 20px; border:1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.45);
+  background: linear-gradient(180deg, rgba(15,23,42,0.96), rgba(15,23,42,0.92));
+}
+.modal-primary-btn, .modal-secondary-btn { border-radius: 12px; }
+@media (max-width: 720px) {
+  .hud-top-row { align-items:stretch; }
+  .hud-stats-row { order:3; width:100%; justify-content:space-between; }
+  .hud-actions-compact { margin-left:auto; }
+  .game-bottom-dock { justify-content:center; }
+  .dock-controls-left { justify-content:center; }
+  .dpad-direction-button { width:52px; height:52px; }
+  .notice-banner-pill, .solver-hint-pill { border-radius:16px; }
+}
+@media (max-width: 420px) {
+  .garden-board-wrapper { width: 96vw; }
+  .hud-stat { padding:6px 8px; }
+  .dock-action-btn span { font-size:12px; }
+}
+
+
+/* ===================================================
+   GROW WORM OVERRIDE: VIBRANT CARTOON THEME & WORM STYLES
+   =================================================== */
+
+/* Master Background: Bright, inviting sky & garden gradient */
+.game-master-container {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 10%, rgba(56, 189, 248, 0.22) 0%, transparent 70%),
+    radial-gradient(ellipse 70% 50% at 80% 90%, rgba(74, 222, 128, 0.18) 0%, transparent 60%),
+    linear-gradient(180deg, #0b1a2e 0%, #0d223a 40%, #091724 100%) !important;
+}
+
+.game-master-container[data-world="1"] {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 15%, rgba(74, 222, 128, 0.28) 0%, transparent 65%),
+    radial-gradient(ellipse 70% 50% at 20% 85%, rgba(56, 189, 248, 0.2) 0%, transparent 60%),
+    linear-gradient(180deg, #0a2618 0%, #0d3320 40%, #081a11 100%) !important;
+}
+
+.game-master-container[data-world="2"] {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 15%, rgba(251, 191, 36, 0.28) 0%, transparent 65%),
+    linear-gradient(180deg, #2a1c06 0%, #382408 40%, #1a1004 100%) !important;
+}
+
+.game-master-container[data-world="3"] {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 15%, rgba(56, 189, 248, 0.3) 0%, transparent 65%),
+    linear-gradient(180deg, #071f38 0%, #0c2b4c 40%, #051426 100%) !important;
+}
+
+.game-master-container[data-world="4"] {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 15%, rgba(192, 132, 252, 0.28) 0%, transparent 65%),
+    linear-gradient(180deg, #260c38 0%, #35124d 40%, #160621 100%) !important;
+}
+
+.game-master-container[data-world="5"] {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 15%, rgba(244, 114, 182, 0.28) 0%, transparent 65%),
+    linear-gradient(180deg, #2b0b20 0%, #3d102e 40%, #170511 100%) !important;
+}
+
+/* 3D Floating Garden Island: Lush Cartoon Maze Terrain */
+.garden-floating-island {
+  background:
+    radial-gradient(ellipse at 50% 10%, rgba(30, 64, 45, 0.95) 0%, rgba(15, 35, 24, 0.98) 100%),
+    linear-gradient(180deg, rgba(74, 222, 128, 0.15) 0%, transparent 60%) !important;
+  border: 3px solid rgba(74, 222, 128, 0.45) !important;
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.65),
+    0 0 45px rgba(74, 222, 128, 0.35),
+    inset 0 3px 6px rgba(255, 255, 255, 0.3),
+    inset 0 -6px 14px rgba(0, 0, 0, 0.5) !important;
+  border-radius: 28px !important;
+}
+
+.garden-matrix-grid {
+  background:
+    radial-gradient(ellipse at center, rgba(14, 38, 26, 0.85) 0%, rgba(8, 22, 15, 0.95) 100%) !important;
+  border-radius: 22px !important;
+  gap: 4px !important;
+  padding: 4px !important;
+}
+
+/* Floor Tiles: Fresh Cartoon Garden Soil with Grass Specs */
+.garden-tile-cell {
+  background: linear-gradient(135deg, #183324 0%, #102419 100%) !important;
+  border-radius: 12px !important;
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.15),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.4) !important;
+}
+
+.garden-tile-cell:nth-child(odd) {
+  background: linear-gradient(135deg, #152d20 0%, #0d1e15 100%) !important;
+}
+
+/* Apple Worm Character Overlays */
+.worm-overlay-layer {
+  position: absolute !important;
+  inset: 0 !important;
+  pointer-events: none !important;
+  z-index: 50 !important;
+}
+
+.worm-overlay-seg {
+  position: absolute !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: left 0.15s cubic-bezier(0.2, 0.9, 0.4, 1.1),
+              top 0.15s cubic-bezier(0.2, 0.9, 0.4, 1.1),
+              transform 0.15s ease !important;
+  will-change: left, top, transform;
+}
+
+.worm-overlay-seg.head {
+  z-index: 65 !important;
+}
+
+.worm-overlay-seg.tail {
+  z-index: 45 !important;
+}
+
+.worm-head-svg-container {
+  width: 112% !important;
+  height: 112% !important;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.5)) !important;
+  transition: transform 0.15s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+
+.worm-segment-svg-container {
+  width: 108% !important;
+  height: 108% !important;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4)) !important;
+}
+
+.worm-tail-svg-container {
+  width: 104% !important;
+  height: 104% !important;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4)) !important;
+}
+
+/* Delicious Candy Apple */
+.premium-apple {
+  width: 95% !important;
+  height: 95% !important;
+  filter: drop-shadow(0 6px 14px rgba(239, 68, 68, 0.55)) !important;
+}
+
+/* Mysterious Black Hole Portal */
+.premium-portal {
+  width: 98% !important;
+  height: 98% !important;
+  filter: drop-shadow(0 6px 20px rgba(168, 85, 247, 0.6)) !important;
+}
+
+/* Wall Blocks with Grass Tops */
+.premium-wall {
+  width: 100% !important;
+  height: 100% !important;
+  filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.5)) !important;
+}
