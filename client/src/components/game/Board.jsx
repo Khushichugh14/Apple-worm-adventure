@@ -8,7 +8,7 @@ import {
   WorldCrystalSVG, WorldIceCrystalSVG, WorldPlanetSVG,
   FloatingParticleSVG
 } from '../GameElements';
-import { KeyRound as KeyRoundIcon, LockKeyhole as LockKeyholeIcon, Flame as FlameIcon, ShieldCheck as ShieldCheckIcon } from 'lucide-react';
+import { KeyRound as KeyRoundIcon, LockKeyhole as LockKeyholeIcon, Flame as FlameIcon, ShieldCheck as ShieldCheckIcon, ArrowUp as ArrowUpIcon, ArrowDown as ArrowDownIcon, ArrowLeft as ArrowLeftIcon, ArrowRight as ArrowRightIcon } from 'lucide-react';
 import WormRenderer from './WormRenderer';
 
 const DECORATION_COMPONENTS = {
@@ -17,6 +17,23 @@ const DECORATION_COMPONENTS = {
   3: WorldCrystalSVG,
   4: WorldIceCrystalSVG,
   5: WorldPlanetSVG,
+};
+
+const DIRECTION_ICONS = {
+  up: ArrowUpIcon,
+  down: ArrowDownIcon,
+  left: ArrowLeftIcon,
+  right: ArrowRightIcon,
+};
+
+const getDirectionIcon = (dir) => DIRECTION_ICONS[dir] || ArrowRightIcon;
+
+const dirFrom = (a, b) => {
+  if (b[1] < a[1]) return 'up';
+  if (b[1] > a[1]) return 'down';
+  if (b[0] < a[0]) return 'left';
+  if (b[0] > a[0]) return 'right';
+  return null;
 };
 
 export default function Board({
@@ -91,6 +108,12 @@ export default function Board({
               const levelVariant = ` level-variant-${((level.id + r + c2) % 6)}`;
               const floorClass = getFloorStyle(r, c2);
 
+              // Compute hint direction at this tile (direction to next path step)
+              const hintPath = solverHint?.path || [];
+              const hintIdx = hintPath.findIndex(pt => same(pt, p));
+              const hintDir = hintIdx >= 0 && hintIdx < hintPath.length - 1 ? dirFrom(hintPath[hintIdx], hintPath[hintIdx + 1]) : null;
+              const isHintPathTile = hintIdx >= 0;
+
               return (
                 <div
                   key={i}
@@ -109,6 +132,12 @@ export default function Board({
                   )}
 
                   {showDecor && <span className={`tile-decor decor-${worldId} d-${Math.floor(decor * 4)}`} aria-hidden="true" />}
+
+                  {isHintPathTile && showHintPath && hintDir && (
+                    <div className="hint-direction-arrow" style={{ animationDelay: `${hintIdx * 0.1}s` }}>
+                      {(() => { const Icon = getDirectionIcon(hintDir); return <Icon size={14} />; })()}
+                    </div>
+                  )}
 
                   {boardFx?.trail?.some(t => same(t, p)) && <span className="tile-trail-fx" aria-hidden="true" />}
 

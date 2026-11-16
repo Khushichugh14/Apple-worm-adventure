@@ -3716,6 +3716,29 @@ button:focus-visible {
 .hint-path-anim::after { animation: hintPulse 1s ease-in-out infinite; }
 @keyframes hintPulse { 0%,100%{ transform:scale(.85); opacity:.55 } 50%{ transform:scale(1.05); opacity:1 } }
 
+/* Hint direction arrows - animated directional guidance on hint path */
+.hint-direction-arrow {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 35;
+  animation: hintArrowPulse 1.2s ease-in-out infinite;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+
+.hint-direction-arrow svg {
+  color: #fbbf24;
+  filter: drop-shadow(0 0 6px rgba(251,191,36,0.8));
+}
+
+@keyframes hintArrowPulse {
+  0%, 100% { transform: scale(0.85); opacity: 0.6; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+
 .game-master-container.fx-warp .garden-floating-island { animation: warpPulse .9s cubic-bezier(.2,.8,.2,1); box-shadow: 0 0 0 0 rgba(56,189,248,0), 0 30px 80px rgba(0,0,0,.45); }
 @keyframes warpPulse { 0%{ filter:brightness(1) saturate(1);} 30%{ filter:brightness(1.25) saturate(1.2) drop-shadow(0 0 22px rgba(56,189,248,.35)); transform: scale(1.015);} 100%{ filter:brightness(1) saturate(1);} }
 .game-master-container.fx-impact .garden-floating-island { animation: impactShake .35s ease; }
