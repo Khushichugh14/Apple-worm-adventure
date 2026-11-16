@@ -86,8 +86,8 @@ function ContinuousWormSVG({
   // Build normalized segment points
   const points = segments.map((seg, i) => {
     const t = i / Math.max(1, segCount - 1);
-    const maxW = cellSize * 0.20; // head width
-    const minW = cellSize * 0.06; // tail width
+    const maxW = cellSize * 0.08; // head width
+    const minW = cellSize * 0.02; // tail width
     const segWidth = maxW - (maxW - minW) * t;
     return {
       x: pad + seg[0] * cellSize,
@@ -104,7 +104,7 @@ function ContinuousWormSVG({
   if (points.length === 1) {
     const p = points[0];
     const hw = p.width / 2;
-    pathD = `M${p.x - hw},${p.y} L${p.x + hw},${p.y} L${p.x + hw},${p.y + hw} Q${p.x},${p.y + hw + 8} ${p.x - hw},${p.y + hw} Z`;
+    pathD = `M${p.x - hw},${p.y} L${p.x + hw},${p.y} L${p.x + hw},${p.y + hw} Q${p.x},${p.y + hw * 1.5} ${p.x - hw},${p.y + hw} Z`;
   } else {
     const neck = points[1];
     const headAngle = Math.atan2(neck.y - head.y, neck.x - head.x);
@@ -188,12 +188,12 @@ function ContinuousWormSVG({
           <stop offset="100%" stopColor={belly} stopOpacity="0.3" />
         </linearGradient>
 
-        <filter id={`wormBodyShadow-${wormSkin}`} x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="6" stdDeviation="4" floodColor="#000000" floodOpacity="0.5" />
+        <filter id={`wormBodyShadow-${wormSkin}`} x="-10%" y="-10%" width="120%" height="120%">
+          <feDropShadow dx="0" dy="2" stdDeviation="1.5" floodColor="#000000" floodOpacity="0.25" />
         </filter>
       </defs>
 
-      <ellipse cx="60" cy="108" rx="18" ry="6" fill="rgba(0,0,0,0.25)" opacity={isMoving ? 0.6 : 0.4} />
+      <ellipse cx="60" cy="108" rx="16" ry="4" fill="rgba(0,0,0,0.2)" opacity={isMoving ? 0.4 : 0.25} />
 
       <path
         d={pathD}
