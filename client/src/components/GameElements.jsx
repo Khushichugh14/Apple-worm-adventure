@@ -64,7 +64,7 @@ function ContinuousWormSVG({
   if (segCount === 0) return null;
 
   // Normalize grid coordinates to fit within viewBox with padding
-  const pad = 16;
+  const pad = 10;
   const cellSize = (width - pad * 2) / levelSize;
 
   const isEating = expression === 'eating';
@@ -86,9 +86,9 @@ function ContinuousWormSVG({
   // Build normalized segment points
   const points = segments.map((seg, i) => {
     const t = i / Math.max(1, segCount - 1);
-    const maxW = cellSize * 0.08; // head width
-    const minW = cellSize * 0.02; // tail width
-    const segWidth = maxW - (maxW - minW) * t;
+    const headW = cellSize * 0.82;   // head width: fits inside one grid cell
+    const tailW = cellSize * 0.28;   // tail width: tapers down
+    const segWidth = headW - (headW - tailW) * t;
     return {
       x: pad + seg[0] * cellSize,
       y: pad + seg[1] * cellSize,
@@ -104,7 +104,7 @@ function ContinuousWormSVG({
   if (points.length === 1) {
     const p = points[0];
     const hw = p.width / 2;
-    pathD = `M${p.x - hw},${p.y} L${p.x + hw},${p.y} L${p.x + hw},${p.y + hw} Q${p.x},${p.y + hw * 1.5} ${p.x - hw},${p.y + hw} Z`;
+    pathD = `M${p.x - hw},${p.y - hw} L${p.x + hw},${p.y - hw} L${p.x + hw},${p.y + hw} L${p.x - hw},${p.y + hw} Z`;
   } else {
     const neck = points[1];
     const headAngle = Math.atan2(neck.y - head.y, neck.x - head.x);
@@ -166,7 +166,7 @@ function ContinuousWormSVG({
     <svg
       className="continuous-worm-svg"
       viewBox="0 0 120 120"
-      style={{ transform: `rotate(${headRotation}deg)`, width: '100%', height: '100%', transformOrigin: '50% 50%' }}
+      style={{ width: '100%', height: '100%', display: 'block' }}
     >
       <defs>
         <radialGradient id={`wormBodyGrad-${wormSkin}`} cx="30%" cy="30%" r="70%">
@@ -188,12 +188,22 @@ function ContinuousWormSVG({
           <stop offset="100%" stopColor={belly} stopOpacity="0.3" />
         </linearGradient>
 
-        <filter id={`wormBodyShadow-${wormSkin}`} x="-10%" y="-10%" width="120%" height="120%">
-          <feDropShadow dx="0" dy="2" stdDeviation="1.5" floodColor="#000000" floodOpacity="0.25" />
+        <filter id={`wormBodyShadow-${wormSkin}`} x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="3" stdDeviation="2" floodColor="#000000" floodOpacity="0.35" />
         </filter>
       </defs>
 
-      <ellipse cx="60" cy="108" rx="16" ry="4" fill="rgba(0,0,0,0.2)" opacity={isMoving ? 0.4 : 0.25} />
+      {/* Ground shadow under worm center */}
+      {segCount > 1 && (
+        <ellipse
+          cx={(head.x + points[segCount - 1].x) / 2}
+          cy={(head.y + points[segCount - 1].y) / 2 + 4}
+          rx={head.width * 0.6}
+          ry={head.width * 0.15}
+          fill="rgba(0,0,0,0.2)"
+          opacity={isMoving ? 0.6 : 0.4}
+        />
+      )}
 
       <path
         d={pathD}
@@ -279,55 +289,58 @@ function ContinuousWormSVG({
       />
 
       <g transform={`translate(${head.x},${head.y}) rotate(${headRotation})`}>
-        <ellipse cx="0" cy="8" rx="22" ry="6" fill="rgba(0,0,0,0.3)" />
+        {/* Head shadow */}
+        <ellipse cx="0" cy="3" rx={head.width * 0.8} ry={head.width * 0.3} fill="rgba(0,0,0,0.25)" />
 
-        <ellipse cx="-8" cy="0" rx="16" ry="14" fill={secondary} opacity="0.7" />
-        <path d="M-20 -8 Q-8 -14 4 -8 Q16 -14 28 -8" stroke="rgba(0,0,0,0.2)" strokeWidth="1.5" fill="none" />
+        {/* Main head body - fits within one grid cell */}
+        <ellipse cx="3" cy="0" rx={head.width * 0.8} ry={head.width * 0.6} fill={`url(#wormBodyGrad-${wormSkin})`} stroke="rgba(255,255,255,0.35)" strokeWidth="1" />
+        <ellipse cx="5" cy="1" rx={head.width * 0.5} ry={head.width * 0.4} fill={highlight} opacity="0.35" />
 
-        <ellipse cx="8" cy="0" rx="24" ry="20" fill={`url(#wormBodyGrad-${wormSkin})`} stroke="rgba(255,255,255,0.35)" strokeWidth="1.5" />
-        <ellipse cx="12" cy="2" rx="16" ry="14" fill={highlight} opacity="0.4" />
+        {/* Mouth line */}
+        <path d={`M-${head.width * 0.3} ${-head.width * 0.5} Q0 ${-head.width * 0.8} ${head.width * 0.3} ${-head.width * 0.5}`} stroke="rgba(0,0,0,0.2)" strokeWidth="1" fill="none" strokeLinecap="round" />
 
-        <path d="M-4 -16 Q8 -20 20 -16" stroke="rgba(0,0,0,0.2)" strokeWidth="1" fill="none" />
-
-        <g transform="translate(16, -6)">
-          <ellipse cx="0" cy="0" rx="7" ry={8 * eyeOpen} fill="#ffffff" stroke={eye} strokeWidth="2" />
+        {/* Eyes */}
+        <g transform={`translate(${head.width * 0.4}, ${-head.width * 0.25})`}>
+          <ellipse cx="0" cy="0" rx={head.width * 0.16} ry={head.width * 0.2} fill="#ffffff" stroke={eye} strokeWidth="1.5" />
           {eyeOpen > 0.2 && (
             <>
-              <ellipse cx={isMoving ? 2 : 1} cy={0} rx="3.5" ry="4" fill="#0a0a0a" />
-              <circle cx={2.5} cy={-1.5} r="1.8" fill="#ffffff" />
+              <ellipse cx={isMoving ? head.width * 0.04 : 0} cy="0" rx={head.width * 0.08} ry={head.width * 0.1} fill="#0a0a0a" />
+              <circle cx={head.width * 0.1} cy={-head.width * 0.05} r={head.width * 0.04} fill="#ffffff" />
             </>
           )}
           {eyeOpen <= 0.2 && (
-            <path d="M-5 0 Q0 -3 5 0" stroke={eye} strokeWidth="2" fill="none" strokeLinecap="round" />
+            <path d={`M-${head.width * 0.12} 0 Q0 ${-head.width * 0.08} ${head.width * 0.12} 0`} stroke={eye} strokeWidth="1.5" fill="none" strokeLinecap="round" />
           )}
         </g>
-        <g transform="translate(16, 6)">
-          <ellipse cx="0" cy="0" rx="7" ry={8 * eyeOpen} fill="#ffffff" stroke={eye} strokeWidth="2" />
+        <g transform={`translate(${head.width * 0.4}, ${head.width * 0.25})`}>
+          <ellipse cx="0" cy="0" rx={head.width * 0.16} ry={head.width * 0.2} fill="#ffffff" stroke={eye} strokeWidth="1.5" />
           {eyeOpen > 0.2 && (
             <>
-              <ellipse cx={isMoving ? 2 : 1} cy={0} rx="3.5" ry="4" fill="#0a0a0a" />
-              <circle cx={2.5} cy={-1.5} r="1.8" fill="#ffffff" />
+              <ellipse cx={isMoving ? head.width * 0.04 : 0} cy="0" rx={head.width * 0.08} ry={head.width * 0.1} fill="#0a0a0a" />
+              <circle cx={head.width * 0.1} cy={-head.width * 0.05} r={head.width * 0.04} fill="#ffffff" />
             </>
           )}
           {eyeOpen <= 0.2 && (
-            <path d="M-5 0 Q0 -3 5 0" stroke={eye} strokeWidth="2" fill="none" strokeLinecap="round" />
+            <path d={`M-${head.width * 0.12} 0 Q0 ${-head.width * 0.08} ${head.width * 0.12} 0`} stroke={eye} strokeWidth="1.5" fill="none" strokeLinecap="round" />
           )}
         </g>
 
-        <g transform="translate(24, 0)">
+        {/* Mouth */}
+        <g transform={`translate(${head.width * 0.58}, 0)`}>
           {isEating ? (
             <g>
-              <ellipse cx="0" cy="2" rx="8" ry={5 + Math.sin(animTime * 0.04) * 2} fill="#2a0a0a" stroke={eye} strokeWidth="1.5" />
-              <ellipse cx="1" cy="4" rx="4" ry="2" fill="#ff4d6d" />
+              <ellipse cx="0" cy={head.width * 0.04} rx={head.width * 0.18} ry={head.width * 0.1} fill="#2a0a0a" stroke={eye} strokeWidth="1" />
+              <ellipse cx="0" cy={head.width * 0.12} rx={head.width * 0.09} ry={head.width * 0.04} fill="#ff4d6d" />
             </g>
           ) : isHappy ? (
-            <path d="M-4 0 Q0 6 4 0" stroke={eye} strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            <path d={`M-${head.width * 0.1} ${head.width * 0.04} Q0 ${head.width * 0.22} ${head.width * 0.1} ${head.width * 0.04}`} stroke={eye} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
           ) : (
-            <path d="M-3 1 Q0 5 3 1" stroke={eye} strokeWidth="2" fill="none" strokeLinecap="round" />
+            <path d={`M-${head.width * 0.08} ${head.width * 0.08} Q0 ${head.width * 0.18} ${head.width * 0.08} ${head.width * 0.08}`} stroke={eye} strokeWidth="1.5" fill="none" strokeLinecap="round" />
           )}
         </g>
 
-        <ellipse cx="6" cy="-4" rx="10" ry="6" fill="#ffffff" opacity={0.25} transform="rotate(-15 6 -4)" />
+        {/* Cheek highlight */}
+        <ellipse cx={head.width * 0.12} cy={-head.width * 0.08} rx={head.width * 0.22} ry={head.width * 0.12} fill="#ffffff" opacity={0.2} transform={`rotate(-15 ${head.width * 0.12} ${-head.width * 0.08})`} />
       </g>
 
       {segCount > 1 && (
