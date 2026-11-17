@@ -291,6 +291,7 @@ export function applyBomb(state, level, center) {
   const cx = center[0], cy = center[1];
   const clearedCrates = state.crates.filter(c => Math.abs(c[0] - cx) + Math.abs(c[1] - cy) <= 1).length > 0;
   const hitStone = state.stoneBlocks.some(s => Math.abs(s.pos[0] - cx) + Math.abs(s.pos[1] - cy) <= 1);
+  if (!clearedCrates && !hitStone) return null;
   let newStones = state.stoneBlocks;
   if (hitStone) {
     newStones = state.stoneBlocks.map(s => {
@@ -314,6 +315,7 @@ export function applyLightning(state, level, axis, index) {
   let newStones = state.stoneBlocks;
   const cratesHit = state.crates.some(remove);
   const stonesHit = state.stoneBlocks.some(s => remove(s.pos));
+  if (!cratesHit && !stonesHit) return null;
   if (cratesHit) newCrates = state.crates.filter(p => !remove(p));
   if (stonesHit) newStones = state.stoneBlocks.map(s => remove(s.pos) ? { ...s, hits: Math.max(0, s.hits - 1) } : s).filter(s => s.hits > 0);
   return { ...state, crates: newCrates, stoneBlocks: newStones };
@@ -345,9 +347,18 @@ export function applyMagicKey(state, level) {
 
 export function applyRainbow(state, level, type) {
   // Remove all collectibles of a given type: 'apples' | 'treasure' | 'grass'
-  if (type === 'apples') return { ...state, apples: [] };
-  if (type === 'treasure') return { ...state, treasure: [] };
-  if (type === 'grass') return { ...state, grass: [] };
+  if (type === 'apples') {
+    if (state.apples.length === 0) return null;
+    return { ...state, apples: [] };
+  }
+  if (type === 'treasure') {
+    if (state.treasure.length === 0) return null;
+    return { ...state, treasure: [] };
+  }
+  if (type === 'grass') {
+    if (state.grass.length === 0) return null;
+    return { ...state, grass: [] };
+  }
   return null;
 }
 

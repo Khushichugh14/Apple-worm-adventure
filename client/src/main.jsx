@@ -1,11 +1,11 @@
 ﻿import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { LEVELS, WORLDS } from './data/levels';
-import { SKINS, calculateStars, ContinuousWormSVG } from './components/GameElements';
+import { SKINS, calculateStars, ContinuousWormSVG, WorldFireflySVG } from './components/GameElements';
 import HUD from './components/game/HUD';
 import Board from './components/game/Board';
 import ControlDock from './components/game/ControlDock';
-import { initialState, step, same, applyBomb, applyLightning, applyHammer, applyMagicKey, applyRainbow } from './game/engine';
+import { initialState, step, same, applyBomb, applyLightning, applyHammer, applyMagicKey, applyRainbow, applyExtraMoves } from './game/engine';
 import { playSound, startBgm, stopBgm, setSfxVolume, setMusicVolume } from './game/audio';
 import { findNextHint } from './game/solver';
 import { API_URL } from './config/gameConfig';
@@ -60,7 +60,7 @@ function App() {
     const saved = localStorage.getItem('currentLevel');
     return saved ? Math.min(50, Math.max(1, Number(saved))) : 1;
   });
-  const [levelTransition, setLevelTransition] = useState(null);
+  const [levelTransition, setLevelTransition] = useState(null); // null | 'out' | 'in'
   const [completed, setCompleted] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('completedLevels'));
@@ -85,6 +85,7 @@ function App() {
   const [solverHint, setSolverHint] = useState(null);
   const [notice, setNotice] = useState('');
   const [earnedStars, setEarnedStars] = useState(3);
+  const [completionReward, setCompletionReward] = useState(null);
   const [wormSkin, setWormSkin] = useState(() => localStorage.getItem('wormSkin') || 'emerald');
   const [ownedSkins, setOwnedSkins] = useState(() => {
     try {
@@ -118,6 +119,7 @@ function App() {
   const [showHintPath, setShowHintPath] = useState(true);
   const [boardFx, setBoardFx] = useState({ trail: [], warp: false, impact: false, eat: false });
   const [wormTrailParticles, setWormTrailParticles] = useState([]);
+  const [wormGrowing, setWormGrowing] = useState(false);
 
   const [powerUps, setPowerUps] = useState(() => {
     try {
@@ -126,6 +128,7 @@ function App() {
     } catch { return { bomb: 0, lightning: 0, rainbow: 0, hammer: 0, extraMoves: 0, magicKey: 0 }; }
   });
   const [selectedPowerUp, setSelectedPowerUp] = useState(null);
+  const [powerUpMode, setPowerUpMode] = useState(null);
 
   const [claimedAchievements, setClaimedAchievements] = useState(() => {
     try { return JSON.parse(localStorage.getItem('claimedAchievements') || '[]'); } catch { return []; }
@@ -473,14 +476,9 @@ function App() {
     }, 1000);
   }, []);
 
-  const startLevel = useCallback(id => {
+  const applyLevelStart = useCallback((id) => {
     const targetLvl = LEVELS[id - 1] || LEVELS[0];
-    if (id !== levelId) {
-      setLevelId(id);
-      setLevelPreview(targetLvl);
-      playSound('click', sound);
-      return;
-    }
+    setLevelId(id);
     const init = initialState(targetLvl);
     setGame(init);
     setRenderWorm(init.worm.map(p => [...p]));
@@ -495,13 +493,35 @@ function App() {
     setWormExpression('idle');
     setStarPopStage(0);
     setConfettiParticles([]);
+    setCompletionReward(null);
     setBoardFx({ trail: [], warp: false, impact: false, eat: false });
     setLevelPreview(null);
     setMapModal(false);
     setLevelIntro(true);
     setTimeout(() => setLevelIntro(false), reducedMotion ? 0 : 900);
+  }, [reducedMotion]);
+
+  const startLevel = useCallback(id => {
+    const targetLvl = LEVELS[id - 1] || LEVELS[0];
+    if (id !== levelId) {
+      setLevelId(id);
+      setLevelPreview(targetLvl);
+      playSound('click', sound);
+      return;
+    }
     playSound('click', sound);
-  }, [levelId, sound, reducedMotion]);
+    if (reducedMotion) {
+      setLevelTransition(null);
+      applyLevelStart(id);
+      return;
+    }
+    setLevelTransition('out');
+    setTimeout(() => {
+      applyLevelStart(id);
+      setLevelTransition('in');
+      setTimeout(() => setLevelTransition(null), 320);
+    }, 260);
+  }, [levelId, sound, reducedMotion, applyLevelStart]);
 
   const triggerConfetti = useCallback(() => {
     const colors = ['#10b981', '#fbbf24', '#38bdf8', '#c084fc', '#f43f5e', '#ffffff', '#4ade80', '#f472b6'];
@@ -562,8 +582,10 @@ function App() {
       if (didEat) {
         playSound('eat', sound);
         setWormExpression('eating');
+        setWormGrowing(true);
         setBoardFx(fx => ({ ...fx, eat: true }));
         setTimeout(() => setBoardFx(fx => ({ ...fx, eat: false })), 420);
+        setTimeout(() => setWormGrowing(false), 450);
         triggerScreenShake();
         const eatenApple = old.apples.find(a => same(a, next.worm[0]));
         if (eatenApple) {
@@ -616,6 +638,12 @@ function App() {
 
         setCompleted(prev => (prev.includes(levelId + 1) ? prev : [...prev, Math.min(50, levelId + 1)]));
         setCoins(c => c + 25);
+        const powerUpTypes = ['bomb', 'lightning', 'hammer', 'magicKey', 'rainbow', 'extraMoves'];
+        const rewardType = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
+        const rewardLabels = { bomb: 'Bomb', lightning: 'Lightning', hammer: 'Hammer', magicKey: 'Magic Key', rainbow: 'Rainbow', extraMoves: 'Extra Moves' };
+        setPowerUps(prev => ({ ...prev, [rewardType]: (prev[rewardType] || 0) + 1 }));
+        setCompletionReward({ type: rewardType, label: rewardLabels[rewardType] || rewardType, coins: 25 });
+        setNotice(`Level complete! +25 coins and +1 ${rewardLabels[rewardType] || rewardType}.`);
         setLevelProgress(prev => {
           const oldp = prev[levelId] || {};
           return {
@@ -765,40 +793,79 @@ function App() {
 
   const applyPowerUp = useCallback((type, pos) => {
     const count = powerUps[type] || 0;
-    if (count <= 0 && selectedPowerUp !== type) return;
-    if (!pos && type !== 'magicKey' && type !== 'extraMoves') return;
+    if (count <= 0) return;
 
     let next = game;
-    let soundName = 'click';
+    let soundName = 'boost';
+    let burstColor = '#fbbf24';
+    let effectText = '';
+    let burstPos = null;
 
     if (type === 'bomb' && pos) {
       next = applyBomb(game, level, pos);
-      soundName = 'boost';
+      burstColor = '#ef4444';
+      effectText = 'Bomb cleared obstacles!';
+      burstPos = pos;
     } else if (type === 'lightning' && pos) {
       next = applyLightning(game, level, 'row', pos[1]);
-      soundName = 'boost';
+      burstColor = '#f59e0b';
+      effectText = 'Lightning struck the row!';
+      burstPos = pos;
     } else if (type === 'hammer' && pos) {
       next = applyHammer(game, level, pos);
-      soundName = 'boost';
+      burstColor = '#10b981';
+      effectText = 'Hammer smashed the obstacle!';
+      burstPos = pos;
     } else if (type === 'magicKey') {
       next = applyMagicKey(game, level);
-      soundName = 'boost';
+      burstColor = '#a855f7';
+      effectText = 'Magic Key unlocked all doors!';
     } else if (type === 'rainbow' && pos) {
-      next = applyRainbow(game, level, 'grass');
-      soundName = 'boost';
+      const hasGrass = (game.grass || []).length > 0;
+      const hasTreasure = (game.treasure || []).length > 0;
+      const hasApples = (game.apples || []).length > 0;
+      const rainbowTarget = hasGrass ? 'grass' : hasTreasure ? 'treasure' : hasApples ? 'apples' : null;
+      if (!rainbowTarget) {
+        setNotice('Rainbow has no collectibles to clear on this level.');
+        return;
+      }
+      next = applyRainbow(game, level, rainbowTarget);
+      burstColor = '#ec4899';
+      effectText = rainbowTarget === 'grass' ? 'Rainbow cleared the grass!' : rainbowTarget === 'treasure' ? 'Rainbow collected all treasure!' : 'Rainbow gathered all apples!';
+      burstPos = pos;
     } else if (type === 'extraMoves') {
       setBonusMoves(b => b + 5);
-      setSelectedPowerUp(null);
-      setNotice('Extra Moves: +5 bonus moves added!');
       playSound('boost', sound);
+      setNotice('Extra Moves: +5 bonus moves added!');
+      burstPos = game.worm[0];
+      triggerParticleBurst(
+        (burstPos[0] / level.size) * 100 + (100 / (level.size * 2)),
+        (burstPos[1] / level.size) * 100,
+        '#3b82f6'
+      );
+      triggerScreenShake();
+      setPowerUps(prev => {
+        const updated = { ...prev };
+        if (updated[type] !== undefined) updated[type] = Math.max(0, updated[type] - 1);
+        return updated;
+      });
+      setSelectedPowerUp(null);
+      setMoveTick(t => t + 1);
       return;
     }
 
-    if (next === game) {
+    if (next === null || next === game) {
       setNotice(`No effect at this tile.`);
       return;
     }
 
+    const head = burstPos || game.worm[0];
+    triggerParticleBurst(
+      (head[0] / level.size) * 100 + (100 / (level.size * 2)),
+      (head[1] / level.size) * 100,
+      burstColor
+    );
+    triggerScreenShake();
     setGame(next);
     setPowerUps(prev => {
       const updated = { ...prev };
@@ -807,7 +874,7 @@ function App() {
     });
     setSelectedPowerUp(null);
     playSound(soundName, sound);
-    setNotice(`${type.charAt(0).toUpperCase() + type.slice(1)} used!`);
+    setNotice(effectText || `${type.charAt(0).toUpperCase() + type.slice(1)} used!`);
     setMoveTick(t => t + 1);
   }, [game, level, powerUps, selectedPowerUp, token, sound, bonusMoves, setBonusMoves, setNotice, setMoveTick, playSound]);
 
@@ -996,20 +1063,30 @@ function App() {
     }));
   }, [currentWorld.color]);
 
-  const ambientNearOrbs = useMemo(() => [
-    { color: currentWorld.color, top: '-150px', left: '-150px', size: 500 },
-    { color: currentWorld.color === '#10b981' ? '#38bdf8' : currentWorld.color === '#f59e0b' ? '#a855f7' : '#ec4899', bottom: '-100px', right: '-100px', size: 400 },
-    { color: currentWorld.color === '#38bdf8' ? '#fbbf24' : currentWorld.color === '#a855f7' ? '#10b981' : '#38bdf8', top: '35%', left: '50%', size: 300 },
-  ], [currentWorld.color]);
+  const ambientNearOrbs = useMemo(() => {
+    const accents = {
+      1: ['#22c55e', '#86efac', '#166534'],
+      2: ['#38bdf8', '#bae6fd', '#0ea5e9'],
+      3: ['#f59e0b', '#fde68a', '#b45309'],
+      4: ['#a855f7', '#e9d5ff', '#d946ef'],
+      5: ['#f97316', '#fdba74', '#ef4444'],
+    }[currentWorld.id] || [currentWorld.color, currentWorld.color, currentWorld.color];
+    return [
+      { color: accents[0], top: '-150px', left: '-150px', size: 520 },
+      { color: accents[1], bottom: '-120px', right: '-120px', size: 420 },
+      { color: accents[2], top: '35%', left: '50%', size: 320 },
+    ];
+  }, [currentWorld.id, currentWorld.color]);
 
   const worldParticles = useMemo(() => {
-    const count = 15;
+    const count = 18;
     return Array.from({ length: count }).map((_, i) => ({
-      left: `${(i * 100) / count + Math.random() * 20}%`,
-      top: `${Math.random() * 100}%`,
-      size: 4 + Math.random() * 8,
-      duration: 4 + Math.random() * 6,
-      delay: Math.random() * 4,
+      left: `${(i * 100) / count + (i % 3) * 3}%`,
+      top: `${(i * 17) % 100}%`,
+      size: 3 + (i % 5) * 2.5,
+      duration: 4 + (i % 6),
+      delay: (i % 7) * 0.6,
+      drift: (i % 2 ? 1 : -1) * (10 + (i % 5) * 8),
     }));
   }, [currentWorld.id]);
 
@@ -1017,7 +1094,7 @@ function App() {
 
   return (
     <div
-      className={`game-master-container ${screenShake ? 'screen-shake' : ''} ${reducedMotion ? 'reduced-motion' : ''} ${highContrast ? 'high-contrast' : ''} ${colorblindMode ? 'colorblind' : ''} ${levelIntro ? 'level-intro' : ''} ${boardFx.warp ? 'fx-warp' : ''} ${boardFx.impact ? 'fx-impact' : ''} ${boardFx.eat ? 'fx-eat' : ''}`}
+      className={`game-master-container ${screenShake ? 'screen-shake' : ''} ${reducedMotion ? 'reduced-motion' : ''} ${highContrast ? 'high-contrast' : ''} ${colorblindMode ? 'colorblind' : ''} ${levelIntro ? 'level-intro' : ''} ${levelTransition ? `level-transition-${levelTransition}` : ''} ${boardFx.warp ? 'fx-warp' : ''} ${boardFx.impact ? 'fx-impact' : ''} ${boardFx.eat ? 'fx-eat' : ''}`}
       data-world={currentWorld.id}
       data-budget={moveBudgetState}
       onTouchStart={handleTouchStart}
@@ -1076,7 +1153,7 @@ function App() {
           {worldParticles.map((p, i) => (
             <div
               key={i}
-              className="world-particle"
+              className={`world-particle world-particle-${currentWorld.id}`}
               style={{
                 left: p.left,
                 top: p.top,
@@ -1084,8 +1161,18 @@ function App() {
                 height: `${p.size}px`,
                 animationDuration: `${p.duration}s`,
                 animationDelay: `${p.delay}s`,
+                '--drift': `${p.drift || 0}px`,
               }}
             />
+          ))}
+          {Array.from({ length: currentWorld.id === 1 ? 8 : currentWorld.id === 4 ? 10 : currentWorld.id === 5 ? 10 : 6 }).map((_, i) => (
+            <div
+              key={`fx-${i}`}
+              className={`ambient-firefly world-fx-${currentWorld.id}`}
+              style={{ left: `${(i * 13 + 7) % 100}%`, top: `${(i * 19 + 10) % 100}%`, animationDelay: `${i * 0.35}s` }}
+            >
+              <WorldFireflySVG worldId={currentWorld.id} delay={i * 0.35} />
+            </div>
           ))}
         </div>
       </div>
@@ -1106,6 +1193,8 @@ function App() {
         solverHint={solverHint}
         onOpenMap={() => setMapModal(true)}
         onToggleSound={() => setSound(!sound)}
+        music={music}
+        onToggleMusic={toggleMusic}
         onOpenShop={() => setShopModal(true)}
         onOpenAchievements={() => setAchievementsModal(true)}
         onOpenSettings={() => setSettingsModal(true)}
@@ -1161,7 +1250,7 @@ function App() {
       {/* DRAG GESTURE HINT (mobile) */}
       {isTouchDevice && showDragHint && (
         <div className={`drag-gesture-hint ${showDragHint ? 'show' : ''}`}>
-          <span>👆 Drag to slither</span>
+          <span>Swipe or use controls to move</span>
         </div>
       )}
 
@@ -1183,6 +1272,7 @@ function App() {
         selectedPowerUp={selectedPowerUp}
         onApplyPowerUp={applyPowerUp}
         floatingScores={floatingScores}
+        growing={wormGrowing}
       />
 
       <ControlDock
@@ -1193,6 +1283,7 @@ function App() {
         powerUps={powerUps}
         selectedPowerUp={selectedPowerUp}
         onSelectPowerUp={setSelectedPowerUp}
+        onApplyPowerUp={applyPowerUp}
         onMove={move}
       />
 
@@ -1219,10 +1310,10 @@ function App() {
             <div className="victory-trophy-pedestal">
               <TrophyIcon size={50} />
             </div>
-            <span style={{ color: '#34d399', fontSize: 13, fontWeight: 800, letterSpacing: '0.1em' }}>
+            <span style={{ color: currentWorld.color, fontSize: 13, fontWeight: 800, letterSpacing: '0.1em' }}>
               {currentWorld.name.toUpperCase()} • LEVEL {levelId}
             </span>
-            <h2 className="modal-prominent-title">Garden Cleared!</h2>
+            <h2 className="modal-prominent-title">Level Complete!</h2>
             <div className="podium-stars-trio">
               <div className={`star-podium-slot ${starPopStage >= 1 ? 'earned' : ''}`}>
                 <StarIcon size={36} fill={starPopStage >= 1 ? '#78350f' : 'none'} />
@@ -1234,6 +1325,11 @@ function App() {
                 <StarIcon size={36} fill={starPopStage >= 3 ? '#78350f' : 'none'} />
               </div>
             </div>
+            <div className="victory-reward-banner" style={{ '--reward-accent': currentWorld.color }}>
+              <div className="victory-reward-chip"><CoinsIcon size={16} /> +{completionReward?.coins || 25} Coins</div>
+              <div className="victory-reward-chip"><GiftIcon size={16} /> +1 {completionReward?.label || 'Power-up'}</div>
+              {levelId % 10 === 0 && levelId < 50 && <div className="victory-reward-chip highlight"><SparklesIcon size={16} /> World {WORLDS.find(w => w.range[0] === levelId + 1)?.id || ''} Unlocked</div>}
+            </div>
             <div className="stats-summary-grid">
               <div className="summary-metric-card">
                 <small>MOVES</small>
@@ -1241,11 +1337,11 @@ function App() {
               </div>
               <div className="summary-metric-card bonus">
                 <small>COIN REWARD</small>
-                <strong>+25 <CoinsIcon size={14} style={{ verticalAlign: 'middle' }} /></strong>
+                <strong>+{completionReward?.coins || 25} <CoinsIcon size={14} style={{ verticalAlign: 'middle' }} /></strong>
               </div>
               <div className="summary-metric-card">
-                <small>SCORE</small>
-                <strong>+{game.score}</strong>
+                <small>POWER-UP</small>
+                <strong>{completionReward?.label || 'Reward'}</strong>
               </div>
               <div className="summary-metric-card">
                 <small>BEST STARS</small>
@@ -1267,19 +1363,21 @@ function App() {
               </div>
             </div>
             <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 22 }}>
-              {game.moves <= level.parMoves
-                ? <span><GemIcon size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} /> Flawless precision!</span>
-                : 'Well played! Slither into the next garden or replay to earn 3 stars.'}
+              {levelId % 10 === 0 && levelId < 50
+                ? <span><SparklesIcon size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} /> Realm cleared! {WORLDS.find(w => w.range[0] === levelId + 1)?.name} awaits.</span>
+                : game.moves <= level.parMoves
+                ? <span><GemIcon size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} /> Flawless route! Portal mastered.</span>
+                : 'Great run! Replay to optimize moves and earn 3 stars.'}
             </p>
             <div className="modal-btn-row">
               <button className="modal-primary-btn" onClick={() => startLevel(Math.min(50, levelId + 1))}>
-                Next Level <ChevronRightIcon size={18} />
+                {levelId === 50 ? 'Finish Adventure' : levelId % 10 === 0 ? 'Enter Next Realm' : 'Next Level'} <ChevronRightIcon size={18} />
               </button>
               <button className="modal-secondary-btn" onClick={restart}>
                 <RotateCcwIcon size={16} /> Replay
               </button>
               <button className="modal-secondary-btn" onClick={() => setMapModal(true)}>
-                Realms
+                World Map
               </button>
             </div>
           </div>

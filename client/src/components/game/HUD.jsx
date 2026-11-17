@@ -2,7 +2,7 @@
 import {
   Apple as AppleIcon, Star as StarIcon, Coins as CoinsIcon, Volume2 as Volume2Icon, VolumeX as VolumeXIcon,
   ShoppingBag as ShoppingBagIcon, Award as AwardIcon, Settings as SettingsIcon, User as UserIcon,
-  Sparkles as SparklesIcon, Compass as CompassIcon
+  Sparkles as SparklesIcon, Compass as CompassIcon, Music as MusicIcon, Music2 as MusicOffIcon
 } from 'lucide-react';
 
 export default function HUD({
@@ -21,6 +21,8 @@ export default function HUD({
   solverHint,
   onOpenMap,
   onToggleSound,
+  music,
+  onToggleMusic,
   onOpenShop,
   onOpenAchievements,
   onOpenSettings,
@@ -62,7 +64,8 @@ export default function HUD({
 
           <div className="hud-actions-compact">
             <div className="coin-badge-pill compact" title="Coins"><CoinsIcon size={14} /><span>{coins}</span></div>
-            <button className={`hud-action-icon-btn ${sound ? 'active' : ''}`} onClick={onToggleSound} title="Sound">{sound ? <Volume2Icon size={15} /> : <VolumeXIcon size={15} />}</button>
+            <button className={`hud-action-icon-btn ${sound ? 'active' : ''}`} onClick={onToggleSound} title="Sound effects">{sound ? <Volume2Icon size={15} /> : <VolumeXIcon size={15} />}</button>
+            <button className={`hud-action-icon-btn ${music ? 'active' : ''}`} onClick={onToggleMusic} title={music ? 'Music on' : 'Music off'}>{music ? <MusicIcon size={15} /> : <MusicOffIcon size={15} />}</button>
             <button className="hud-action-icon-btn" onClick={onOpenShop} title="Shop"><ShoppingBagIcon size={15} /></button>
             <button className="hud-action-icon-btn" onClick={onOpenAchievements} title="Badges"><AwardIcon size={15} /></button>
             <button className="hud-action-icon-btn" onClick={onOpenSettings} title="Settings"><SettingsIcon size={15} /></button>

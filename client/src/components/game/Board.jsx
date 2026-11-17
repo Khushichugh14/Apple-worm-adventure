@@ -4,19 +4,18 @@ import {
   PremiumAppleSVG, PremiumPortalSVG, PremiumStoneWallSVG,
   PremiumGrassTileSVG, PremiumStoneBlockSVG, PremiumCrateTileSVG,
   PremiumIceTileSVG, PremiumTreasureTileSVG,
-  WorldBackgroundSVG, WorldTreeSVG, WorldMushroomSVG,
+  WorldBackgroundSVG, WorldTreeSVG, WorldBushSVG, WorldRockSVG, WorldMushroomSVG,
   WorldCrystalSVG, WorldIceCrystalSVG, WorldPlanetSVG,
-  FloatingParticleSVG
 } from '../GameElements';
 import { KeyRound as KeyRoundIcon, LockKeyhole as LockKeyholeIcon, Flame as FlameIcon, ShieldCheck as ShieldCheckIcon, ArrowUp as ArrowUpIcon, ArrowDown as ArrowDownIcon, ArrowLeft as ArrowLeftIcon, ArrowRight as ArrowRightIcon } from 'lucide-react';
 import WormRenderer from './WormRenderer';
 
 const DECORATION_COMPONENTS = {
-  1: WorldTreeSVG,
-  2: WorldMushroomSVG,
-  3: WorldCrystalSVG,
-  4: WorldIceCrystalSVG,
-  5: WorldPlanetSVG,
+  1: [WorldTreeSVG, WorldBushSVG, WorldMushroomSVG, WorldRockSVG, WorldBushSVG],
+  2: [WorldIceCrystalSVG, WorldCrystalSVG, WorldRockSVG, WorldIceCrystalSVG],
+  3: [WorldRockSVG, WorldTreeSVG, WorldBushSVG, WorldPlanetSVG, WorldRockSVG],
+  4: [WorldMushroomSVG, WorldTreeSVG, WorldCrystalSVG, WorldBushSVG, WorldMushroomSVG],
+  5: [WorldRockSVG, WorldPlanetSVG, WorldCrystalSVG, WorldRockSVG, WorldPlanetSVG],
 };
 
 const DIRECTION_ICONS = {
@@ -54,9 +53,10 @@ export default function Board({
   selectedPowerUp,
   onApplyPowerUp,
   floatingScores,
+  growing = false,
 }) {
   const worldId = currentWorld?.id || 1;
-  const DecorIcon = DECORATION_COMPONENTS[worldId] || WorldTreeSVG;
+  const DecorIcons = DECORATION_COMPONENTS[worldId] || [WorldTreeSVG];
 
   const isApple = p => game.apples.some(a => same(a, p));
   const isHead = p => game.worm.length && same(game.worm[0], p);
@@ -142,7 +142,7 @@ export default function Board({
                   {boardFx?.trail?.some(t => same(t, p)) && <span className="tile-trail-fx" aria-hidden="true" />}
 
                   {isAppleCell ? (
-                    <PremiumAppleSVG collected={false} bobPhase={(animTime * 0.001 + p[0] * 0.5 + p[1] * 0.3) % (Math.PI * 2)} worldId={worldId} />
+                    <PremiumAppleSVG collected={false} bobPhase={animTime * 0.002 + p[0] * 0.7 + p[1] * 0.45} worldId={worldId} />
                   ) : isPortalCell ? (
                     <div className={`portal-cell-wrap ${game.apples.length === 0 ? 'open' : 'locked'}`}>
                       <PremiumPortalSVG unlocked={game.apples.length === 0} pulsePhase={animTime * 0.001} worldId={worldId} />
@@ -157,45 +157,21 @@ export default function Board({
                   ) : isBlockCell ? (
                     <span className="mechanic-icon block-icon" title="Block"><ShieldCheckIcon size={18} /></span>
                   ) : isWallCell ? (
-                    <PremiumStoneWallSVG worldId={worldId} variant={(level.id + r * 3 + c2) % 4} seed={level.id + r * 7 + c2 * 3} />
+                    <PremiumStoneWallSVG worldId={worldId} variant={(level.id + r * 3 + c2) % 4} />
                   ) : isGrassCell ? (
-                    <PremiumGrassTileSVG pulsePhase={animTime * 0.001} />
+                    <PremiumGrassTileSVG pulsePhase={animTime * 0.001} worldId={worldId} />
                   ) : isStoneCell ? (
-                    <PremiumStoneBlockSVG hits={(game.stoneBlocks || []).find(s => same(s.pos, p))?.hits || 2} pulsePhase={animTime * 0.001} />
+                    <PremiumStoneBlockSVG hits={(game.stoneBlocks || []).find(s => same(s.pos, p))?.hits || 2} worldId={worldId} />
                   ) : isCrateCell ? (
-                    <PremiumCrateTileSVG pulsePhase={animTime * 0.001} />
+                    <PremiumCrateTileSVG worldId={worldId} />
                   ) : isIceCell ? (
-                    <PremiumIceTileSVG pulsePhase={animTime * 0.001} />
+                    <PremiumIceTileSVG pulsePhase={animTime * 0.001} worldId={worldId} />
                   ) : isTreasureCell ? (
-                    <PremiumTreasureTileSVG pulsePhase={animTime * 0.001} />
+                    <PremiumTreasureTileSVG pulsePhase={animTime * 0.001} worldId={worldId} />
                   ) : null}
                 </div>
               );
             })}
-          </div>
-
-          {/* Perimeter Environmental Decorations - Surround the board, never on playable cells */}
-          <div className="perimeter-decorations" aria-hidden="true">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={`perim-top-${i}`} className="perim-item perim-top" style={{ left: `${(i * 100) / 6}%` }}>
-                <DecorIcon worldId={worldId} variant={i} />
-              </div>
-            ))}
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={`perim-bottom-${i}`} className="perim-item perim-bottom" style={{ left: `${(i * 100) / 6}%` }}>
-                <DecorIcon worldId={worldId} variant={i} />
-              </div>
-            ))}
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={`perim-left-${i}`} className="perim-item perim-left" style={{ top: `${(i * 100) / 4}%` }}>
-                <DecorIcon worldId={worldId} variant={i + 6} />
-              </div>
-            ))}
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={`perim-right-${i}`} className="perim-item perim-right" style={{ top: `${(i * 100) / 4}%` }}>
-                <DecorIcon worldId={worldId} variant={i + 10} />
-              </div>
-            ))}
           </div>
 
           <WormRenderer
@@ -206,7 +182,44 @@ export default function Board({
             currentSkin={currentSkin}
             facing={facing}
             animTime={animTime}
+            growing={growing}
           />
+        </div>
+
+        {/* Perimeter Environmental Decorations - Surround board, outside overflow-hidden island */}
+        <div className="perimeter-decorations" aria-hidden="true">
+          {Array.from({ length: 6 }).map((_, i) => {
+            const Comp = DecorIcons[i % DecorIcons.length];
+            return (
+              <div key={`perim-top-${i}`} className="perim-item perim-top" style={{ left: `${(i * 100) / 6}%` }}>
+                <Comp worldId={worldId} variant={i} />
+              </div>
+            );
+          })}
+          {Array.from({ length: 6 }).map((_, i) => {
+            const Comp = DecorIcons[i % DecorIcons.length];
+            return (
+              <div key={`perim-bottom-${i}`} className="perim-item perim-bottom" style={{ left: `${(i * 100) / 6}%` }}>
+                <Comp worldId={worldId} variant={i} />
+              </div>
+            );
+          })}
+          {Array.from({ length: 4 }).map((_, i) => {
+            const Comp = DecorIcons[(i + 6) % DecorIcons.length];
+            return (
+              <div key={`perim-left-${i}`} className="perim-item perim-left" style={{ top: `${(i * 100) / 4}%` }}>
+                <Comp worldId={worldId} variant={i + 6} />
+              </div>
+            );
+          })}
+          {Array.from({ length: 4 }).map((_, i) => {
+            const Comp = DecorIcons[(i + 10) % DecorIcons.length];
+            return (
+              <div key={`perim-right-${i}`} className="perim-item perim-right" style={{ top: `${(i * 100) / 4}%` }}>
+                <Comp worldId={worldId} variant={i + 10} />
+              </div>
+            );
+          })}
         </div>
       </div>
     </main>
