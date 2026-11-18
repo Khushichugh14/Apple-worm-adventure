@@ -114,64 +114,66 @@ export default function Board({
               const hintDir = hintIdx >= 0 && hintIdx < hintPath.length - 1 ? dirFrom(hintPath[hintIdx], hintPath[hintIdx + 1]) : null;
               const isHintPathTile = hintIdx >= 0;
 
-              return (
-                <div
-                  key={i}
-                  className={`garden-tile-cell ${floorClass}${levelVariant}${showDecor ? ' has-decor' : ''}${isWallCell ? ' wall' : ''}${isKeyCell ? ' key-tile' : ''}${isDoorCell ? ' door-tile' : ''}${isHazardCell ? ' hazard-tile' : ''}${isBlockCell ? ' block-tile' : ''}${isAppleCell ? ' apple' : ''}${isPortalCell ? ' portal' : ''}${hint && game.apples.length && same(game.apples[0], p) ? ' hinted' : ''}${showHintPath && solverHint && solverHint.path && solverHint.path.some(pt => same(pt, p)) ? ' hint-path hint-path-anim' : ''}${boardFx?.trail?.some(t => same(t, p)) ? ' worm-trail' : ''}${isHead(p) ? ' head' : ''}${game.worm.some(w => same(w, p)) ? ' worm' : ''}${isGrassCell ? ' grass-tile' : ''}${isStoneCell ? ' stone-block-tile' : ''}${isCrateCell ? ' crate-tile' : ''}${isIceCell ? ' ice-tile' : ''}${isTreasureCell ? ' treasure-tile' : ''}`}
-                  onClick={() => { if (selectedPowerUp) onApplyPowerUp(selectedPowerUp, p); }}
-                  aria-label={
-                    isPortalCell ? (game.apples.length === 0 ? 'Portal open' : 'Portal locked') :
-                    isAppleCell ? 'Apple' : isWallCell ? 'Wall' : isKeyCell ? 'Key' : isDoorCell ? 'Locked gate' :
-                    isHazardCell ? 'Hazard' : isGrassCell ? 'Grass' : isStoneCell ? 'Stone block' :
-                    isCrateCell ? 'Crate' : isIceCell ? 'Ice' : isTreasureCell ? 'Treasure' : 'Tile'
-                  }
-                >
-                  {/* Floor texture for empty cells */}
-                  {isEmpty && (
-                    <div className="floor-texture" aria-hidden="true" />
-                  )}
+                  return (
+                    <div
+                      key={i}
+                      className={`garden-tile-cell ${floorClass}${levelVariant}${showDecor ? ' has-decor' : ''}${isWallCell ? ' wall' : ''}${isKeyCell ? ' key-tile' : ''}${isDoorCell ? ' door-tile' : ''}${isHazardCell ? ' hazard-tile' : ''}${isBlockCell ? ' block-tile' : ''}${isAppleCell ? ' apple' : ''}${isPortalCell ? ' portal' : ''}${hint && game.apples.length && same(game.apples[0], p) ? ' hinted' : ''}${showHintPath && isHintPathTile ? ' hint-path hint-path-anim' : ''}${boardFx?.trail?.some(t => same(t, p)) ? ' worm-trail' : ''}${isGrassCell ? ' grass-tile' : ''}${isStoneCell ? ' stone-block-tile' : ''}${isCrateCell ? ' crate-tile' : ''}${isIceCell ? ' ice-tile' : ''}${isTreasureCell ? ' treasure-tile' : ''}`}
+                      onClick={() => { if (selectedPowerUp) onApplyPowerUp(selectedPowerUp, p); }}
+                      aria-label={
+                        isPortalCell ? (game.apples.length === 0 ? 'Portal open' : 'Portal locked') :
+                        isAppleCell ? 'Apple' : isWallCell ? 'Wall' : isKeyCell ? 'Key' : isDoorCell ? 'Locked gate' :
+                        isHazardCell ? 'Hazard' : isGrassCell ? 'Grass' : isStoneCell ? 'Stone block' :
+                        isCrateCell ? 'Crate' : isIceCell ? 'Ice' : isTreasureCell ? 'Treasure' : 'Tile'
+                      }
+                    >
+                      {/* Floor texture for empty cells */}
+                      {isEmpty && (
+                        <div className="floor-texture" aria-hidden="true" />
+                      )}
 
-                  {showDecor && <span className={`tile-decor decor-${worldId} d-${Math.floor(decor * 4)}`} aria-hidden="true" />}
+                      {showDecor && <span className={`tile-decor decor-${worldId} d-${Math.floor(decor * 4)}`} aria-hidden="true" />}
 
-                  {isHintPathTile && showHintPath && hintDir && (
-                    <div className="hint-direction-arrow" style={{ animationDelay: `${hintIdx * 0.1}s` }}>
-                      {(() => { const Icon = getDirectionIcon(hintDir); return <Icon size={14} />; })()}
+                      {isHintPathTile && showHintPath && hintDir && (
+                        <div className="hint-direction-arrow" style={{ animationDelay: `${hintIdx * 0.1}s` }}>
+                          {(() => { const Icon = getDirectionIcon(hintDir); return <Icon size={14} />; })()}
+                        </div>
+                      )}
+
+                      {boardFx?.trail?.some(t => same(t, p)) && <span className="tile-trail-fx" aria-hidden="true" />}
+
+                      {isAppleCell ? (
+                        <div className="tile-item-layer tile-apple-layer">
+                          <PremiumAppleSVG collected={false} bobPhase={animTime * 0.002 + p[0] * 0.7 + p[1] * 0.45} worldId={worldId} />
+                        </div>
+                      ) : isPortalCell ? (
+                        <div className={`portal-cell-wrap tile-item-layer ${game.apples.length === 0 ? 'open' : 'locked'}`}>
+                          <PremiumPortalSVG unlocked={game.apples.length === 0} pulsePhase={animTime * 0.001} worldId={worldId} />
+                          <span className="portal-state-badge">{game.apples.length === 0 ? 'OPEN' : `${game.apples.length}`}</span>
+                        </div>
+                      ) : isKeyCell ? (
+                        <span className="mechanic-icon key-icon tile-item-layer" title="Collect key to open gates"><KeyRoundIcon size={18} /></span>
+                      ) : isDoorCell ? (
+                        <span className="mechanic-icon door-icon tile-item-layer" title="Locked gate - find a key"><LockKeyholeIcon size={18} /></span>
+                      ) : isHazardCell ? (
+                        <span className="mechanic-icon hazard-icon tile-item-layer" title="Hazard - avoid"><FlameIcon size={18} /></span>
+                      ) : isBlockCell ? (
+                        <span className="mechanic-icon block-icon tile-item-layer" title="Block"><ShieldCheckIcon size={18} /></span>
+                      ) : isWallCell ? (
+                        <div className="tile-item-layer tile-wall-layer"><PremiumStoneWallSVG worldId={worldId} variant={(level.id + r * 3 + c2) % 4} /></div>
+                      ) : isGrassCell ? (
+                        <div className="tile-item-layer"><PremiumGrassTileSVG pulsePhase={animTime * 0.001} worldId={worldId} /></div>
+                      ) : isStoneCell ? (
+                        <div className="tile-item-layer"><PremiumStoneBlockSVG hits={(game.stoneBlocks || []).find(s => same(s.pos, p))?.hits || 2} worldId={worldId} /></div>
+                      ) : isCrateCell ? (
+                        <div className="tile-item-layer"><PremiumCrateTileSVG worldId={worldId} /></div>
+                      ) : isIceCell ? (
+                        <div className="tile-item-layer"><PremiumIceTileSVG pulsePhase={animTime * 0.001} worldId={worldId} /></div>
+                      ) : isTreasureCell ? (
+                        <div className="tile-item-layer"><PremiumTreasureTileSVG pulsePhase={animTime * 0.001} worldId={worldId} /></div>
+                      ) : null}
                     </div>
-                  )}
-
-                  {boardFx?.trail?.some(t => same(t, p)) && <span className="tile-trail-fx" aria-hidden="true" />}
-
-                  {isAppleCell ? (
-                    <PremiumAppleSVG collected={false} bobPhase={animTime * 0.002 + p[0] * 0.7 + p[1] * 0.45} worldId={worldId} />
-                  ) : isPortalCell ? (
-                    <div className={`portal-cell-wrap ${game.apples.length === 0 ? 'open' : 'locked'}`}>
-                      <PremiumPortalSVG unlocked={game.apples.length === 0} pulsePhase={animTime * 0.001} worldId={worldId} />
-                      <span className="portal-state-badge">{game.apples.length === 0 ? 'OPEN' : `${game.apples.length}`}</span>
-                    </div>
-                  ) : isKeyCell ? (
-                    <span className="mechanic-icon key-icon" title="Collect key to open gates"><KeyRoundIcon size={18} /></span>
-                  ) : isDoorCell ? (
-                    <span className="mechanic-icon door-icon" title="Locked gate - find a key"><LockKeyholeIcon size={18} /></span>
-                  ) : isHazardCell ? (
-                    <span className="mechanic-icon hazard-icon" title="Hazard - avoid"><FlameIcon size={18} /></span>
-                  ) : isBlockCell ? (
-                    <span className="mechanic-icon block-icon" title="Block"><ShieldCheckIcon size={18} /></span>
-                  ) : isWallCell ? (
-                    <PremiumStoneWallSVG worldId={worldId} variant={(level.id + r * 3 + c2) % 4} />
-                  ) : isGrassCell ? (
-                    <PremiumGrassTileSVG pulsePhase={animTime * 0.001} worldId={worldId} />
-                  ) : isStoneCell ? (
-                    <PremiumStoneBlockSVG hits={(game.stoneBlocks || []).find(s => same(s.pos, p))?.hits || 2} worldId={worldId} />
-                  ) : isCrateCell ? (
-                    <PremiumCrateTileSVG worldId={worldId} />
-                  ) : isIceCell ? (
-                    <PremiumIceTileSVG pulsePhase={animTime * 0.001} worldId={worldId} />
-                  ) : isTreasureCell ? (
-                    <PremiumTreasureTileSVG pulsePhase={animTime * 0.001} worldId={worldId} />
-                  ) : null}
-                </div>
-              );
-            })}
+                  );
+                })}
           </div>
 
           <WormRenderer

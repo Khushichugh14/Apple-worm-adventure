@@ -454,6 +454,9 @@ function App() {
     if (leaderboardModal) fetchLeaderboard();
   }, [leaderboardModal, fetchLeaderboard]);
 
+  let fxIdSeq = 0;
+  const nextFxId = (prefix) => `${prefix}-${Date.now()}-${++fxIdSeq}`;
+
   const triggerScreenShake = useCallback(() => {
     setScreenShake(true);
     setTimeout(() => setScreenShake(false), 300);
@@ -461,7 +464,7 @@ function App() {
 
   const triggerParticleBurst = useCallback((x, y, color) => {
     const particles = Array.from({ length: 12 }).map((_, i) => ({
-      id: Date.now() + i,
+      id: nextFxId('burst'),
       x: x + (Math.random() - 0.5) * 10,
       y: y + (Math.random() - 0.5) * 10,
       color,
@@ -526,7 +529,7 @@ function App() {
   const triggerConfetti = useCallback(() => {
     const colors = ['#10b981', '#fbbf24', '#38bdf8', '#c084fc', '#f43f5e', '#ffffff', '#4ade80', '#f472b6'];
     const particles = Array.from({ length: 60 }).map((_, idx) => ({
-      id: idx,
+      id: nextFxId('confetti'),
       color: colors[idx % colors.length],
       left: Math.random() * 96 + '%',
       delay: Math.random() * 0.5 + 's',
@@ -561,8 +564,8 @@ function App() {
 
       const oldHead = old.worm[0];
       const soilColors = ['#8b5a2b', '#a67c52', '#784212', '#5d4037'];
-      const trailParticles = Array.from({ length: 5 }).map((_, i) => ({
-        id: Date.now() + i + Math.random(),
+      const trailParticles = Array.from({ length: 5 }).map(() => ({
+        id: nextFxId('trail'),
         x: (oldHead[0] / level.size) * 100 + (100 / (level.size * 2)) + (Math.random() - 0.5) * 12,
         y: (oldHead[1] / level.size) * 100 + (Math.random() - 0.5) * 12,
         size: 4 + Math.random() * 6,
@@ -589,7 +592,7 @@ function App() {
         triggerScreenShake();
         const eatenApple = old.apples.find(a => same(a, next.worm[0]));
         if (eatenApple) {
-          const scoreId = Date.now() + Math.random();
+          const scoreId = nextFxId('score');
           setFloatingScores(prev => [...prev, { id: scoreId, x: eatenApple[0], y: eatenApple[1], text: '+10' }]);
           triggerParticleBurst(
             (eatenApple[0] / level.size) * 100 + (100 / (level.size * 2)),

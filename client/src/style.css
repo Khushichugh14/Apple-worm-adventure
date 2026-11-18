@@ -7431,3 +7431,284 @@ input:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ===================================================
+   HOTFIX: Board visibility, object sizing, alignment, layering
+   (appended overrides to resolve oversized apple, grid clarity,
+    worm alignment, and z-index/overflow issues)
+   =================================================== */
+
+.game-play-stage {
+  padding: 10px 12px 8px;
+  min-height: 0;
+}
+
+.garden-board-wrapper {
+  position: relative;
+  width: min(92vmin, 72vh, 720px);
+  height: min(92vmin, 72vh, 720px);
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: visible;
+}
+
+.garden-floating-island {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 1 / 1;
+  padding: 8px !important;
+  border-radius: 20px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.world-background-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.garden-matrix-grid {
+  position: relative;
+  z-index: 2;
+  display: grid !important;
+  grid-template-columns: repeat(var(--grid-size, 8), minmax(0, 1fr)) !important;
+  grid-template-rows: repeat(var(--grid-size, 8), minmax(0, 1fr)) !important;
+  width: 100% !important;
+  height: 100% !important;
+  gap: 4px !important;
+  padding: 6px !important;
+  border-radius: 14px;
+  background: rgba(4, 8, 16, 0.28) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.25) !important;
+  overflow: hidden;
+}
+
+.garden-tile-cell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-clip: padding-box;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.28),
+    0 1px 2px rgba(0, 0, 0, 0.18) !important;
+}
+
+.garden-tile-cell.floor-tile-a {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)) !important;
+}
+.garden-tile-cell.floor-tile-b {
+  background-image: linear-gradient(180deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.10)) !important;
+}
+
+.garden-tile-cell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+  z-index: 1;
+}
+
+.garden-tile-cell .floor-texture {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0.22;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.garden-tile-cell.wall { z-index: 4; }
+.garden-tile-cell.key-tile,
+.garden-tile-cell.door-tile,
+.garden-tile-cell.hazard-tile,
+.garden-tile-cell.block-tile,
+.garden-tile-cell.grass-tile,
+.garden-tile-cell.stone-block-tile,
+.garden-tile-cell.crate-tile,
+.garden-tile-cell.ice-tile,
+.garden-tile-cell.treasure-tile { z-index: 5; }
+.garden-tile-cell.apple { z-index: 8; }
+.garden-tile-cell.portal { z-index: 7; }
+.garden-tile-cell.hint-path,
+.garden-tile-cell.hinted { z-index: 6; }
+
+.tile-item-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 6;
+}
+
+.tile-item-layer > * {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.tile-apple-layer { z-index: 9; }
+.tile-wall-layer { z-index: 6; }
+
+.premium-wall {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+.premium-apple {
+  width: 68% !important;
+  height: 68% !important;
+  max-width: 68% !important;
+  max-height: 68% !important;
+  display: block;
+  transform-origin: 50% 72%;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.28)) !important;
+}
+
+.portal-cell-wrap {
+  position: absolute !important;
+  inset: 0 !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  z-index: 8 !important;
+  pointer-events: none;
+}
+
+.portal-cell-wrap .premium-portal {
+  width: 78% !important;
+  height: 78% !important;
+  max-width: 78% !important;
+  max-height: 78% !important;
+  display: block;
+}
+
+.portal-state-badge {
+  position: absolute;
+  left: 50%;
+  bottom: 6%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: 999px;
+  z-index: 10;
+  letter-spacing: 0.06em;
+}
+
+.mechanic-icon {
+  width: 64%;
+  height: 64%;
+  z-index: 6;
+}
+
+.hint-direction-arrow {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 6;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+.tile-trail-fx {
+  position: absolute;
+  inset: 24%;
+  border-radius: 50%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.tile-decor {
+  z-index: 1;
+  opacity: 0.45 !important;
+}
+
+/* Continuous worm aligned exactly with grid inner content */
+.worm-overlay-layer {
+  position: absolute !important;
+  inset: 6px !important;
+  z-index: 20 !important;
+  pointer-events: none !important;
+  overflow: visible !important;
+}
+
+.continuous-worm-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible !important;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.30));
+}
+
+.garden-tile-cell.worm,
+.garden-tile-cell.head {
+  background-image: inherit !important;
+}
+
+/* Keep board effects above grid but below global UI */
+.garden-floating-island::before { z-index: 1; }
+.garden-floating-island::after { z-index: 3; }
+
+.floating-points-toast {
+  z-index: 30;
+}
+
+/* Responsive alignment: worm overlay must match grid padding */
+@media (max-width: 700px) {
+  .game-play-stage { padding: 8px 8px 6px; }
+  .garden-board-wrapper {
+    width: min(96vw, 68dvh, 560px);
+    height: min(96vw, 68dvh, 560px);
+  }
+  .garden-floating-island { padding: 6px !important; border-radius: 16px; }
+  .garden-matrix-grid { gap: 3px !important; padding: 4px !important; border-radius: 12px; }
+  .worm-overlay-layer { inset: 4px !important; }
+  .garden-tile-cell { border-radius: 7px !important; }
+  .premium-apple { width: 66% !important; height: 66% !important; max-width: 66% !important; max-height: 66% !important; }
+  .portal-cell-wrap .premium-portal { width: 76% !important; height: 76% !important; max-width: 76% !important; max-height: 76% !important; }
+  .portal-state-badge { font-size: 7px; padding: 2px 4px; bottom: 5%; }
+}
+
+@media (max-width: 480px) {
+  .garden-board-wrapper {
+    width: min(97vw, 58dvh, 520px);
+    height: min(97vw, 58dvh, 520px);
+  }
+  .garden-floating-island { padding: 5px !important; }
+  .garden-matrix-grid { gap: 2px !important; padding: 3px !important; }
+  .worm-overlay-layer { inset: 3px !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-apple,
+  .continuous-worm-svg {
+    animation: none !important;
+  }
+}
