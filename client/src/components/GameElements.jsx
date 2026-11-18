@@ -307,20 +307,21 @@ export function ContinuousWormSVG({
 
   // Subtle organic squish/breathe phase
   const breathe = Math.sin(t * 3) * 0.03;
-  const blink = (Math.sin(animTime * 0.0028) + 1) / 2 > 0.96 && !isEating && !isFailed ? 0.08 : 1;
+  const blink = (Math.sin(animTime * 0.0028) + 1) / 2 > 0.965 && !isEating && !isFailed ? 0.08 : 1;
+  const wiggle = isMoving ? Math.sin(animTime * 0.03) * 0.045 : Math.sin(animTime * 0.004) * 0.015;
+  const stretchX = 1 + (isMoving ? 0.05 : 0) + (isEating ? 0.04 : 0) - (isHappy ? 0.02 : 0);
+  const stretchY = 1 - (isMoving ? 0.04 : 0) - (isEating ? 0.03 : 0) + (isHappy ? 0.05 : 0);
 
   // Segment coordinate mapping (supports fractional positions during interpolation)
-  const pts = segments.map((seg, i) => {
-    return {
-      x: seg[0] * cell + half,
-      y: seg[1] * cell + half,
-      gridX: seg[0],
-      gridY: seg[1],
-      i,
-    };
-  });
+  const pts = segments.map((seg, i) => ({
+    x: seg[0] * cell + half,
+    y: seg[1] * cell + half,
+    gridX: seg[0],
+    gridY: seg[1],
+    i,
+  }));
 
-  const bodyR = Math.max(3.2, cell * 0.34);
+  const bodyR = Math.max(3.2, cell * 0.345);
 
   const head = pts[0];
   const neck = pts[1] || head;
@@ -336,33 +337,40 @@ export function ContinuousWormSVG({
   }
 
   // Look-at direction for pupils: track nearest apple or glance forward
-  let pupilOffsetX = 1.6;
+  let pupilOffsetX = 1.7;
   let pupilOffsetY = 0;
   if (targetApple) {
     const adx = targetApple[0] - head.gridX;
     const ady = targetApple[1] - head.gridY;
     const dist = Math.hypot(adx, ady);
-    if (dist <= 2.8) {
-      pupilOffsetX = Math.max(-2.4, Math.min(2.4, adx * 1.4));
-      pupilOffsetY = Math.max(-2.4, Math.min(2.4, ady * 1.4));
+    if (dist <= 3) {
+      pupilOffsetX = Math.max(-2.4, Math.min(2.4, adx * 1.3));
+      pupilOffsetY = Math.max(-2.4, Math.min(2.4, ady * 1.3));
     }
   }
 
-  // Construct seamless continuous body spine path
   let spinePath = `M ${pts[0].x} ${pts[0].y}`;
-  for (let i = 1; i < pts.length; i++) {
-    spinePath += ` L ${pts[i].x} ${pts[i].y}`;
+  if (pts.length === 2) {
+    spinePath += ` L ${pts[1].x} ${pts[1].y}`;
+  } else {
+    for (let i = 1; i < pts.length - 1; i++) {
+      const cx = pts[i].x;
+      const cy = pts[i].y;
+      const nx = (pts[i].x + pts[i + 1].x) / 2;
+      const ny = (pts[i].y + pts[i + 1].y) / 2;
+      spinePath += ` Q ${cx} ${cy} ${nx} ${ny}`;
+    }
+    if (pts.length > 2) {
+      const last = pts[pts.length - 1];
+      spinePath += ` T ${last.x} ${last.y}`;
+    }
   }
-
-  const tail = pts[pts.length - 1];
-  const beforeTail = pts[Math.max(0, pts.length - 2)] || tail;
-  const tailAngle = Math.atan2(tail.y - beforeTail.y, tail.x - beforeTail.x) * 180 / Math.PI;
 
   const uid = `worm-${wormSkin}-${levelSize}`;
 
   return (
     <svg
-      className={`continuous-worm-svg ${growing ? 'growing' : ''} ${isMoving ? 'moving' : ''} ${isEating ? 'eating' : ''} ${isHappy ? 'happy' : ''}`}
+      className={`continuous-worm-svg ${growing ? 'growing' : ''} ${isMoving ? 'moving' : ''} ${isEating ? 'eating' : ''} ${isHappy ? 'happy' : ''} ${isFailed ? 'failed' : ''}`}
       viewBox={`0 0 ${size} ${size}`}
       preserveAspectRatio="none"
       style={{ width: '100%', height: '100%', overflow: 'visible' }}
@@ -452,12 +460,15 @@ export function ContinuousWormSVG({
         const prev = pts[i - 1] || pt;
         const next = pts[i + 1] || pt;
         const segAngle = Math.atan2(next.y - prev.y, next.x - prev.x) * 180 / Math.PI;
-        const pulse = 1 + Math.sin(t * 3.2 + i * 0.9) * 0.03 + breathe;
+        const phase = t * 3.4 + i * 0.9;
+        const pulse = 1 + Math.sin(phase) * 0.035 + breathe;
         const isTail = i === pts.length - 1;
-        const segR = bodyR * (isTail ? 0.82 : 0.96) * pulse;
+        const taper = isTail ? 0.74 : (1 - (i / Math.max(1, pts.length - 1)) * 0.18);
+        const segR = bodyR * taper * pulse;
+        const wobble = isMoving ? Math.sin(animTime * 0.028 + i * 0.8) * (cell * 0.012) : 0;
 
         return (
-          <g key={`seg-${i}`} transform={`translate(${pt.x}, ${pt.y}) rotate(${segAngle})`}>
+          <g key={`seg-${i}`} transform={`translate(${pt.x}, ${pt.y + wobble}) rotate(${segAngle})`}>
             {/* Segment base bulb */}
             <circle cx="0" cy="0" r={segR} fill={`url(#worm-body-${uid})`} />
 
@@ -500,44 +511,36 @@ export function ContinuousWormSVG({
 
       {/* 5. Expressive 3D Cartoon Head Segment */}
       <g transform={`translate(${head.x}, ${head.y}) rotate(${headAngle})`} filter={`url(#worm-shadow-${uid})`}>
-        {/* Head Base Bulb */}
-        <circle cx="0" cy="0" r={bodyR * 1.04} fill={`url(#worm-head-${uid})`} />
+        <g transform={`scale(${stretchX} ${stretchY}) rotate(${wiggle * 8})`}>
+          {/* Head Base Bulb */}
+          <circle cx="0" cy="0" r={bodyR * 1.06} fill={`url(#worm-head-${uid})`} />
+          {/* Snout projection forward */}
+          <ellipse cx={bodyR * 0.44} cy="0" rx={bodyR * 0.72} ry={bodyR * 0.75} fill={`url(#worm-head-${uid})`} />
+          {/* Chin / ventral jaw */}
+          <ellipse cx={bodyR * 0.26} cy={bodyR * 0.32} rx={bodyR * 0.62} ry={bodyR * 0.42} fill={`url(#worm-belly-${uid})`} />
+          {/* Forehead 3D gloss shine */}
+          <ellipse cx={-bodyR * 0.12} cy={-bodyR * 0.42} rx={bodyR * 0.42} ry={bodyR * 0.2} fill="#ffffff" opacity="0.55" />
 
-        {/* Snout projection forward */}
-        <ellipse cx={bodyR * 0.42} cy="0" rx={bodyR * 0.7} ry={bodyR * 0.74} fill={`url(#worm-head-${uid})`} />
+          {/* Cute bouncy antennae with glowing chartreuse tip spheres */}
+          <g>
+            {[-1, 1].map((side) => {
+              const baseY = side * bodyR * 0.72;
+              const sway = Math.sin(animTime * 0.01 + (side > 0 ? 0.8 : 0)) * (isMoving ? bodyR * 0.1 : bodyR * 0.04);
+              const tipX = -bodyR * 0.12 + sway;
+              const tipY = side * bodyR * (1.38 + (isHappy ? 0.05 : 0));
+              return (
+                <g key={`antenna-${side}`}>
+                  <path d={`M ${-bodyR * 0.02} ${baseY} Q ${bodyR * 0.12} ${side * bodyR * 1.12} ${tipX} ${tipY}`} stroke={secondary} strokeWidth={Math.max(1.1, cell * 0.05)} strokeLinecap="round" fill="none" />
+                  <circle cx={tipX} cy={tipY} r={Math.max(1.6, cell * 0.068)} fill={antennaeColor} stroke={secondary} strokeWidth="0.6" />
+                  <circle cx={tipX - 0.2} cy={tipY - side * 0.2} r={Math.max(0.7, cell * 0.03)} fill="#ffffff" opacity="0.9" />
+                </g>
+              );
+            })}
+          </g>
 
-        {/* Chin / ventral jaw */}
-        <ellipse cx={bodyR * 0.26} cy={bodyR * 0.3} rx={bodyR * 0.62} ry={bodyR * 0.42} fill={`url(#worm-belly-${uid})`} />
-
-        {/* Forehead 3D gloss shine */}
-        <ellipse cx={-bodyR * 0.12} cy={-bodyR * 0.4} rx={bodyR * 0.4} ry={bodyR * 0.2} fill="#ffffff" opacity="0.5" />
-
-        {/* Cute bouncy antennae with glowing chartreuse tip spheres */}
-        <g>
-          <path
-            d={`M ${-bodyR * 0.04} ${-bodyR * 0.72} Q ${bodyR * 0.08} ${-bodyR * 1.18} ${-bodyR * 0.14} ${-bodyR * 1.38}`}
-            stroke={secondary}
-            strokeWidth={Math.max(1.1, cell * 0.05)}
-            strokeLinecap="round"
-            fill="none"
-          />
-          <circle cx={-bodyR * 0.15} cy={-bodyR * 1.4} r={Math.max(1.5, cell * 0.065)} fill={antennaeColor} stroke={secondary} strokeWidth="0.6" />
-          <circle cx={-bodyR * 0.18} cy={-bodyR * 1.43} r={Math.max(0.7, cell * 0.03)} fill="#ffffff" opacity="0.85" />
-
-          <path
-            d={`M ${-bodyR * 0.04} ${bodyR * 0.72} Q ${bodyR * 0.08} ${bodyR * 1.18} ${-bodyR * 0.14} ${bodyR * 1.38}`}
-            stroke={secondary}
-            strokeWidth={Math.max(1.1, cell * 0.05)}
-            strokeLinecap="round"
-            fill="none"
-          />
-          <circle cx={-bodyR * 0.15} cy={bodyR * 1.4} r={Math.max(1.5, cell * 0.065)} fill={antennaeColor} stroke={secondary} strokeWidth="0.6" />
-          <circle cx={-bodyR * 0.18} cy={bodyR * 1.37} r={Math.max(0.7, cell * 0.03)} fill="#ffffff" opacity="0.85" />
-        </g>
-
-        {/* Rosy Blushing Cheeks */}
-        <ellipse cx={bodyR * 0.24} cy={-bodyR * 0.58} rx={bodyR * 0.22} ry={bodyR * 0.14} fill={blushColor} opacity={isHappy || isAnticipating ? 0.62 : 0.4} />
-        <ellipse cx={bodyR * 0.24} cy={bodyR * 0.58} rx={bodyR * 0.22} ry={bodyR * 0.14} fill={blushColor} opacity={isHappy || isAnticipating ? 0.62 : 0.4} />
+          {/* Rosy Blushing Cheeks */}
+          <ellipse cx={bodyR * 0.24} cy={-bodyR * 0.58} rx={bodyR * 0.22} ry={bodyR * 0.14} fill={blushColor} opacity={isHappy || isAnticipating || isEating ? 0.65 : 0.42} />
+          <ellipse cx={bodyR * 0.24} cy={bodyR * 0.58} rx={bodyR * 0.22} ry={bodyR * 0.14} fill={blushColor} opacity={isHappy || isAnticipating || isEating ? 0.65 : 0.42} />
 
         {/* Eyes */}
         {[-1, 1].map((side) => {
@@ -602,25 +605,19 @@ export function ContinuousWormSVG({
               />
             </g>
           ) : isFailed ? (
-            <path
-              d={`M ${bodyR * 0.04} ${-bodyR * 0.16} Q ${-bodyR * 0.16} 0 ${bodyR * 0.04} ${bodyR * 0.16}`}
-              stroke="#330a10"
-              strokeWidth={Math.max(1.3, cell * 0.055)}
-              fill="none"
-              strokeLinecap="round"
-            />
+            <g>
+              <ellipse cx="0" cy={bodyR * 0.02} rx={bodyR * 0.12} ry={bodyR * 0.14} fill="#4a0e17" />
+              <path d={`M ${-bodyR * 0.16} ${-bodyR * 0.2} Q 0 ${-bodyR * 0.32} ${bodyR * 0.16} ${-bodyR * 0.2}`} stroke="#330a10" strokeWidth={Math.max(1.1, cell * 0.045)} fill="none" strokeLinecap="round" opacity="0.7" />
+            </g>
+          ) : isMoving ? (
+            <path d={`M ${-bodyR * 0.1} ${-bodyR * 0.14} Q ${bodyR * 0.12} 0 ${-bodyR * 0.1} ${bodyR * 0.14}`} stroke="#330a10" strokeWidth={Math.max(1.25, cell * 0.052)} fill="none" strokeLinecap="round" />
           ) : (
             <g>
-              <path
-                d={`M ${-bodyR * 0.1} ${-bodyR * 0.16} Q ${bodyR * 0.1} 0 ${-bodyR * 0.1} ${bodyR * 0.16}`}
-                stroke="#330a10"
-                strokeWidth={Math.max(1.2, cell * 0.05)}
-                fill="none"
-                strokeLinecap="round"
-              />
+              <path d={`M ${-bodyR * 0.1} ${-bodyR * 0.16} Q ${bodyR * 0.1} 0 ${-bodyR * 0.1} ${bodyR * 0.16}`} stroke="#330a10" strokeWidth={Math.max(1.2, cell * 0.05)} fill="none" strokeLinecap="round" />
               <circle cx={bodyR * 0.02} cy="0" r={bodyR * 0.05} fill="#ff6b8b" opacity="0.75" />
             </g>
           )}
+        </g>
         </g>
       </g>
 
@@ -1114,8 +1111,8 @@ export function BuzzsawHazardSVG({ animTime = 0 }) {
    vibrant leaf, specular highlight & gentle bobbing
    =================================================== */
 export function PremiumAppleSVG({ collected = false, bobPhase = 0, worldId = 1 }) {
-  const bob = Math.sin(bobPhase * 1.2) * 1.6;
-  const rot = Math.sin(bobPhase * 0.8) * 2;
+  const bob = Math.sin(bobPhase * 1.2) * 1.8;
+  const rot = Math.sin(bobPhase * 0.8) * 2.2;
   const uid = `apple-${worldId}`;
 
   return (
@@ -1127,82 +1124,49 @@ export function PremiumAppleSVG({ collected = false, bobPhase = 0, worldId = 1 }
         width: '72%',
         height: '72%',
         overflow: 'visible',
-        transform: collected ? 'scale(0.15)' : `translateY(${bob}px) rotate(${rot}deg)`,
+        transform: collected ? 'scale(0.12) translateY(-8px)' : `translateY(${bob}px) rotate(${rot}deg)`,
         opacity: collected ? 0 : 1,
-        transition: collected ? 'transform 0.28s ease, opacity 0.28s ease' : 'opacity 0.2s ease',
+        transition: collected ? 'transform 0.24s ease, opacity 0.24s ease' : 'opacity 0.2s ease',
         transformOrigin: '50% 72%',
       }}
     >
       <defs>
-        {/* Luscious red radial gradient with bright gloss reflection */}
-        <radialGradient id={`apple-red-${uid}`} cx="32%" cy="28%" r="72%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.85" />
-          <stop offset="14%" stopColor="#fca5a5" />
-          <stop offset="35%" stopColor="#ef4444" />
-          <stop offset="78%" stopColor="#dc2626" />
-          <stop offset="100%" stopColor="#991b1b" />
+        <radialGradient id={`apple-red-${uid}`} cx="30%" cy="26%" r="74%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
+          <stop offset="12%" stopColor="#fecaca" />
+          <stop offset="32%" stopColor="#f87171" />
+          <stop offset="60%" stopColor="#ef4444" />
+          <stop offset="82%" stopColor="#dc2626" />
+          <stop offset="100%" stopColor="#7f1d1d" />
         </radialGradient>
-
-        {/* Leaf green gradient */}
+        <radialGradient id={`apple-rim-${uid}`} cx="50%" cy="88%" r="55%">
+          <stop offset="0%" stopColor="#7f1d1d" stopOpacity="0.55" />
+          <stop offset="100%" stopColor="#7f1d1d" stopOpacity="0" />
+        </radialGradient>
         <linearGradient id={`apple-leaf-${uid}`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#86efac" />
-          <stop offset="50%" stopColor="#22c55e" />
+          <stop offset="0%" stopColor="#bbf7d0" />
+          <stop offset="45%" stopColor="#4ade80" />
           <stop offset="100%" stopColor="#15803d" />
         </linearGradient>
-
-        {/* Stem brown gradient */}
         <linearGradient id={`apple-stem-${uid}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#a16207" />
+          <stop offset="0%" stopColor="#b45309" />
           <stop offset="100%" stopColor="#451a03" />
         </linearGradient>
       </defs>
-
-      {/* Floor Contact Shadow (shrinks when apple bobs up) */}
-      <ellipse
-        cx="50"
-        cy="90"
-        rx={22 - Math.abs(bob) * 1.2}
-        ry={6 - Math.abs(bob) * 0.35}
-        fill="#000000"
-        opacity="0.2"
-      />
-
-      {/* Wooden Curved Stem */}
-      <path
-        d="M 50 36 C 48 22 56 14 65 10"
-        stroke={`url(#apple-stem-${uid})`}
-        strokeWidth="5"
-        strokeLinecap="round"
-        fill="none"
-      />
-
-      {/* Vibrant Green Leaf */}
+      <ellipse cx="50" cy="91" rx={23 - Math.abs(bob) * 1.1} ry={6.5 - Math.abs(bob) * 0.3} fill="#000000" opacity="0.22" />
+      <path d="M 50 36 C 48 22 56 14 65 10" stroke={`url(#apple-stem-${uid})`} strokeWidth="5.2" strokeLinecap="round" fill="none" />
       <g transform="translate(62, 8) rotate(22)">
-        <path
-          d="M 0 12 C 10 -4 30 -2 34 10 C 30 22 10 26 0 16 Z"
-          fill={`url(#apple-leaf-${uid})`}
-          stroke="#15803d"
-          strokeWidth="1"
-        />
-        <path d="M 2 13 Q 15 8 28 12" stroke="#bbf7d0" strokeWidth="1.2" fill="none" opacity="0.6" />
+        <path d="M 0 12 C 10 -4 30 -2 34 10 C 30 22 10 26 0 16 Z" fill={`url(#apple-leaf-${uid})`} stroke="#166534" strokeWidth="1" />
+        <path d="M 2 13 Q 15 8 28 12" stroke="#ecfccb" strokeWidth="1.3" fill="none" opacity="0.7" />
       </g>
-
-      {/* Plump 3D Apple Body */}
-      <path
-        d="M 50 34 C 34 26 14 36 14 62 C 14 84 34 94 50 89 C 66 94 86 84 86 62 C 86 36 66 26 50 34 Z"
-        fill={`url(#apple-red-${uid})`}
-        stroke="#991b1b"
-        strokeWidth="1.2"
-      />
-
-      {/* Volumetric Gloss Specular Reflection */}
-      <ellipse cx="34" cy="48" rx="8" ry="14" fill="#ffffff" opacity="0.45" transform="rotate(-18 34 48)" />
-      <circle cx="30" cy="42" r="3.2" fill="#ffffff" opacity="0.85" />
-      <circle cx="36" cy="56" r="1.8" fill="#ffffff" opacity="0.65" />
-
-      {/* Gentle Sparkle Glint */}
+      <path d="M 50 34 C 34 26 14 36 14 62 C 14 84 34 94 50 89 C 66 94 86 84 86 62 C 86 36 66 26 50 34 Z" fill={`url(#apple-red-${uid})`} stroke="#7f1d1d" strokeWidth="1.2" />
+      <ellipse cx="50" cy="70" rx="24" ry="12" fill={`url(#apple-rim-${uid})`} />
+      <path d="M 50 34 C 45 40 43 43 50 46 C 57 43 55 40 50 34 Z" fill="#7f1d1d" opacity="0.18" />
+      <ellipse cx="33" cy="47" rx="8.5" ry="14.5" fill="#ffffff" opacity="0.48" transform="rotate(-18 33 47)" />
+      <circle cx="30" cy="41" r="3.4" fill="#ffffff" opacity="0.9" />
+      <circle cx="36" cy="55" r="1.9" fill="#ffffff" opacity="0.7" />
       <g transform="translate(70, 42)">
-        <polygon points="0,-5 1.5,-1.2 5,0 1.5,1.2 0,5 -1.5,1.2 -5,0 -1.5,-1.2" fill="#ffffff" opacity="0.9" />
+        <polygon points="0,-5 1.5,-1.2 5,0 1.5,1.2 0,5 -1.5,1.2 -5,0 -1.5,-1.2" fill="#ffffff" opacity="0.95" />
       </g>
     </svg>
   );
@@ -1314,11 +1278,34 @@ export function PremiumPortalSVG({ unlocked = false, pulsePhase = 0, worldId = 1
    ADDITIONAL TILES (Grass, Crates, Ice, Treasure)
    =================================================== */
 export function PremiumGrassTileSVG({ pulsePhase = 0, worldId = 1 }) {
+  const sway = Math.sin(pulsePhase * 2.2) * 1.8;
+  const uid = `grass-${worldId}`;
   return (
-    <svg viewBox="0 0 100 100" style={{ width: '92%', height: '92%', overflow: 'visible' }}>
-      <ellipse cx="50" cy="80" rx="28" ry="8" fill="#000" opacity="0.18" />
-      <path d="M 30 78 Q 40 38 50 78 Q 60 38 70 78" stroke="#16a34a" strokeWidth="10" fill="none" strokeLinecap="round" />
-      <path d="M 38 78 Q 46 46 54 78 Q 62 46 70 76" stroke="#4ade80" strokeWidth="6" fill="none" strokeLinecap="round" opacity="0.85" />
+    <svg viewBox="0 0 100 100" style={{ width: '96%', height: '96%', overflow: 'visible' }}>
+      <defs>
+        <linearGradient id={`soil-front-${uid}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#92400e" />
+          <stop offset="100%" stopColor="#451a03" />
+        </linearGradient>
+        <linearGradient id={`soil-top-${uid}`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#a16207" />
+          <stop offset="100%" stopColor="#78350f" />
+        </linearGradient>
+        <linearGradient id={`grass-top-${uid}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#86efac" />
+          <stop offset="45%" stopColor="#4ade80" />
+          <stop offset="100%" stopColor="#16a34a" />
+        </linearGradient>
+      </defs>
+      <ellipse cx="52" cy="88" rx="34" ry="8" fill="#000" opacity="0.22" />
+      <rect x="10" y="46" width="80" height="40" rx="12" fill={`url(#soil-front-${uid})`} />
+      <ellipse cx="50" cy="46" rx="40" ry="14" fill={`url(#soil-top-${uid})`} />
+      <ellipse cx="50" cy="40" rx="36" ry="11" fill={`url(#grass-top-${uid})`} />
+      <path d={`M 22 ${68 + sway * 0.2} Q 30 ${38 - sway} 38 ${66}`} stroke="#15803d" strokeWidth="5.5" strokeLinecap="round" fill="none" />
+      <path d={`M 34 ${66 - sway * 0.1} Q 42 ${30 + sway} 50 ${66}`} stroke="#22c55e" strokeWidth="5.5" strokeLinecap="round" fill="none" />
+      <path d={`M 48 ${66 + sway * 0.15} Q 58 ${34 - sway} 66 ${66}`} stroke="#16a34a" strokeWidth="5.2" strokeLinecap="round" fill="none" />
+      <path d={`M 60 ${68 - sway * 0.1} Q 70 ${40 + sway} 78 ${68}`} stroke="#4ade80" strokeWidth="4.8" strokeLinecap="round" fill="none" />
+      <path d="M 18 42 Q 50 30 82 42" stroke="#bbf7d0" strokeWidth="2.2" strokeLinecap="round" fill="none" opacity="0.75" />
     </svg>
   );
 }
@@ -1326,34 +1313,66 @@ export function PremiumGrassTileSVG({ pulsePhase = 0, worldId = 1 }) {
 export function PremiumCrateTileSVG({ worldId = 1 }) {
   return (
     <svg viewBox="0 0 100 100" style={{ width: '96%', height: '96%', overflow: 'visible' }}>
-      <rect x="8" y="20" width="84" height="74" rx="10" fill="#000" opacity="0.25" />
-      <rect x="8" y="12" width="84" height="76" rx="10" fill="#d97706" stroke="#78350f" strokeWidth="2" />
-      <rect x="14" y="18" width="72" height="64" rx="6" fill="#b45309" />
+      <defs>
+        <linearGradient id={`crate-front-${worldId}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#f59e0b" />
+          <stop offset="55%" stopColor="#d97706" />
+          <stop offset="100%" stopColor="#92400e" />
+        </linearGradient>
+      </defs>
+      <rect x="8" y="20" width="84" height="74" rx="11" fill="#000" opacity="0.25" />
+      <rect x="8" y="12" width="84" height="76" rx="11" fill={`url(#crate-front-${worldId})`} stroke="#78350f" strokeWidth="2.2" />
+      <rect x="14" y="18" width="72" height="64" rx="7" fill="#b45309" opacity="0.55" />
       <path d="M 14 18 L 86 82 M 86 18 L 14 82" stroke="#78350f" strokeWidth="5" />
-      <circle cx="50" cy="50" r="5" fill="#fef3c7" opacity="0.5" />
+      <path d="M 14 50 H 86 M 50 18 V 82" stroke="#92400e" strokeWidth="4" opacity="0.85" />
+      <rect x="45" y="45" width="10" height="10" rx="2" fill="#fef3c7" stroke="#92400e" strokeWidth="1.2" />
+      <path d="M 14 18 H 86" stroke="#fde68a" strokeWidth="2.2" strokeLinecap="round" opacity="0.7" />
     </svg>
   );
 }
 
 export function PremiumIceTileSVG({ pulsePhase = 0, worldId = 2 }) {
+  const shine = 0.55 + (Math.sin(pulsePhase * 2.4) + 1) * 0.12;
   return (
     <svg viewBox="0 0 100 100" style={{ width: '96%', height: '96%', overflow: 'visible' }}>
-      <rect x="8" y="16" width="84" height="76" rx="14" fill="#38bdf8" />
-      <rect x="8" y="8" width="84" height="76" rx="14" fill="#f0f9ff" stroke="#7dd3fc" strokeWidth="2" opacity="0.9" />
-      <path d="M 20 20 L 40 40 L 80 20" stroke="#ffffff" strokeWidth="3" fill="none" opacity="0.75" />
-      <polygon points="50,30 65,50 50,70 35,50" fill="#bae6fd" opacity="0.5" />
+      <defs>
+        <linearGradient id={`ice-front-${worldId}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#f0f9ff" />
+          <stop offset="45%" stopColor="#bae6fd" />
+          <stop offset="100%" stopColor="#38bdf8" />
+        </linearGradient>
+      </defs>
+      <rect x="8" y="18" width="84" height="74" rx="14" fill="#0284c7" opacity="0.28" />
+      <rect x="8" y="8" width="84" height="76" rx="14" fill={`url(#ice-front-${worldId})`} stroke="#7dd3fc" strokeWidth="2" />
+      <path d="M 18 18 L 44 42 L 82 18" stroke="#ffffff" strokeWidth="3.2" fill="none" opacity={shine} />
+      <path d="M 20 70 L 40 52 L 58 74 L 80 50" stroke="#e0f2fe" strokeWidth="2.4" fill="none" opacity="0.7" />
+      <polygon points="50,30 66,50 50,70 34,50" fill="#bae6fd" opacity="0.45" />
+      <ellipse cx="30" cy="24" rx="10" ry="5" fill="#ffffff" opacity="0.55" />
     </svg>
   );
 }
 
 export function PremiumTreasureTileSVG({ pulsePhase = 0, worldId = 1 }) {
+  const glow = 0.55 + (Math.sin(pulsePhase * 2.2) + 1) * 0.18;
   return (
     <svg viewBox="0 0 100 100" style={{ width: '94%', height: '94%', overflow: 'visible' }}>
-      <ellipse cx="50" cy="84" rx="28" ry="7" fill="#000" opacity="0.25" />
-      <rect x="20" y="46" width="60" height="36" rx="8" fill="#92400e" stroke="#451a03" strokeWidth="2" />
-      <rect x="18" y="32" width="64" height="20" rx="9" fill="#fbbf24" stroke="#d97706" strokeWidth="2" />
-      <rect x="44" y="46" width="12" height="16" rx="3" fill="#fde047" stroke="#92400e" />
-      <circle cx="50" cy="40" r="5" fill="#38bdf8" />
+      <defs>
+        <linearGradient id={`treasure-lid-${worldId}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#fde68a" />
+          <stop offset="100%" stopColor="#d97706" />
+        </linearGradient>
+        <radialGradient id={`treasure-glow-${worldId}`} cx="50%" cy="40%" r="50%">
+          <stop offset="0%" stopColor="#fef9c3" stopOpacity={glow} />
+          <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <ellipse cx="50" cy="84" rx="30" ry="8" fill="#000" opacity="0.25" />
+      <circle cx="50" cy="40" r="26" fill={`url(#treasure-glow-${worldId})`} />
+      <rect x="20" y="48" width="60" height="34" rx="8" fill="#92400e" stroke="#451a03" strokeWidth="2" />
+      <rect x="18" y="32" width="64" height="20" rx="9" fill={`url(#treasure-lid-${worldId})`} stroke="#b45309" strokeWidth="2" />
+      <rect x="44" y="48" width="12" height="14" rx="3" fill="#fde68a" stroke="#92400e" strokeWidth="1.2" />
+      <circle cx="50" cy="41" r="4.5" fill="#38bdf8" stroke="#0ea5e9" strokeWidth="1" />
+      <path d="M 24 36 H 76" stroke="#fffbeb" strokeWidth="2" strokeLinecap="round" opacity="0.65" />
     </svg>
   );
 }

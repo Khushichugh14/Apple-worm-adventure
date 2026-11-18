@@ -619,7 +619,9 @@ function App() {
         playSound('complete', sound);
         triggerConfetti();
         triggerScreenShake();
-        setBoardFx(fx => ({ ...fx, warp: true }));
+        setTimeout(triggerScreenShake, 180);
+        setBoardFx(fx => ({ ...fx, warp: true, eat: true }));
+        setTimeout(() => setBoardFx(fx => ({ ...fx, eat: false })), 320);
         setTimeout(() => setBoardFx(fx => ({ ...fx, warp: false })), 900);
 
         const portalPos = level.portal;
@@ -683,9 +685,10 @@ function App() {
         playSound('fail', sound);
         setNotice(next.reason);
         triggerScreenShake();
-        setWormExpression('idle');
+        setWormExpression('failed');
         setBoardFx(fx => ({ ...fx, impact: true }));
         setTimeout(() => setBoardFx(fx => ({ ...fx, impact: false })), 520);
+        setTimeout(() => setWormExpression('idle'), 900);
 
         const isWallHit = next.reason && (next.reason.includes('wall') || next.reason.includes('gate') || next.reason.includes('block') || next.reason.includes('hazard') || next.reason.includes('tangled') || next.reason.includes('edges'));
         if (isWallHit) {
@@ -695,10 +698,15 @@ function App() {
             (headPos[1] / level.size) * 100,
             next.reason.includes('hazard') ? '#f87171' : '#94a3b8'
           );
+          triggerParticleBurst(
+            (headPos[0] / level.size) * 100 + (100 / (level.size * 2)),
+            (headPos[1] / level.size) * 100,
+            '#fbbf24'
+          );
         }
       } else if (!didEat) {
         playSound('move', sound);
-        setTimeout(() => setWormExpression('idle'), 100);
+        setTimeout(() => setWormExpression('idle'), 120);
       }
 
       return next;
