@@ -44,12 +44,33 @@ const getTileDepth = (r, c, levelSize) => {
   return Math.max(distX, distY);
 };
 
-// Temporary uniform grid coloring for debugging - applies same green tint to ALL cells
+// Enhanced tile styling with world-specific gradients and effects
 const getTileStyle = (r, c, level, game, worldId, isWallCell, isPortalCell, isAppleCell, isEmpty, animTime) => {
-  return {
-    '--tile-bg': '#1a3d1a',
-    '--tile-border': 'rgba(34, 197, 94, 0.4)',
+  const p = [r, c];
+  const baseStyle = {
+    '--tile-bg': '#0a0d1a',
+    '--tile-border': 'rgba(255, 255, 255, 0.04)',
   };
+
+  // World-specific tile styles with checkerboard pattern
+  if (worldId === 1) { // Sunset Meadow - Organic grass/earth
+    baseStyle['--tile-bg'] = (r + c) % 2 === 0 ? '#0e1a12' : '#10261a';
+    baseStyle['--tile-border'] = 'rgba(34, 197, 94, 0.15)';
+  } else if (worldId === 2) { // Frozen Crystal Cave - Ice
+    baseStyle['--tile-bg'] = (r + c) % 2 === 0 ? '#051018' : '#091626';
+    baseStyle['--tile-border'] = 'rgba(56, 189, 248, 0.12)';
+  } else if (worldId === 3) { // Desert Canyon - Sandstone
+    baseStyle['--tile-bg'] = (r + c) % 2 === 0 ? '#1a1408' : '#22160a';
+    baseStyle['--tile-border'] = 'rgba(245, 158, 11, 0.12)';
+  } else if (worldId === 4) { // Enchanted Twilight - Mystic
+    baseStyle['--tile-bg'] = (r + c) % 2 === 0 ? '#140818' : '#1c0a1c';
+    baseStyle['--tile-border'] = 'rgba(168, 85, 247, 0.15)';
+  } else if (worldId === 5) { // Volcanic Caldera - Dark/Ember
+    baseStyle['--tile-bg'] = (r + c) % 2 === 0 ? '#0a0410' : '#140820';
+    baseStyle['--tile-border'] = 'rgba(249, 115, 22, 0.12)';
+  }
+
+  return baseStyle;
 };
 
 export default function Board({
