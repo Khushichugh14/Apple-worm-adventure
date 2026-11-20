@@ -3123,9 +3123,9 @@ button:focus-visible {
 .dock-powerups-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(2px, 0.25vw, 3px);
+  gap: clamp(4px, 0.4vw, 6px);
   width: 100%;
-  max-width: clamp(180px, 28vw, 300px);
+  max-width: clamp(220px, 32vw, 360px);
 }
 
 .dock-powerup-status {
@@ -3182,14 +3182,14 @@ button:focus-visible {
 .dock-action-btn {
   display: inline-flex;
   align-items: center;
-  gap: clamp(1px, 0.2vw, 3px);
-  padding: clamp(2px, 0.3vw, 4px) clamp(4px, 0.6vw, 8px);
+  gap: clamp(2px, 0.2vw, 4px);
+  padding: clamp(6px, 0.5vw, 8px) clamp(8px, 1vw, 12px);
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-glass);
   font-family: var(--font-ui);
   font-weight: 600;
-  font-size: clamp(7px, 0.8vw, 10px);
+  font-size: clamp(9px, 0.9vw, 11px);
   color: var(--text-secondary);
   box-shadow: var(--shadow-sm);
   transition: all var(--transition-fast);
@@ -3229,18 +3229,19 @@ button:focus-visible {
 
 /* Powerup buttons - 3 column grid layout */
 .dock-action-btn.powerup-btn {
-  min-width: 0;
-  padding: clamp(2px, 0.3vw, 4px) clamp(2px, 0.3vw, 4px);
-  font-size: clamp(6px, 0.7vw, 8px);
+  min-width: 64px;
+  min-height: 56px;
+  padding: clamp(6px, 0.6vw, 10px) clamp(4px, 0.4vw, 8px);
+  font-size: clamp(8px, 0.8vw, 10px);
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
   justify-content: center;
   background: var(--powerup-bg, rgba(255, 255, 255, 0.05));
   border-color: var(--powerup-border, var(--border-glass));
   color: var(--powerup-color, var(--text-secondary));
 }
 
-.dock-action-btn.powerup-btn svg { width: 10px; height: 10px; }
+.dock-action-btn.powerup-btn svg { width: 16px; height: 16px; }
 
 .dock-action-btn.powerup-btn:hover {
   background: var(--powerup-hover, rgba(255, 255, 255, 0.1));
@@ -8634,28 +8635,15 @@ input:focus-visible {
 .world-background-svg { position:absolute; inset:0; width:100%; height:100%; }
 .garden-matrix-grid { position:relative; z-index:2; width:100%; height:100%; gap:4px; padding:6px; border-radius:20px; background: rgba(0,0,0,0.18); backdrop-filter: blur(2px); }
 
-/* Tiles: visible terrain depth per world */
+/* Tiles: uniform grid color with subtle depth */
 .garden-tile-cell {
   position:relative; border-radius:10px; overflow:hidden; isolation:isolate;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), inset 0 -6px 10px rgba(0,0,0,.25), 0 2px 4px rgba(0,0,0,.18);
+  background: var(--tile-bg, #1a3d1a);
+  border: 1px solid var(--tile-border, rgba(34, 197, 94, 0.4));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), inset 0 -2px 4px rgba(0,0,0,.15);
   transition: transform .12s ease, filter .2s ease, box-shadow .2s ease;
 }
-.floor-tile-a, .floor-tile-b { position:absolute; inset:0; z-index:0; }
-.game-master-container[data-world="1"] .floor-tile-a { background: linear-gradient(180deg, #285338, #1a3a28); }
-.game-master-container[data-world="1"] .floor-tile-b { background: linear-gradient(180deg, #21462f, #163020); }
-.game-master-container[data-world="2"] .floor-tile-a { background: linear-gradient(180deg, #1b3e56, #122b3d); }
-.game-master-container[data-world="2"] .floor-tile-b { background: linear-gradient(180deg, #17364b, #0f2434); }
-.game-master-container[data-world="3"] .floor-tile-a { background: linear-gradient(180deg, #704720, #4a2f16); }
-.game-master-container[data-world="3"] .floor-tile-b { background: linear-gradient(180deg, #5f3c1b, #402713); }
-.game-master-container[data-world="4"] .floor-tile-a { background: linear-gradient(180deg, #3a2158, #27163d); }
-.game-master-container[data-world="4"] .floor-tile-b { background: linear-gradient(180deg, #311c4b, #211334); }
-.game-master-container[data-world="5"] .floor-tile-a { background: linear-gradient(180deg, #4a1d14, #2d120d); }
-.game-master-container[data-world="5"] .floor-tile-b { background: linear-gradient(180deg, #3f1811, #24100b); }
-.game-master-container[data-world="1"] .garden-tile-cell { outline: 1px solid rgba(134,239,172,.08); }
-.game-master-container[data-world="2"] .garden-tile-cell { outline: 1px solid rgba(186,230,253,.12); box-shadow: inset 0 1px 0 rgba(255,255,255,.22), inset 0 -6px 10px rgba(2,6,23,.25), 0 0 0 1px rgba(125,211,252,.05) inset; }
-.game-master-container[data-world="3"] .garden-tile-cell { outline: 1px solid rgba(253,230,138,.08); }
-.game-master-container[data-world="4"] .garden-tile-cell { outline: 1px solid rgba(233,213,255,.1); }
-.game-master-container[data-world="5"] .garden-tile-cell { outline: 1px solid rgba(251,146,60,.12); }
+.floor-tile-a, .floor-tile-b { display: none; }
 
 .floor-texture { position:absolute; inset:0; z-index:1; opacity:.35; pointer-events:none; mix-blend-mode:soft-light; }
 .game-master-container[data-world="1"] .floor-texture { background: radial-gradient(circle at 30% 30%, rgba(187,247,208,.35), transparent 35%), radial-gradient(circle at 70% 70%, rgba(34,197,94,.25), transparent 40%); }

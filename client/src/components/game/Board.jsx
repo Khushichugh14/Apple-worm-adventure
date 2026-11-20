@@ -133,8 +133,6 @@ export default function Board({
               const floorClass = getFloorStyle(r, c2);
               const tileDepth = getTileDepth(r, c2, level.size);
               const depthStyle = {
-                '--tile-depth': tileDepth,
-                '--depth-shadow': `0 ${2 + tileDepth * 4}px ${4 + tileDepth * 8}px rgba(0,0,0,${0.3 + tileDepth * 0.2})`,
                 ...getTileStyle(r, c2, level, game, worldId, isWallCell, isPortalCell, isAppleCell, isEmpty, animTime),
               };
 
@@ -185,9 +183,6 @@ export default function Board({
                   {isEmpty && (
                     <div className="floor-texture" aria-hidden="true" />
                   )}
-
-                  {/* Ambient occlusion shadow at tile corners */}
-                  <div className="tile-ao-shadow" aria-hidden="true" style={{ opacity: 0.15 + tileDepth * 0.15 }} />
 
                   {showDecor && <span className={`tile-decor decor-${worldId} d-${Math.floor(decor * 4)}`} aria-hidden="true" />}
 
